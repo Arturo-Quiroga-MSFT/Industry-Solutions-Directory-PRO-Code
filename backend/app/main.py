@@ -125,8 +125,8 @@ async def chat(request: ChatRequest):
         # Get or create session
         session_id = request.session_id or str(uuid.uuid4())
         
-        # Ensure session exists
-        await cosmos_service.create_session(session_id)
+        # Ensure session exists (disabled while Cosmos DB updates)
+        # await cosmos_service.create_session(session_id)
         
         # Step 1: Search for relevant solutions
         logger.info(f"Searching for: {request.message[:50]}...")
@@ -135,8 +135,9 @@ async def chat(request: ChatRequest):
             filters=request.filters
         )
         
-        # Step 2: Retrieve chat history for context
-        chat_history = await cosmos_service.get_session_history(session_id)
+        # Step 2: Retrieve chat history for context (disabled - no history without Cosmos)
+        # chat_history = await cosmos_service.get_session_history(session_id)
+        chat_history = []  # Empty history while Cosmos DB disabled
         
         # Step 3: Generate response using RAG
         logger.info(f"Generating response with {len(citations)} citations...")
@@ -146,21 +147,12 @@ async def chat(request: ChatRequest):
             chat_history=chat_history
         )
         
-        # Step 4: Store messages in Cosmos DB
-        # Store user message
-        await cosmos_service.add_message(
-            session_id=session_id,
-            role=MessageRole.USER,
-            content=request.message
-        )
+        # Step 4: Store messages in Cosmos DB (disabled)
+        # await cosmos_service.add_message(session_id=session_id, role=MessageRole.USER, content=request.message)
+        # message_id = await cosmos_service.add_message(session_id=session_id, role=MessageRole.ASSISTANT, content=response_text, citations=[citation.model_dump() for citation in citations])
+        message_id = f"msg-{uuid.uuid4()}"  # Generate temporary message ID
         
-        # Store assistant message with citations
-        message_id = await cosmos_service.add_message(
-            session_id=session_id,
-            role=MessageRole.ASSISTANT,
-            content=response_text,
-            citations=[citation.model_dump() for citation in citations]
-        )
+        logger.warning("Cosmos DB disabled - session history not persisted")
         
         # Return response
         return ChatResponse(
@@ -181,29 +173,11 @@ async def chat(request: ChatRequest):
 @app.get("/api/chat/history/{session_id}", response_model=ChatHistoryResponse)
 async def get_chat_history(session_id: str):
     """Get chat history for a session"""
-    try:
-        messages = await cosmos_service.get_session_history(session_id)
-        metadata = await cosmos_service.get_session_metadata(session_id)
-        
-        if not messages and not metadata:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Session not found: {session_id}"
-            )
-        
-        return ChatHistoryResponse(
-            session_id=session_id,
-            messages=messages,
-            metadata=metadata
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error retrieving chat history: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error retrieving chat history"
-        )
+    # Cosmos DB disabled - return unavailable
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Chat history temporarily unavailable (Cosmos DB disabled)"
+    )
 
 
 @app.post("/api/feedback")
