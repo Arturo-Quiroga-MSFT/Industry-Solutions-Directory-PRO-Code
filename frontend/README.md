@@ -1,8 +1,57 @@
-# Frontend Chat Widget
+# Frontend
 
-Embeddable JavaScript chat widget for the Industry Solutions Directory.
+User interfaces for the Industry Solutions Directory.
 
-## Features
+## Streamlit UI (Recommended for Quick Start)
+
+Modern, interactive web interface built with Streamlit.
+
+### Features
+
+- 💬 Real-time chat interface
+- 📚 Citation display with relevance scores
+- 🔄 Session management
+- 💡 Example questions by industry
+- 🎨 Clean, responsive design
+- 🔌 Backend health monitoring
+
+### Quick Start
+
+1. **Install Dependencies**
+   ```bash
+   cd frontend
+   pip install -r requirements.txt
+   ```
+
+2. **Start Backend** (in separate terminal)
+   ```bash
+   cd backend
+   python -m uvicorn app.main:app --reload
+   ```
+
+3. **Run Streamlit App**
+   ```bash
+   cd frontend
+   streamlit run streamlit_app.py
+   ```
+
+4. **Access the UI**
+   - Open browser to: `http://localhost:8501`
+
+### Usage
+
+- Type questions in the chat input
+- Click example questions from the sidebar
+- View citations with relevance scores
+- Start new sessions to reset conversation history
+
+---
+
+## JavaScript Chat Widget (Future)
+
+Embeddable JavaScript chat widget for website integration.
+
+### Features (Planned)
 
 - Lightweight and performant
 - Easy integration via script tag
