@@ -1,25 +1,27 @@
 # FastAPI and Web Framework
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-pydantic==2.5.3
-pydantic-settings==2.1.0
-python-multipart==0.0.6
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+python-multipart
 
 # Azure SDK
-azure-identity==1.15.0
-azure-cosmos==4.5.1
-azure-search-documents==11.4.0
-azure-ai-inference==1.0.0b1
-azure-core==1.29.6
-azure-monitor-opentelemetry==1.2.0
+azure-identity
+azure-cosmos
+azure-search-documents
+azure-ai-inference
+azure-core
+azure-monitor-opentelemetry
 
 # OpenAI (for embeddings and chat)
-openai==1.10.0
+openai
 
 # Data processing
-python-dotenv==1.0.0
-httpx==0.26.0
+python-dotenv
+httpx
+requests
+beautifulsoup4
 
 # Utilities
-tenacity==8.2.3  # Retry logic
-tiktoken==0.5.2  # Token counting
+tenacity  # Retry logic
+tiktoken  # Token counting

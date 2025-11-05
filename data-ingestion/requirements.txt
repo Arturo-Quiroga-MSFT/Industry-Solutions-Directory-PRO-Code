@@ -1,0 +1,22 @@
+# Data Ingestion Requirements
+# Install with: pip install -r data-ingestion/requirements.txt
+
+# Azure SDK
+azure-identity
+azure-search-documents
+azure-core
+
+# OpenAI for embeddings
+openai
+
+# HTTP and Web Scraping
+requests
+httpx
+beautifulsoup4
+lxml
+
+# Data processing
+python-dotenv
+
+# Utilities
+tenacity
