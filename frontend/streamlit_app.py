@@ -6,6 +6,7 @@ import streamlit as st
 import requests
 import uuid
 import re
+import os
 from typing import Optional
 
 
@@ -70,11 +71,12 @@ st.markdown("""
 class ChatClient:
     """Client for interacting with the backend API"""
     
-    def __init__(self, base_url: str = "http://localhost:8000"):
-        self.base_url = base_url
-        self.chat_endpoint = f"{base_url}/api/chat"
-        self.health_endpoint = f"{base_url}/api/health"
-        self.history_endpoint = f"{base_url}/api/chat/history"
+    def __init__(self, base_url: str = None):
+        # Use environment variable if available, otherwise default to localhost
+        self.base_url = base_url or os.getenv("BACKEND_API_URL", "http://localhost:8000")
+        self.chat_endpoint = f"{self.base_url}/api/chat"
+        self.health_endpoint = f"{self.base_url}/api/health"
+        self.history_endpoint = f"{self.base_url}/api/chat/history"
     
     def check_health(self) -> bool:
         """Check if the backend API is available"""
