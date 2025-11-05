@@ -1,0 +1,135 @@
+python interactive_chat.py
+================================================================================
+INDUSTRY SOLUTIONS DIRECTORY - INTERACTIVE CHAT
+================================================================================
+Session ID: interactive-4c8ac7d2
+Backend URL: http://localhost:8000
+
+Checking backend availability...
+✅ Backend is online and ready!
+
+================================================================================
+INSTRUCTIONS:
+- Type your question and press Enter
+- Type 'quit', 'exit', or 'q' to end the session
+- Type 'new' to start a new session
+- Type 'help' for example queries
+================================================================================
+
+You: Show me all cybersecurity solutions
+
+🔍 Searching for solutions...
+
+================================================================================
+RESPONSE:
+================================================================================
+Here's a summary of all the cybersecurity solutions currently listed in the Microsoft Industry Solutions Directory. Each solution is designed to address different security challenges and industry needs, ranging from compliance and regulatory requirements to threat detection and portfolio optimization.
+
+---
+
+### 1. **Hitachi Solutions Proactive Security: Cyber Threat Defense 2-Week POC**  
+**Partner:** Hitachi Solutions America, Ltd.  
+**Key Capabilities:**  
+- Customized cybersecurity action plans for financial services and insurance  
+- Focus on regulatory compliance, data privacy, fraud detection, and internal threat protection  
+- Strategic proof-of-concept to strengthen and streamline cybersecurity and operational efficiency  
+- Holistic approach includes cost management  
+**Industries Supported:** Financial Services, Insurance  
+**Technologies:** Microsoft security products, data privacy tools  
+[Learn more](https://solutions.microsoftindustryinsights.com/solution/hitachi-solutions-proactive-security-cyber-threat-defense-2-week-poc)
+
+---
+
+### 2. **CMMC Implementation for Microsoft 365 (8 Wk Proj) (Summit 7-20240112051759)**  
+**Partner:** Summit 7  
+**Key Capabilities:**  
+- End-to-end security solutions for CMMC (Cybersecurity Maturity Model Certification)  
+- Integration with Microsoft Enterprise Mobility and Security products  
+- Azure Security product configuration (Defender for Cloud, Azure KeyVault)  
+- Governance controls for SharePoint Online and OneDrive  
+- Data Loss Prevention (DLP), Intune, Conditional Access policies  
+- Tailored for DoD contractors to enhance compliance and win contracts  
+**Industries Supported:** Defense, DoD Contractors  
+**Technologies:** Microsoft 365, Azure, Defender, Intune  
+[Learn more](https://solutions.microsoftindustryinsights.com/solution/cmmc-implementation-for-microsoft-365-8-wk-proj-summit-7-20240112051759)
+
+---
+
+### 3. **Cyber Portfolio Rationalization**  
+**Partner:** PwC  
+**Key Capabilities:**  
+- Simplifies and streamlines cybersecurity portfolios  
+- Reduces cost and complexity in Microsoft 365 and Azure environments  
+- Identifies and eliminates redundant tools  
+- Optimizes use of Microsoft Office 365 Security products  
+**Industries Supported:** Cross-industry  
+**Technologies:** Microsoft 365, Azure  
+[Learn more](https://solutions.microsoftindustryinsights.com/solution/cyber-portfolio-rationalization)
+
+---
+
+### 4. **Oxford Computer Group eduSOC**  
+**Partner:** Oxford Computer Group  
+**Key Capabilities:**  
+- Managed security operations for education institutions  
+- Uses Microsoft Sentinel, Defender suite, and identity solutions  
+- Detects and investigates cyber threats with AI-powered analytics  
+- Incident response orchestration and automation  
+- Additional resources for security alert management  
+**Industries Supported:** Education  
+**Technologies:** Microsoft Sentinel, Defender, Identity solutions  
+[Learn more](https://solutions.microsoftindustryinsights.com/solution/oxford-computer-group-edusoc)
+
+---
+
+### 5. **CMMC Implementation for Microsoft 365 (8 Wk Proj) (Summit 7-20231130090141)**  
+**Partner:** Summit 7  
+**Key Capabilities:**  
+- CMMC compliance for the Defense Industrial Base (DIB)  
+- Maps NIST 800-171 security controls to Microsoft 365 GCC High, Azure Government, and Enterprise Mobility Security  
+- Technical configuration for federal compliance mandates  
+**Industries Supported:** Defense, Aerospace, DoD Contractors  
+**Technologies:** Microsoft 365 GCC High, Azure Government, EM+S  
+[Learn more](https://solutions.microsoftindustryinsights.com/solution/cmmc-implementation-for-microsoft-365-8-wk-proj-summit-7-20231130090141)
+
+---
+
+**Next Steps:**  
+- If you have a specific industry, technology, or security challenge in mind, let me know and I can recommend the most suitable solution.
+- Would you like more details about any of these offerings or help with a particular use case?
+
+================================================================================
+CITATIONS (5 solutions found):
+================================================================================
+
+1. Hitachi Solutions Proactive Security: Cyber Threat Defense 2-Week POC
+   Partner: Hitachi Solutions America, Ltd.
+   Relevance Score: 0.0331
+   Description: Hitachi Solutions leverages our deep industry and technical capabilities to formulate customized action plans for our financial services and insurance customers that align with their unique security o...
+   URL: https://solutions.microsoftindustryinsights.com/solution/hitachi-solutions-proactive-security-cyber-threat-defense-2-week-poc
+
+2. CMMC Implementation for Microsoft 365 (8 Wk Proj) (Summit 7-20240112051759)
+   Partner: Summit 7
+   Relevance Score: 0.0313
+   Description: We stay at the forefront of cybersecurity trends to provide cutting-edge solutions.Key Features:&middot; End-to-end security solutions for CMMC.&middot; Utilization of native Microsoft Enterprise Mobi...
+   URL: https://solutions.microsoftindustryinsights.com/solution/cmmc-implementation-for-microsoft-365-8-wk-proj-summit-7-20240112051759
+
+3. Cyber Portfolio Rationalization
+   Partner: PwC
+   Relevance Score: 0.0305
+   Description: Simplify your cybersecurity portfolio to reduce the cost and complexity of your Microsoft 365 and Microsoft Azure environmentCybersecurity doesn&rsquo;t have to be complex. The objective of this portf...
+   URL: https://solutions.microsoftindustryinsights.com/solution/cyber-portfolio-rationalization
+
+4. Oxford Computer Group eduSOC
+   Partner: Oxford Computer Group
+   Relevance Score: 0.0286
+   Description: These challenges are often compounded by remote learning and insider threats from non-savvy users.What is eduSOC?OCG leverages Microsoft identity and security solutions and our extensive experience wo...
+   URL: https://solutions.microsoftindustryinsights.com/solution/oxford-computer-group-edusoc
+
+5. CMMC Implementation for Microsoft 365 (8 Wk Proj) (Summit 7-20231130090141)
+   Partner: Summit 7
+   Relevance Score: 0.0282
+   Description: Due to an increasing number of cyber-attacks on the US Defense supply chain, the US Department of Defense (DoD) has significantly increased cybersecurity regulations for the Defense Industrial Base (D...
+   URL: https://solutions.microsoftindustryinsights.com/solution/cmmc-implementation-for-microsoft-365-8-wk-proj-summit-7-20231130090141
+
+================================================================================
