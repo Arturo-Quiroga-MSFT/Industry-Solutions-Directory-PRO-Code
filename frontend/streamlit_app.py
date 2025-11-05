@@ -77,6 +77,8 @@ class ChatClient:
         self.chat_endpoint = f"{self.base_url}/api/chat"
         self.health_endpoint = f"{self.base_url}/api/health"
         self.history_endpoint = f"{self.base_url}/api/chat/history"
+        self.summary_endpoint = f"{self.base_url}/api/chat/summary"
+        self.export_endpoint = f"{self.base_url}/api/chat/export"
     
     def check_health(self) -> bool:
         """Check if the backend API is available"""
@@ -127,6 +129,41 @@ class ChatClient:
                 return data.get("messages", [])
             return None
         except requests.exceptions.RequestException:
+            return None
+    
+    def get_summary(self, session_id: str) -> Optional[dict]:
+        """Generate a conversation summary"""
+        try:
+            response = requests.post(
+                f"{self.summary_endpoint}/{session_id}",
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                st.error(f"Failed to generate summary: {response.status_code}")
+                return None
+        except requests.exceptions.RequestException as e:
+            st.error(f"Failed to generate summary: {str(e)}")
+            return None
+    
+    def export_conversation(self, session_id: str, format: str = "markdown") -> Optional[dict]:
+        """Export conversation as downloadable file"""
+        try:
+            response = requests.get(
+                f"{self.export_endpoint}/{session_id}",
+                params={"format": format},
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                st.error(f"Failed to export conversation: {response.status_code}")
+                return None
+        except requests.exceptions.RequestException as e:
+            st.error(f"Failed to export conversation: {str(e)}")
             return None
 
 
@@ -297,6 +334,49 @@ def main():
         else:
             for msg in st.session_state.messages:
                 display_message(msg, is_user=msg.get('role') == 'user')
+    
+    # Conversation Actions (only show if there are messages)
+    if st.session_state.messages:
+        st.markdown("---")
+        st.subheader("📋 Conversation Actions")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("📝 Generate Summary", use_container_width=True):
+                with st.spinner("Generating summary..."):
+                    client = ChatClient()
+                    summary_result = client.get_summary(st.session_state.session_id)
+                    
+                    if summary_result:
+                        st.session_state.summary = summary_result
+                        st.success("✅ Summary generated!")
+                        st.rerun()
+        
+        with col2:
+            download_format = st.selectbox("Format", ["Markdown", "Text"], label_visibility="collapsed")
+            if st.button("💾 Download Conversation", use_container_width=True):
+                with st.spinner("Preparing download..."):
+                    client = ChatClient()
+                    export_result = client.export_conversation(
+                        st.session_state.session_id, 
+                        download_format.lower()
+                    )
+                    
+                    if export_result:
+                        st.download_button(
+                            label=f"⬇️ Download as {download_format}",
+                            data=export_result.get('content', ''),
+                            file_name=export_result.get('filename', f'conversation.{download_format.lower()}'),
+                            mime='text/markdown' if download_format == 'Markdown' else 'text/plain',
+                            use_container_width=True
+                        )
+        
+        # Display summary if generated
+        if 'summary' in st.session_state and st.session_state.summary:
+            with st.expander("📄 Conversation Summary", expanded=True):
+                st.markdown(st.session_state.summary.get('summary', ''))
+                st.caption(f"Based on {st.session_state.summary.get('message_count', 0)} messages")
     
     # Chat input
     st.markdown("---")

@@ -145,5 +145,34 @@ RESPONSE FORMAT:
         except Exception as e:
             logger.error(f"OpenAI health check failed: {e}")
             return False
-            logger.error(f"OpenAI service health check failed: {e}")
-            return False
+    
+    async def generate_summary(self, prompt: str) -> str:
+        """
+        Generate a summary using GPT
+        
+        Args:
+            prompt: The prompt containing conversation to summarize
+            
+        Returns:
+            Generated summary text
+        """
+        try:
+            response = self.client.chat.completions.create(
+                model=self.chat_model,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant that creates clear, concise summaries."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                top_p=0.95
+            )
+            
+            summary = response.choices[0].message.content
+            logger.info(f"Generated summary with {len(summary)} characters")
+            
+            return summary
+            
+        except Exception as e:
+            logger.error(f"Error generating summary: {e}")
+            raise
+

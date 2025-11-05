@@ -262,6 +262,165 @@ async def delete_session(session_id: str):
         )
 
 
+@app.post("/api/chat/summary/{session_id}")
+async def generate_conversation_summary(session_id: str):
+    """
+    Generate an AI-powered summary of the conversation
+    Includes user questions and recommendations provided
+    """
+    try:
+        # Get chat history
+        messages = await cosmos_service.get_session_history(session_id)
+        
+        if not messages:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session not found: {session_id}"
+            )
+        
+        # Build conversation text for summarization
+        conversation_text = "\n\n".join([
+            f"{'User' if msg.role == MessageRole.USER else 'Assistant'}: {msg.content}"
+            for msg in messages
+        ])
+        
+        # Generate summary using GPT
+        summary_prompt = f"""Please create a concise summary of this conversation between a user and an AI assistant helping find Microsoft partner solutions.
+
+Include:
+1. **User's Key Questions**: List the main questions or topics the user asked about
+2. **Recommendations Provided**: Summarize the partner solutions that were recommended
+3. **Key Insights**: Any important takeaways or patterns in what the user was looking for
+
+Conversation:
+{conversation_text}
+
+Please format the summary in markdown with clear sections."""
+
+        summary = await openai_service.generate_summary(summary_prompt)
+        
+        return {
+            "session_id": session_id,
+            "summary": summary,
+            "message_count": len(messages)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating summary: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error generating summary"
+        )
+
+
+@app.get("/api/chat/export/{session_id}")
+async def export_conversation(session_id: str, format: str = "markdown"):
+    """
+    Export conversation as downloadable file (markdown or text)
+    Includes summary, full conversation, and citations
+    """
+    try:
+        # Get chat history and metadata
+        messages = await cosmos_service.get_session_history(session_id)
+        metadata = await cosmos_service.get_session_metadata(session_id)
+        
+        if not messages:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session not found: {session_id}"
+            )
+        
+        # Generate summary first
+        summary_response = await generate_conversation_summary(session_id)
+        summary = summary_response["summary"]
+        
+        # Build export content
+        if format.lower() == "markdown":
+            content = f"""# Industry Solutions Directory - Conversation Export
+
+**Session ID**: {session_id}
+**Date**: {metadata.get('startTime', 'N/A') if metadata else 'N/A'}
+**Messages**: {len(messages)}
+
+---
+
+## Summary
+
+{summary}
+
+---
+
+## Full Conversation
+
+"""
+            # Add each message
+            for i, msg in enumerate(messages, 1):
+                role = "You" if msg.role == MessageRole.USER else "Assistant"
+                content += f"\n### {role} (Message {i})\n\n{msg.content}\n"
+                
+                # Add citations if present
+                if msg.citations:
+                    content += "\n**Solutions Referenced:**\n"
+                    for cit in msg.citations:
+                        content += f"- **{cit.get('solution_name')}** by {cit.get('partner_name')}\n"
+                        content += f"  - {cit.get('url')}\n"
+                
+                content += "\n---\n"
+            
+            content += f"\n\n*Exported from Industry Solutions Directory on {metadata.get('startTime', 'N/A') if metadata else 'N/A'}*\n"
+        
+        else:  # Plain text format
+            content = f"""Industry Solutions Directory - Conversation Export
+{'=' * 60}
+
+Session ID: {session_id}
+Date: {metadata.get('startTime', 'N/A') if metadata else 'N/A'}
+Messages: {len(messages)}
+
+{'=' * 60}
+SUMMARY
+{'=' * 60}
+
+{summary}
+
+{'=' * 60}
+FULL CONVERSATION
+{'=' * 60}
+
+"""
+            for i, msg in enumerate(messages, 1):
+                role = "YOU" if msg.role == MessageRole.USER else "ASSISTANT"
+                content += f"\n{role} (Message {i}):\n{'-' * 40}\n{msg.content}\n"
+                
+                if msg.citations:
+                    content += "\nSolutions Referenced:\n"
+                    for cit in msg.citations:
+                        content += f"  - {cit.get('solution_name')} by {cit.get('partner_name')}\n"
+                        content += f"    {cit.get('url')}\n"
+                
+                content += "\n"
+            
+            content += f"\n\nExported from Industry Solutions Directory on {metadata.get('startTime', 'N/A') if metadata else 'N/A'}\n"
+        
+        return {
+            "session_id": session_id,
+            "format": format,
+            "content": content,
+            "filename": f"conversation_{session_id}.{'md' if format.lower() == 'markdown' else 'txt'}"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error exporting conversation: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error exporting conversation"
+        )
+
+
 # Error handlers
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
