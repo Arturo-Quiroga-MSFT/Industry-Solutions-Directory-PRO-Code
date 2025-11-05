@@ -136,12 +136,14 @@ RESPONSE FORMAT:
         """
         try:
             # Simple test completion
-            response = self.client.complete(
-                messages=[UserMessage(content="test")],
+            response = self.client.chat.completions.create(
                 model=self.chat_model,
+                messages=[{"role": "user", "content": "test"}],
                 max_tokens=5
             )
             return bool(response.choices)
         except Exception as e:
+            logger.error(f"OpenAI health check failed: {e}")
+            return False
             logger.error(f"OpenAI service health check failed: {e}")
             return False

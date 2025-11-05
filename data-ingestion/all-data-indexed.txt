@@ -1,0 +1,44 @@
+INFO:azure.core.pipeline.policies.http_logging_policy:Request URL: 'https://indsolse-dev-srch-okumlm.search.windows.net/indexes('partner-solutions-index')/docs/search.index?api-version=REDACTED'
+Request method: 'POST'
+Request headers:
+    'Content-Type': 'application/json'
+    'Content-Length': '7294472'
+    'Accept': 'application/json'
+    'x-ms-client-request-id': 'ec49f3ac-ba63-11f0-8fde-c2736d4d253a'
+    'User-Agent': 'azsdk-python-search-documents/11.4.0 Python/3.13.9 (macOS-15.7.1-arm64-arm-64bit-Mach-O)'
+    'Authorization': 'REDACTED'
+A body is sent with the request
+INFO:azure.core.pipeline.policies.http_logging_policy:Response status: 200
+Response headers:
+    'Transfer-Encoding': 'chunked'
+    'Content-Type': 'application/json; odata.metadata=minimal; odata.streaming=true; charset=utf-8'
+    'Strict-Transport-Security': 'REDACTED'
+    'Preference-Applied': 'REDACTED'
+    'OData-Version': 'REDACTED'
+    'request-id': 'ec49f3ac-ba63-11f0-8fde-c2736d4d253a'
+    'elapsed-time': 'REDACTED'
+    'Date': 'Wed, 05 Nov 2025 16:24:43 GMT'
+INFO:__main__:Uploaded batch 14, 100 documents
+INFO:azure.core.pipeline.policies.http_logging_policy:Request URL: 'https://indsolse-dev-srch-okumlm.search.windows.net/indexes('partner-solutions-index')/docs/search.index?api-version=REDACTED'
+Request method: 'POST'
+Request headers:
+    'Content-Type': 'application/json'
+    'Content-Length': '6251678'
+    'Accept': 'application/json'
+    'x-ms-client-request-id': 'f03104b0-ba63-11f0-8fde-c2736d4d253a'
+    'User-Agent': 'azsdk-python-search-documents/11.4.0 Python/3.13.9 (macOS-15.7.1-arm64-arm-64bit-Mach-O)'
+    'Authorization': 'REDACTED'
+A body is sent with the request
+INFO:azure.core.pipeline.policies.http_logging_policy:Response status: 200
+Response headers:
+    'Transfer-Encoding': 'chunked'
+    'Content-Type': 'application/json; odata.metadata=minimal; odata.streaming=true; charset=utf-8'
+    'Strict-Transport-Security': 'REDACTED'
+    'Preference-Applied': 'REDACTED'
+    'OData-Version': 'REDACTED'
+    'request-id': 'f03104b0-ba63-11f0-8fde-c2736d4d253a'
+    'elapsed-time': 'REDACTED'
+    'Date': 'Wed, 05 Nov 2025 16:24:51 GMT'
+INFO:__main__:Uploaded batch 15, 86 documents
+INFO:__main__:Successfully indexed 1486 document chunks
+INFO:__main__:Data ingestion pipeline completed successfully!

@@ -1,0 +1,12 @@
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 1/1)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 1/1)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 1/1)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
