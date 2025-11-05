@@ -216,14 +216,14 @@ class DataIngestionPipeline:
             
             for ps in partner_solutions:
                 solution = {
-                    'solution_name': ps.get('partnerSolutionTitle', 'Unknown Solution'),
-                    'partner_name': ps.get('companyName', 'Unknown Partner'),
+                    'solution_name': ps.get('solutionName', 'Unknown Solution'),
+                    'partner_name': ps.get('orgName', 'Unknown Partner'),
                     'description': ps.get('solutionDescription', ''),
                     'industry': industry_name,
                     'sub_industry': sub_industry_name,
                     'solution_area': area_name,
-                    'solution_url': ps.get('partnerSolutionUrl', ''),
-                    'logo_url': ps.get('logoUrl', ''),
+                    'solution_url': f"https://solutions.microsoftindustryinsights.com/solutiondetails/{ps.get('partnerSolutionSlug', '')}",
+                    'logo_url': ps.get('logoFileLink', ''),
                     'partner_id': ps.get('partnerId', ''),
                     'solution_id': ps.get('partnerSolutionId', str(uuid.uuid4()))
                 }

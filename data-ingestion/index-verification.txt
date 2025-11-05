@@ -1,0 +1,115 @@
+python data-ingestion/verify_index.py
+================================================================================
+Verifying Index: partner-solutions-index
+Endpoint: https://indsolse-dev-srch-okumlm.search.windows.net
+================================================================================
+
+1. DOCUMENT COUNT
+--------------------------------------------------------------------------------
+Total documents in index: 33
+
+2. SAMPLE DOCUMENTS (First 5)
+--------------------------------------------------------------------------------
+
+Document 1:
+  Solution Name: Mobile Mentor Mentoring Service
+  Partner Name: Mobile Mentor
+  Industries: ['Education', 'Simplify and Secure IT']
+  Technologies: ['Security']
+  Description: <p id="isPasted">Our mentoring service helps customers leverage Microsoft 365 to improve endpoint se...
+
+Document 2:
+  Solution Name: MK.IO
+  Partner Name: MediaKind
+  Industries: ['Education', 'Student Success']
+  Technologies: ['AI Business Solutions']
+  Description: <h1>MK.IO: Empowering education with accessible video solutions&#10;&#10;</h1><p class="MsoNormal">E...
+
+Document 3:
+  Solution Name: MK.IO
+  Partner Name: MediaKind
+  Industries: ['Education', 'Student Success']
+  Technologies: ['AI Business Solutions']
+  Description: <h1>MK.IO: Empowering education with accessible video solutions&#10;&#10;</h1><p class="MsoNormal">E...
+
+Document 4:
+  Solution Name: greymatter Student Lifecycle CRM by Frequency Foundry
+  Partner Name: greymatter Student Lifecycle CRM by Frequency Foundry
+  Industries: ['Education', 'Institutional Innovation']
+  Technologies: ['AI Business Solutions']
+  Description: <p>Frequency Foundry&rsquo;s greymatter Student Lifecycle CRM is a Customer Relationship Management ...
+
+Document 5:
+  Solution Name: CDW
+  Partner Name: CDW
+  Industries: ['Education', 'Institutional Innovation']
+  Technologies: ['AI Business Solutions']
+  Description: <p>CDW understands the ever-evolving requirements of IT in the Education field. From Cloud infrastru...
+
+3. UNIQUE SOLUTIONS
+--------------------------------------------------------------------------------
+Total unique solutions: 12
+
+Unique solutions list:
+  - Blackbaud Enterprise Fundraising CRM (by Blackbaud)
+  - BlueVoyant-20240319060716 (by BlueVoyant)
+  - CDW (by CDW)
+  - CIS Hardened Images (by Center for Internet Security)
+  - Higher Education Blueprint (by HSO)
+  - M365 Copilot Security Readiness (by Slalom Consulting)
+  - MK.IO (by MediaKind)
+  - Mobile Mentor Mentoring Service (by Mobile Mentor)
+  - Nerdio Manager for Enterprise (by Nerdio)
+  - PwC Digital Relationship Management Solution (by PwC)
+  - eGroup | Enabling Technologies Copilot for Microsoft 365 Launch Protocols (by eGroup | Enabling Technologies)
+  - greymatter Student Lifecycle CRM by Frequency Foundry (by greymatter Student Lifecycle CRM by Frequency Foundry)
+
+4. SOLUTIONS BY INDUSTRY
+--------------------------------------------------------------------------------
+  Education: 33 documents
+  Institutional Innovation: 12 documents
+  Simplify and Secure IT: 11 documents
+  Student Success: 10 documents
+
+5. TEST SEARCH - 'education'
+--------------------------------------------------------------------------------
+
+  Result 1:
+    Solution: Higher Education Blueprint
+    Partner: HSO
+    Industries: ['Education', 'Institutional Innovation']
+
+  Result 2:
+    Solution: Higher Education Blueprint
+    Partner: HSO
+    Industries: ['Education', 'Institutional Innovation']
+
+  Result 3:
+    Solution: M365 Copilot Security Readiness
+    Partner: Slalom Consulting
+    Industries: ['Education', 'Simplify and Secure IT']
+
+6. TEST VECTOR SEARCH - 'AI solutions for healthcare'
+--------------------------------------------------------------------------------
+
+  Result 1:
+    Solution: greymatter Student Lifecycle CRM by Frequency Foundry
+    Partner: greymatter Student Lifecycle CRM by Frequency Foundry
+    Industries: ['Education', 'Institutional Innovation']
+    Description: <p>Frequency Foundry&rsquo;s greymatter Student Lifecycle CRM is a Customer Relationship Management solution built from the ground up for higher educa...
+
+  Result 2:
+    Solution: CDW
+    Partner: CDW
+    Industries: ['Education', 'Institutional Innovation']
+    Description: <p>CDW understands the ever-evolving requirements of IT in the Education field. From Cloud infrastructure, to Security management and even onwards int...
+
+  Result 3:
+    Solution: Nerdio Manager for Enterprise
+    Partner: Nerdio
+    Industries: ['Education', 'Student Success']
+    Description: <div class="OutlineElement Ltr SCXW123530336 BCX4"><p class="Paragraph SCXW123530336 BCX4"><span lang="EN-US" class="TextRun SCXW123530336 BCX4"><span...
+
+================================================================================
+Verification Complete!
+================================================================================

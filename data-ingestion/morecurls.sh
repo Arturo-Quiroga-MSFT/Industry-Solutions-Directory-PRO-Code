@@ -56,3 +56,28 @@ EOF
 
 # this one shows that The solutions are nested within themeSolutionAreas → partnerSolutions
 curl -s "https://mssoldir-app-prd.azurewebsites.net/api/Industry/GetThemeDetalsByViewId?slug=improve-operational-efficiencies-for-modernized-school-experiences-850" | python3 -c "import sys, json; data=json.load(sys.stdin); print('spotLightPartnerSolutions:', len(data.get('spotLightPartnerSolutions', []))); print('themeSolutionAreas count:', len(data.get('themeSolutionAreas', []))); areas = data.get('themeSolutionAreas', []); print('\nSolution areas:'); [print(f\"  - {a.get('solutionAreaName')}: {len(a.get('partnerSolutions', []))} solutions\") for a in areas[:5]]"
+
+# another good one ot have:
+curl -s "https://mssoldir-app-prd.azurewebsites.net/api/Industry/GetThemeDetalsByViewId?slug=improve-operational-efficiencies-for-modernized-school-experiences-850" > /tmp/theme_data.json && python3 << 'EOF'
+import json
+with open('/tmp/theme_data.json') as f:
+    data = json.load(f)
+
+print("Response keys:", list(data.keys()))
+print("\nthemeSolutionAreas count:", len(data.get('themeSolutionAreas', [])))
+
+if data.get('themeSolutionAreas'):
+    area = data['themeSolutionAreas'][0]
+    print("\nFirst area name:", area.get('solutionAreaName'))
+    print("Partner solutions count:", len(area.get('partnerSolutions', [])))
+    
+    if area.get('partnerSolutions'):
+        sol = area['partnerSolutions'][0]
+        print("\n=== FIRST PARTNER SOLUTION FIELDS ===")
+        for key, value in sol.items():
+            if key == 'solutionDescription':
+                print(f"  {key}: [HTML content, {len(str(value))} chars]")
+            else:
+                print(f"  {key}: {value}")
+EOF
+
