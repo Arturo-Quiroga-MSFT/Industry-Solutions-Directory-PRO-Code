@@ -133,155 +133,114 @@ class DataIngestionPipeline:
     
     async def scrape_solutions(self) -> List[Dict[str, Any]]:
         """
-        Scrape partner solutions from the website
-        The Industry Solutions Directory is a dynamic React app that loads data via API
+        Scrape partner solutions from the website using the discovered API
+        API structure: Get menu → Get theme details with solutions
         """
-        logger.info("Starting web scraping...")
+        logger.info("Starting web scraping from Industry Solutions Directory API...")
         
         solutions = []
+        api_base = "https://mssoldir-app-prd.azurewebsites.net/api/Industry"
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'application/json',
+        }
         
         try:
-            # The website uses a backend API - try to find the API endpoint
-            # Common patterns: /api/solutions, /api/v1/solutions, etc.
-            api_endpoints = [
-                f"{self.base_url}/api/solutions",
-                f"{self.base_url}/api/v1/solutions",
-                f"{self.base_url}/api/data/solutions",
-            ]
+            # Step 1: Get the menu with all industries and themes
+            logger.info("Fetching industry menu...")
+            menu_response = requests.get(f"{api_base}/getMenu", headers=headers, timeout=30)
             
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Accept': 'application/json',
-            }
+            if menu_response.status_code != 200:
+                raise Exception(f"Failed to fetch menu: {menu_response.status_code}")
             
-            # Try each potential API endpoint
-            for api_url in api_endpoints:
-                try:
-                    logger.info(f"Trying API endpoint: {api_url}")
-                    response = requests.get(api_url, headers=headers, timeout=10)
+            menu_data = menu_response.json()
+            logger.info(f"Found {len(menu_data)} industries in menu")
+            
+            # Step 2: For each industry theme, get the partner solutions
+            for industry in menu_data:
+                industry_name = industry.get('industryName', 'Unknown')
+                logger.info(f"Processing industry: {industry_name}")
+                
+                for sub_industry in industry.get('subIndustries', []):
+                    theme_slug = sub_industry.get('industryThemeSlug')
+                    sub_industry_name = sub_industry.get('subIndustryName', 'Unknown')
                     
-                    if response.status_code == 200:
-                        data = response.json()
-                        logger.info(f"Successfully retrieved data from {api_url}")
+                    if not theme_slug:
+                        logger.debug(f"Skipping {sub_industry_name} - no theme slug")
+                        continue
+                    
+                    logger.info(f"  Fetching solutions for: {sub_industry_name}")
+                    
+                    try:
+                        # Get theme details with partner solutions
+                        theme_response = requests.get(
+                            f"{api_base}/GetThemeDetalsByViewId",
+                            params={'slug': theme_slug},
+                            headers=headers,
+                            timeout=30
+                        )
                         
-                        # Parse the API response (structure may vary)
-                        if isinstance(data, list):
-                            solutions = self._parse_api_solutions(data)
-                        elif isinstance(data, dict) and 'solutions' in data:
-                            solutions = self._parse_api_solutions(data['solutions'])
-                        elif isinstance(data, dict) and 'data' in data:
-                            solutions = self._parse_api_solutions(data['data'])
-                        
-                        if solutions:
-                            break
+                        if theme_response.status_code == 200:
+                            theme_data = theme_response.json()
                             
-                except requests.RequestException as e:
-                    logger.debug(f"API endpoint {api_url} failed: {e}")
-                    continue
+                            # Solutions are nested in themeSolutionAreas
+                            theme_solution_areas = theme_data.get('themeSolutionAreas', [])
+                            solution_count = 0
+                            
+                            for area in theme_solution_areas:
+                                area_name = area.get('solutionAreaName', 'Unknown Area')
+                                partner_solutions = area.get('partnerSolutions', [])
+                                
+                                for ps in partner_solutions:
+                                    solutions.append(self._parse_partner_solution(
+                                        ps, industry_name, sub_industry_name, area_name
+                                    ))
+                                    solution_count += 1
+                            
+                            # Also get spotlight solutions
+                            spotlight_solutions = theme_data.get('spotLightPartnerSolutions', [])
+                            for ps in spotlight_solutions:
+                                solutions.append(self._parse_partner_solution(
+                                    ps, industry_name, sub_industry_name, "Spotlight"
+                                ))
+                                solution_count += 1
+                            
+                            logger.info(f"    Found {solution_count} solutions")
+                        else:
+                            logger.warning(f"    Failed to fetch theme {theme_slug}: {theme_response.status_code}")
+                            
+                    except Exception as e:
+                        logger.error(f"    Error fetching theme {theme_slug}: {e}")
+                        continue
             
-            # If API approach didn't work, try scraping the rendered page
             if not solutions:
-                logger.info("API approach failed, attempting to scrape rendered page...")
-                solutions = await self._scrape_html_page()
-            
-            # If still no solutions, use sample data for testing
-            if not solutions:
-                logger.warning("Web scraping failed, using sample data for testing")
+                logger.warning("No solutions found from API, using sample data")
                 solutions = self._get_sample_solutions()
                 
         except Exception as e:
-            logger.error(f"Error during web scraping: {e}")
+            logger.error(f"Error during API scraping: {e}")
             logger.info("Falling back to sample data")
             solutions = self._get_sample_solutions()
         
-        logger.info(f"Retrieved {len(solutions)} solutions")
+        logger.info(f"Retrieved {len(solutions)} total solutions")
         return solutions
     
-    def _parse_api_solutions(self, data: List[Dict]) -> List[Dict[str, Any]]:
-        """Parse solutions from API response"""
-        solutions = []
+    def _parse_partner_solution(self, ps_data: Dict, industry: str, sub_industry: str, solution_area: str = "") -> Dict[str, Any]:
+        """Parse a partner solution from the API response"""
+        technologies = [solution_area] if solution_area else []
         
-        for item in data:
-            try:
-                solution = {
-                    "solution_name": item.get('name') or item.get('title') or item.get('solution_name', 'Unknown Solution'),
-                    "partner_name": item.get('partner') or item.get('partner_name') or item.get('company', 'Unknown Partner'),
-                    "description": item.get('description') or item.get('summary', ''),
-                    "industries": item.get('industries') or item.get('industry') or [],
-                    "technologies": item.get('technologies') or item.get('technology') or [],
-                    "solution_url": item.get('url') or item.get('link') or f"{self.base_url}/solution/{item.get('id', '')}",
-                    "full_content": item.get('content') or item.get('description', '')
-                }
-                
-                # Ensure industries and technologies are lists
-                if isinstance(solution['industries'], str):
-                    solution['industries'] = [solution['industries']]
-                if isinstance(solution['technologies'], str):
-                    solution['technologies'] = [solution['technologies']]
-                
-                solutions.append(solution)
-                
-            except Exception as e:
-                logger.warning(f"Error parsing solution item: {e}")
-                continue
-        
-        return solutions
-    
-    async def _scrape_html_page(self) -> List[Dict[str, Any]]:
-        """Scrape solutions from HTML page (fallback method)"""
-        solutions = []
-        
-        try:
-            from bs4 import BeautifulSoup
-            
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-            
-            response = requests.get(f"{self.base_url}/browse", headers=headers, timeout=15)
-            
-            if response.status_code != 200:
-                return solutions
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
-            
-            # Look for common patterns in solution cards
-            # Adjust these selectors based on actual HTML structure
-            solution_cards = (
-                soup.find_all('div', class_=lambda x: x and ('solution' in x.lower() or 'card' in x.lower())) or
-                soup.find_all('article') or
-                soup.find_all('div', {'data-solution': True})
-            )
-            
-            for card in solution_cards:
-                try:
-                    # Extract solution data from card
-                    name_elem = card.find(['h2', 'h3', 'h4']) or card.find(class_=lambda x: x and 'title' in x.lower())
-                    desc_elem = card.find('p') or card.find(class_=lambda x: x and 'desc' in x.lower())
-                    link_elem = card.find('a')
-                    
-                    if name_elem:
-                        solution = {
-                            "solution_name": name_elem.get_text(strip=True),
-                            "partner_name": "Partner",  # Extract from page if available
-                            "description": desc_elem.get_text(strip=True) if desc_elem else "",
-                            "industries": [],  # Extract from tags/labels if available
-                            "technologies": [],  # Extract from tags/labels if available
-                            "solution_url": link_elem.get('href', '') if link_elem else "",
-                            "full_content": card.get_text(strip=True)
-                        }
-                        solutions.append(solution)
-                        
-                except Exception as e:
-                    logger.warning(f"Error parsing solution card: {e}")
-                    continue
-                    
-        except ImportError:
-            logger.error("BeautifulSoup not available. Install with: pip install beautifulsoup4")
-        except Exception as e:
-            logger.error(f"Error scraping HTML: {e}")
-        
-        return solutions
+        return {
+            "solution_name": ps_data.get('solutionName', 'Unknown Solution'),
+            "partner_name": ps_data.get('orgName', 'Unknown Partner'),
+            "description": ps_data.get('solutionDescription', ''),
+            "industries": [industry, sub_industry],
+            "technologies": technologies,
+            "solution_url": f"{self.base_url}/solution/{ps_data.get('partnerSolutionSlug', '')}",
+            "full_content": ps_data.get('solutionDescription', ''),
+            "logo_url": ps_data.get('logoFileLink', ''),
+            "partner_solution_id": ps_data.get('partnerSolutionId', '')
+        }
     
     def _get_sample_solutions(self) -> List[Dict[str, Any]]:
         """Return sample data for testing when scraping fails"""
