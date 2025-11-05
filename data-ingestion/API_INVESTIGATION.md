@@ -126,20 +126,52 @@ GET https://mssoldir-app-prd.azurewebsites.net/api/Technology
 ```
 **Status:** Exists but needs further investigation
 
-## Next Steps
+## SOLUTION FOUND! ✅
 
-1. **Find Partner Solutions Endpoint** - Need to discover how partner solutions are loaded
-2. **Test Dynamic Page Loading** - May need to inspect network traffic when clicking through the UI
-3. **Check for Sub-Industry/Theme Specific APIs** - Solutions might be loaded per theme/industry
-4. **Investigate Query Parameters** - Check if endpoints accept filters (industryId, themeId, etc.)
+### Working Endpoints
 
-## Potential Solution Endpoints to Test
+#### 1. Menu/Navigation Structure
 ```bash
-# Possible patterns to test:
-curl -s "https://mssoldir-app-prd.azurewebsites.net/api/Solution"
-curl -s "https://mssoldir-app-prd.azurewebsites.net/api/Partner"
-curl -s "https://mssoldir-app-prd.azurewebsites.net/api/Solutions"
-curl -s "https://mssoldir-app-prd.azurewebsites.net/api/Partners"
-curl -s "https://mssoldir-app-prd.azurewebsites.net/api/Industry/{industryId}/Solutions"
-curl -s "https://mssoldir-app-prd.azurewebsites.net/api/Theme/{themeId}/Solutions"
+curl -s "https://mssoldir-app-prd.azurewebsites.net/api/Industry/getMenu"
 ```
+Returns complete industry hierarchy with slugs needed for fetching solutions.
+
+#### 2. Theme Details with Partner Solutions
+```bash
+curl -s "https://mssoldir-app-prd.azurewebsites.net/api/Industry/GetThemeDetalsByViewId?slug={industryThemeSlug}"
+```
+
+**Response Structure:**
+```json
+{
+  "themeSolutionAreas": [
+    {
+      "solutionAreaName": "AI Business Solutions",
+      "partnerSolutions": [
+        {
+          "partnerSolutionTitle": "Solution Name",
+          "companyName": "Partner Company",
+          "solutionDescription": "Description text...",
+          "partnerSolutionUrl": "https://...",
+          "logoUrl": "https://...",
+          "partnerId": "uuid",
+          "partnerSolutionId": "uuid"
+        }
+      ]
+    }
+  ],
+  "spotLightPartnerSolutions": [...]
+}
+```
+
+### Working Flow
+
+1. **Get Menu** → Extract all `industryThemeSlug` values
+2. **For each slug** → Call `GetThemeDetalsByViewId?slug={slug}`
+3. **Parse** → Extract solutions from `themeSolutionAreas[].partnerSolutions[]`
+
+### Test Results (November 5, 2025)
+- ✅ Successfully scraped 12 solutions from 2 industries
+- ✅ Generated 32 document chunks with embeddings
+- ✅ Indexed into Azure AI Search
+- ⚠️ Solution names showing as "Unknown Solution" - field name verification needed

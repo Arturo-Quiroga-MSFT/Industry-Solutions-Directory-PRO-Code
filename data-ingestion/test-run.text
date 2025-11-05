@@ -1,0 +1,227 @@
+(base) arturoquiroga@ARTUROs-MBP Industry-Solutions-Directory-PRO-Code % source /Users/arturoqu
+iroga/Industry-Solutions-Directory-PRO-Code/.venv/bin/activate
+(.venv) (base) arturoquiroga@ARTUROs-MBP Industry-Solutions-Directory-PRO-Code % python data-ingestion/ingest_data_test.py
+INFO:azure.identity._credentials.environment:No environment configuration found.
+INFO:azure.identity._credentials.managed_identity:ManagedIdentityCredential will use IMDS
+INFO:__main__:Creating index: partner-solutions-index
+INFO:azure.core.pipeline.policies.http_logging_policy:Request URL: 'http://169.254.169.254/metadata/identity/oauth2/token?api-version=REDACTED&resource=REDACTED'
+Request method: 'GET'
+Request headers:
+    'User-Agent': 'azsdk-python-identity/1.15.0 Python/3.13.9 (macOS-15.7.1-arm64-arm-64bit-Mach-O)'
+No body was attached to the request
+INFO:azure.identity._credentials.chained:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:azure.core.pipeline.policies.http_logging_policy:Request URL: 'https://indsolse-dev-srch-okumlm.search.windows.net/indexes('partner-solutions-index')?api-version=REDACTED'
+Request method: 'DELETE'
+Request headers:
+    'Accept': 'application/json'
+    'x-ms-client-request-id': '30e179c8-ba59-11f0-8e57-c2736d4d253a'
+    'User-Agent': 'azsdk-python-search-documents/11.4.0 Python/3.13.9 (macOS-15.7.1-arm64-arm-64bit-Mach-O)'
+    'Authorization': 'REDACTED'
+No body was attached to the request
+INFO:azure.core.pipeline.policies.http_logging_policy:Response status: 204
+Response headers:
+    'Strict-Transport-Security': 'REDACTED'
+    'Preference-Applied': 'REDACTED'
+    'request-id': '30e179c8-ba59-11f0-8e57-c2736d4d253a'
+    'elapsed-time': 'REDACTED'
+    'Date': 'Wed, 05 Nov 2025 15:07:50 GMT'
+INFO:__main__:Deleted existing index: partner-solutions-index
+INFO:azure.core.pipeline.policies.http_logging_policy:Request URL: 'https://indsolse-dev-srch-okumlm.search.windows.net/indexes('partner-solutions-index')?api-version=REDACTED'
+Request method: 'PUT'
+Request headers:
+    'Content-Type': 'application/json'
+    'Content-Length': '1682'
+    'Prefer': 'REDACTED'
+    'Accept': 'application/json'
+    'x-ms-client-request-id': '323e159c-ba59-11f0-8e57-c2736d4d253a'
+    'User-Agent': 'azsdk-python-search-documents/11.4.0 Python/3.13.9 (macOS-15.7.1-arm64-arm-64bit-Mach-O)'
+    'Authorization': 'REDACTED'
+A body is sent with the request
+INFO:azure.core.pipeline.policies.http_logging_policy:Response status: 201
+Response headers:
+    'Transfer-Encoding': 'chunked'
+    'Content-Type': 'application/json; odata.metadata=minimal; odata.streaming=true; charset=utf-8'
+    'ETag': '"0x8DE1C7D16E46B3E"'
+    'Location': 'REDACTED'
+    'Strict-Transport-Security': 'REDACTED'
+    'Preference-Applied': 'REDACTED'
+    'OData-Version': 'REDACTED'
+    'request-id': '323e159c-ba59-11f0-8e57-c2736d4d253a'
+    'elapsed-time': 'REDACTED'
+    'Date': 'Wed, 05 Nov 2025 15:07:50 GMT'
+INFO:__main__:Index 'partner-solutions-index' created successfully
+INFO:__main__:Starting API data collection (TEST MODE - LIMITED DATA)...
+INFO:__main__:Fetching menu from: https://mssoldir-app-prd.azurewebsites.net/api/Industry/getMenu
+INFO:__main__:Found 10 total industries
+INFO:__main__:
+Processing industry: Defense Industrial Base
+INFO:__main__:  Found 1 sub-industries
+INFO:__main__:  Fetching solutions for: Sharpen Your Competitive Edge with AI-Infused Cloud Tech
+INFO:__main__:    Retrieved 0 solutions (limited from 0 total)
+INFO:__main__:
+Processing industry: Education
+INFO:__main__:  Found 4 sub-industries
+INFO:__main__:  Fetching solutions for: Institutional Innovation
+INFO:__main__:    Retrieved 5 solutions (limited from 51 total)
+INFO:__main__:  Fetching solutions for: Simplify and Secure IT
+INFO:__main__:    Retrieved 5 solutions (limited from 11 total)
+INFO:__main__:  Fetching solutions for: Student Success
+INFO:__main__:    Retrieved 2 solutions (limited from 2 total)
+INFO:__main__:
+Total solutions collected: 12
+INFO:__main__:Indexing 12 solutions...
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 1/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 2/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 3/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 4/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 5/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 1/1)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 1/1)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 1/3)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 2/3)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 3/3)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 1/2)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 2/2)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 1/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 2/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 3/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 4/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 5/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 1/1)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 1/1)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 1/2)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 2/2)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 1/1)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 1/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 2/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 3/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 4/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 5/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 1/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 2/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 3/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 4/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:__main__:Generating embedding for: Unknown Solution (chunk 5/5)
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:httpx:HTTP Request: POST https://indsolse-dev-ai-okumlm.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-02-01 "HTTP/1.1 200 OK"
+INFO:azure.identity._internal.decorators:AzureCliCredential.get_token succeeded
+INFO:azure.identity._credentials.default:DefaultAzureCredential acquired a token from AzureCliCredential
+INFO:azure.core.pipeline.policies.http_logging_policy:Request URL: 'https://indsolse-dev-srch-okumlm.search.windows.net/indexes('partner-solutions-index')/docs/search.index?api-version=REDACTED'
+Request method: 'POST'
+Request headers:
+    'Content-Type': 'application/json'
+    'Content-Length': '2343987'
+    'Accept': 'application/json'
+    'x-ms-client-request-id': '44ad38a2-ba59-11f0-8e57-c2736d4d253a'
+    'User-Agent': 'azsdk-python-search-documents/11.4.0 Python/3.13.9 (macOS-15.7.1-arm64-arm-64bit-Mach-O)'
+    'Authorization': 'REDACTED'
+A body is sent with the request
+INFO:azure.core.pipeline.policies.http_logging_policy:Response status: 200
+Response headers:
+    'Transfer-Encoding': 'chunked'
+    'Content-Type': 'application/json; odata.metadata=minimal; odata.streaming=true; charset=utf-8'
+    'Content-Encoding': 'REDACTED'
+    'Vary': 'REDACTED'
+    'Strict-Transport-Security': 'REDACTED'
+    'Preference-Applied': 'REDACTED'
+    'OData-Version': 'REDACTED'
+    'request-id': '44ad38a2-ba59-11f0-8e57-c2736d4d253a'
+    'elapsed-time': 'REDACTED'
+    'Date': 'Wed, 05 Nov 2025 15:08:23 GMT'
+INFO:__main__:Uploaded batch 1, 32 documents
+INFO:__main__:Successfully indexed 32 document chunks
+INFO:__main__:Data ingestion pipeline completed successfully!
