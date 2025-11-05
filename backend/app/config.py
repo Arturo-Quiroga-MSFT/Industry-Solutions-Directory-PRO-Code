@@ -16,22 +16,21 @@ class Settings(BaseSettings):
     
     # Azure OpenAI
     azure_openai_endpoint: str
-    azure_openai_api_key: str
-    azure_openai_api_version: str = "2024-06-01"
-    azure_openai_chat_deployment: str = "gpt-4-1-mini"  # or gpt-4.1, gpt-4o, etc.
+    azure_openai_api_version: str = "2024-02-01"
+    azure_openai_chat_deployment: str = "gpt-4.1-mini"
     azure_openai_embedding_deployment: str = "text-embedding-3-large"
-    azure_openai_embedding_dimensions: int = 1536
     
     # Azure AI Search
     azure_search_endpoint: str
-    azure_search_api_key: str
     azure_search_index_name: str = "partner-solutions-index"
     
     # Azure Cosmos DB
     azure_cosmos_endpoint: str
-    azure_cosmos_key: str
     azure_cosmos_database_name: str = "industry-solutions-db"
     azure_cosmos_container_name: str = "chat-sessions"
+    
+    # Application Insights (optional)
+    applicationinsights_connection_string: Optional[str] = None
     
     # Chat Configuration
     max_history_messages: int = 10
@@ -57,6 +56,7 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
+        extra = "ignore"  # Allow extra fields in .env without validation errors
 
 
 # Global settings instance

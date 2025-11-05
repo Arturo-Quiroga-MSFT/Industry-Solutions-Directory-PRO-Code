@@ -73,17 +73,27 @@ Industry-Solutions-Directory-PRO-Code/
 ## Prerequisites
 
 - **Azure Subscription** with the following services:
-  - Azure OpenAI Service
-  - Azure AI Search (Standard tier or higher)
-  - Azure Cosmos DB for NoSQL
+  - Azure OpenAI Service (with text-embedding-3-large and gpt-4.1-mini deployments)
+  - Azure AI Search (Basic tier or higher)
+  - Azure Cosmos DB for NoSQL (Serverless recommended)
   - Azure App Service or Container Apps
-  - Azure Key Vault (recommended)
+  - **Azure CLI authentication** configured (passwordless auth)
 
 - **Development Tools**:
   - Python 3.11+
   - Node.js 18+ (for frontend widget)
-  - Azure CLI
+  - Azure CLI (logged in with `az login`)
   - Git
+
+## Authentication
+
+This solution uses **Azure CLI authentication (DefaultAzureCredential)** throughout - no API keys required. Ensure you:
+
+1. Run `az login` before local development
+2. Grant appropriate RBAC roles to your identity:
+   - **Azure OpenAI**: `Cognitive Services OpenAI User`
+   - **Azure AI Search**: `Search Index Data Contributor`, `Search Service Contributor`
+   - **Azure Cosmos DB**: `Cosmos DB Built-in Data Contributor`
 
 ## Quick Start
 
@@ -124,56 +134,98 @@ cd backend
 cp .env.example .env
 ```
 
-Edit `.env` and add your Azure service endpoints and keys:
+Edit `.env` and configure Azure service endpoints (no API keys needed):
 
 ```env
-# Azure OpenAI
+# Azure OpenAI Configuration
 AZURE_OPENAI_ENDPOINT=https://your-openai.openai.azure.com/
-AZURE_OPENAI_API_KEY=your-key-here
+AZURE_OPENAI_API_VERSION=2024-02-01
 AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4-1-mini
 AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-3-large
+# Note: Using Azure CLI authentication (no API key needed)
 
-# Azure AI Search
+# Azure AI Search Configuration
 AZURE_SEARCH_ENDPOINT=https://your-search.search.windows.net
-AZURE_SEARCH_API_KEY=your-key-here
 AZURE_SEARCH_INDEX_NAME=partner-solutions-index
+# Note: Using Azure CLI authentication (no API key needed)
 
-# Azure Cosmos DB
+# Azure Cosmos DB Configuration
 AZURE_COSMOS_ENDPOINT=https://your-cosmos.documents.azure.com:443/
-AZURE_COSMOS_KEY=your-key-here
 AZURE_COSMOS_DATABASE_NAME=industry-solutions-db
 AZURE_COSMOS_CONTAINER_NAME=chat-sessions
+# Note: Using Azure CLI authentication (no key needed)
+
+# Chat Configuration
+MAX_HISTORY_MESSAGES=10
+MAX_CONTEXT_TOKENS=4000
+TEMPERATURE=0.7
+TOP_P=0.95
+
+# Search Configuration
+SEARCH_TOP_K=5
+VECTOR_SEARCH_THRESHOLD=0.7
 ```
+
+**Important**: This solution uses passwordless authentication via Azure CLI. Make sure you're logged in with `az login` and have the required RBAC permissions.
 
 ### 4. Run Data Ingestion
 
-Index partner solution data into Azure AI Search:
+Index partner solution data from the Industry Solutions Directory API into Azure AI Search:
 
 ```bash
 cd data-ingestion
 pip install -r requirements.txt
+
+# Test with limited data first (2 industries, 5 solutions per theme)
+python ingest_data_test.py
+
+# Verify the indexed data
+python verify_index.py
+
+# Full ingestion (all 10 industries, ~20-30 minutes)
 python ingest_data.py
 ```
 
-> **Note**: The current implementation includes sample data. You'll need to implement the actual web scraping logic based on the website's structure.
+**Data Source**: The ingestion scripts pull real data from `https://mssoldir-app-prd.azurewebsites.net/api/Industry/` endpoints:
+- `getMenu` - Lists all industries and themes
+- `GetThemeDetalsByViewId?slug={themeSlug}` - Gets partner solutions for each theme
+
+**Vector Embeddings**: Uses `text-embedding-3-large` model with **3072 dimensions** (not 1536).
+
+See `data-ingestion/API_INVESTIGATION.md` for details on the data source discovery process.
 
 ### 5. Run the Backend API Locally
 
 ```bash
 cd backend
 pip install -r requirements.txt
-python -m app.main
+
+# Make sure you're logged in with Azure CLI
+az login
+
+# Start the FastAPI server
+uvicorn app.main:app --reload --port 8000
 ```
 
 The API will be available at `http://localhost:8000`
 
 API Documentation: `http://localhost:8000/docs`
 
+**Troubleshooting**:
+- If you get Cosmos DB firewall errors, add your public IP to the firewall:
+  ```bash
+  az cosmosdb update --name your-cosmos-name --resource-group your-rg --ip-range-filter YOUR_PUBLIC_IP
+  ```
+- Ensure all RBAC permissions are granted (see Prerequisites)
+
 ### 6. Test the API
 
 ```bash
 # Health check
 curl http://localhost:8000/api/health
+
+# Get available facets (industries, technologies)
+curl http://localhost:8000/api/facets
 
 # Chat request
 curl -X POST http://localhost:8000/api/chat \
@@ -185,6 +237,8 @@ curl -X POST http://localhost:8000/api/chat \
     }
   }'
 ```
+
+**Expected Response**: The chat endpoint will return AI-generated recommendations with citations linking to actual partner solutions.
 
 ### 7. Build and Deploy Frontend Widget
 
@@ -352,14 +406,36 @@ pylint app/
 
 ### Common Issues
 
+**Issue**: Pydantic validation error for `applicationinsights_connection_string`
+- **Solution**: The config now includes `extra = "ignore"` to allow optional fields in `.env`
+
+**Issue**: Vector dimension mismatch (1536 vs 3072)
+- **Solution**: The `text-embedding-3-large` model produces 3072-dimension vectors. Index and ingestion scripts are configured correctly.
+
+**Issue**: Cosmos DB firewall blocking local development
+- **Solution**: Add your public IP to the firewall allow list:
+  ```bash
+  # Get your public IP
+  curl ifconfig.me
+  
+  # Add to Cosmos DB firewall
+  az cosmosdb update \
+    --name your-cosmos-name \
+    --resource-group your-rg \
+    --ip-range-filter YOUR_PUBLIC_IP
+  ```
+
+**Issue**: Azure authentication errors
+- **Solution**: Ensure you're logged in with `az login` and have the required RBAC roles assigned
+
 **Issue**: Search returns no results
-- **Solution**: Verify the index exists and contains data. Run data ingestion script.
+- **Solution**: Verify the index exists and contains data. Run `python data-ingestion/verify_index.py` to check.
 
 **Issue**: OpenAI API rate limit errors
 - **Solution**: Implement retry logic with exponential backoff (included in code)
 
 **Issue**: CORS errors from frontend
-- **Solution**: Add your website domain to `cors_origins` in `config.py`
+- **Solution**: Add your website domain to `cors_origins` in `config.py` or `.env`
 
 ### Debug Mode
 

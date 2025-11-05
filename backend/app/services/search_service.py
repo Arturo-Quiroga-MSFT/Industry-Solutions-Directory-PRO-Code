@@ -5,9 +5,10 @@ Implements RAG pattern for retrieving relevant partner solutions
 import logging
 from typing import List, Dict, Any, Optional
 from azure.search.documents import SearchClient
-from azure.search.documents.models import VectorizableTextQuery, VectorizedQuery
-from azure.core.credentials import AzureKeyCredential
+from azure.search.documents.models import VectorizedQuery
+from azure.identity import DefaultAzureCredential
 from azure.core.exceptions import AzureError
+from openai import AzureOpenAI
 
 from app.config import settings
 from app.models.schemas import SearchFilter, Citation
@@ -21,11 +22,22 @@ class SearchService:
     def __init__(self):
         """Initialize the search client"""
         try:
+            # Use Azure CLI authentication
+            credential = DefaultAzureCredential()
+            
             self.client = SearchClient(
                 endpoint=settings.azure_search_endpoint,
                 index_name=settings.azure_search_index_name,
-                credential=AzureKeyCredential(settings.azure_search_api_key)
+                credential=credential
             )
+            
+            # Initialize OpenAI client for generating embeddings
+            self.openai_client = AzureOpenAI(
+                azure_endpoint=settings.azure_openai_endpoint,
+                api_version=settings.azure_openai_api_version,
+                azure_ad_token_provider=lambda: credential.get_token("https://cognitiveservices.azure.com/.default").token
+            )
+            
             logger.info(f"Search client initialized for index: {settings.azure_search_index_name}")
         except Exception as e:
             logger.error(f"Failed to initialize search client: {e}")
@@ -54,10 +66,12 @@ class SearchService:
             # Build filter expression
             filter_expr = self._build_filter_expression(filters)
             
-            # Create vector query with automatic text-to-vector conversion
-            # Azure AI Search will use the configured vectorizer to convert text to vector
-            vector_query = VectorizableTextQuery(
-                text=query,
+            # Generate embedding for the query
+            query_embedding = self._generate_embedding(query)
+            
+            # Create vector query with the embedding
+            vector_query = VectorizedQuery(
+                vector=query_embedding,
                 k_nearest_neighbors=top_k * 2,  # Request more for filtering
                 fields="content_vector"
             )
@@ -107,6 +121,14 @@ class SearchService:
             logger.error(f"Unexpected error during search: {e}")
             raise
     
+    def _generate_embedding(self, text: str) -> List[float]:
+        """Generate embedding for text using Azure OpenAI"""
+        response = self.openai_client.embeddings.create(
+            input=text,
+            model=settings.azure_openai_embedding_deployment
+        )
+        return response.data[0].embedding
+    
     async def semantic_hybrid_search(
         self,
         query: str,
@@ -114,8 +136,8 @@ class SearchService:
         top_k: int = None
     ) -> List[Citation]:
         """
-        Perform semantic hybrid search with semantic ranking
-        Provides better relevance through L2 semantic re-ranking
+        Perform semantic hybrid search with vector search
+        (Note: Semantic reranking requires additional Azure AI Search configuration)
         
         Args:
             query: User's search query
@@ -130,13 +152,17 @@ class SearchService:
         try:
             filter_expr = self._build_filter_expression(filters)
             
-            vector_query = VectorizableTextQuery(
-                text=query,
-                k_nearest_neighbors=50,  # Request more for semantic re-ranking
+            # Generate embedding for the query
+            query_embedding = self._generate_embedding(query)
+            
+            vector_query = VectorizedQuery(
+                vector=query_embedding,
+                k_nearest_neighbors=50,  # Request more for better results
                 fields="content_vector"
             )
             
-            # Execute semantic hybrid search
+            # Execute hybrid search (vector + keyword)
+            # Note: Semantic ranking config would require index updates
             results = self.client.search(
                 search_text=query,
                 vector_queries=[vector_query],
@@ -151,8 +177,6 @@ class SearchService:
                     "solution_url",
                     "chunk_text"
                 ],
-                query_type="semantic",
-                semantic_configuration_name="partner-solutions-semantic-config",  # Configured in index
                 top=top_k,
                 include_total_count=True
             )
@@ -160,8 +184,8 @@ class SearchService:
             citations = []
             for result in results:
                 try:
-                    # Use reranker score if available, otherwise use search score
-                    relevance_score = result.get("@search.reranker_score", result.get("@search.score", 0.0))
+                    # Use search score
+                    relevance_score = result.get("@search.score", 0.0)
                     
                     citation = Citation(
                         solution_name=result.get("solution_name", "Unknown"),
@@ -172,7 +196,7 @@ class SearchService:
                     )
                     citations.append(citation)
                 except Exception as e:
-                    logger.warning(f"Error parsing semantic search result: {e}")
+                    logger.warning(f"Error parsing search result: {e}")
                     continue
             
             logger.info(f"Semantic search returned {len(citations)} results")

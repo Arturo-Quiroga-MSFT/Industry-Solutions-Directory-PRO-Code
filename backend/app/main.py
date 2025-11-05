@@ -45,8 +45,8 @@ async def lifespan(app: FastAPI):
     try:
         search_service = SearchService()
         openai_service = OpenAIService()
-        cosmos_service = CosmosDBService()
-        logger.info("All services initialized successfully")
+        # cosmos_service = CosmosDBService()  # Temporarily disabled while Cosmos DB updates
+        logger.info("Search and OpenAI services initialized successfully (Cosmos DB disabled)")
     except Exception as e:
         logger.error(f"Failed to initialize services: {e}")
         raise
@@ -92,15 +92,15 @@ async def health_check():
         # Check all services
         search_healthy = await search_service.health_check()
         openai_healthy = await openai_service.health_check()
-        cosmos_healthy = await cosmos_service.health_check()
+        # cosmos_healthy = await cosmos_service.health_check()  # Temporarily disabled
         
         dependencies = {
             "azure_ai_search": "healthy" if search_healthy else "unhealthy",
             "azure_openai": "healthy" if openai_healthy else "unhealthy",
-            "azure_cosmos_db": "healthy" if cosmos_healthy else "unhealthy"
+            "azure_cosmos_db": "disabled"  # Temporarily disabled while updating
         }
         
-        overall_healthy = all([search_healthy, openai_healthy, cosmos_healthy])
+        overall_healthy = all([search_healthy, openai_healthy])  # Don't require Cosmos for now
         
         return HealthResponse(
             status="healthy" if overall_healthy else "degraded",

@@ -4,9 +4,8 @@ Implements the LLM interface for RAG pattern
 """
 import logging
 from typing import List, Optional
-from azure.ai.inference import ChatCompletionsClient
-from azure.ai.inference.models import SystemMessage, UserMessage, AssistantMessage
-from azure.core.credentials import AzureKeyCredential
+from openai import AzureOpenAI
+from azure.identity import DefaultAzureCredential
 
 from app.config import settings
 from app.models.schemas import ChatMessage, MessageRole, Citation
@@ -20,9 +19,11 @@ class OpenAIService:
     def __init__(self):
         """Initialize the Azure OpenAI client"""
         try:
-            self.client = ChatCompletionsClient(
-                endpoint=settings.azure_openai_endpoint,
-                credential=AzureKeyCredential(settings.azure_openai_api_key)
+            credential = DefaultAzureCredential()
+            self.client = AzureOpenAI(
+                azure_endpoint=settings.azure_openai_endpoint,
+                api_version=settings.azure_openai_api_version,
+                azure_ad_token_provider=lambda: credential.get_token("https://cognitiveservices.azure.com/.default").token
             )
             self.chat_model = settings.azure_openai_chat_deployment
             logger.info(f"OpenAI client initialized with model: {self.chat_model}")
@@ -52,26 +53,26 @@ class OpenAIService:
             system_prompt = self._build_system_prompt(context)
             
             # Build messages list
-            messages = [SystemMessage(content=system_prompt)]
+            messages = [{"role": "system", "content": system_prompt}]
             
             # Add chat history if available (limit to max_history_messages)
             if chat_history:
                 recent_history = chat_history[-(settings.max_history_messages * 2):]
                 for msg in recent_history:
                     if msg.role == MessageRole.USER:
-                        messages.append(UserMessage(content=msg.content))
+                        messages.append({"role": "user", "content": msg.content})
                     elif msg.role == MessageRole.ASSISTANT:
-                        messages.append(AssistantMessage(content=msg.content))
+                        messages.append({"role": "assistant", "content": msg.content})
             
             # Add current user message
-            messages.append(UserMessage(content=user_message))
+            messages.append({"role": "user", "content": user_message})
             
             # Generate response
-            response = self.client.complete(
+            response = self.client.chat.completions.create(
+                model=self.chat_model,
                 messages=messages,
                 temperature=settings.temperature,
-                top_p=settings.top_p,
-                model=self.chat_model
+                top_p=settings.top_p
             )
             
             generated_text = response.choices[0].message.content

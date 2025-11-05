@@ -7,7 +7,7 @@ import uuid
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from azure.cosmos import CosmosClient, PartitionKey, exceptions
-from azure.core.credentials import AzureKeyCredential
+from azure.identity import DefaultAzureCredential
 
 from app.config import settings
 from app.models.schemas import ChatMessage, MessageRole
@@ -21,9 +21,10 @@ class CosmosDBService:
     def __init__(self):
         """Initialize Cosmos DB client"""
         try:
+            credential = DefaultAzureCredential()
             self.client = CosmosClient(
                 url=settings.azure_cosmos_endpoint,
-                credential=settings.azure_cosmos_key
+                credential=credential
             )
             
             # Get or create database
