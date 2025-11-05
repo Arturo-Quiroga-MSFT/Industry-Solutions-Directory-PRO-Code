@@ -325,3 +325,132 @@ CITATIONS (5 solutions found):
 ================================================================================
 
 
+
+You: like to be connected with either partner for a detailed consultation or demo                
+
+🔍 Searching for solutions...
+
+================================================================================
+RESPONSE:
+================================================================================
+Great! I can help you take the next step toward connecting with either partner for a detailed consultation or demo.
+
+**Please let me know:**
+- Which solution (or both) are you interested in:  
+  - **Higher Education Blueprint by HSO**  
+  - **greymatter Student Lifecycle CRM by Frequency Foundry**
+- Any specific topics or requirements you’d like the partners to address (e.g., integration with your current SIS, focus on retention, alumni engagement, etc.).
+
+**Next Steps:**
+1. I’ll provide direct contact links and instructions for requesting a demo or consultation for your chosen solution(s).
+2. You can also visit the solution pages and use the “Contact Partner” or “Request Demo” options.
+
+**Solution Contact Links:**
+
+- [Contact HSO for Higher Education Blueprint](https://solutions.microsoftindustryinsights.com/solution/higher-education-blueprint)
+- [Contact Frequency Foundry for greymatter Student Lifecycle CRM](https://solutions.microsoftindustryinsights.com/solution/greymatter-student-lifecycle-crm-by-frequency-foundry)
+
+Would you like to move forward with one or both solutions? If you share any additional needs or context, I can help ensure your inquiry is tailored to your institution’s goals.
+
+================================================================================
+CITATIONS (5 solutions found):
+================================================================================
+
+1. Seeq Industrial Analytics Platform Suite (Seeq-20231215010242)
+   Partner: Seeq
+   Relevance Score: 0.0250
+   Description: &nbsp;&nbsp;To learn more about how to accelerate your digital journey and to schedule a demo, visit Seeq.com.&nbsp;.
+   URL: https://solutions.microsoftindustryinsights.com/solution/seeq-industrial-analytics-platform-suite-seeq-20231215010242
+
+2. MazikCare Copilot
+   Partner: Quisitive
+   Relevance Score: 0.0240
+   Description: &#10;Experience AI-powered care coordination like never before with MazikCare&#10; Copilot.&#10;Bridge care gaps, enhance teamwork, reduce burnout and elevate the entire patient journey with our cutti...
+   URL: https://solutions.microsoftindustryinsights.com/solution/mazikcare-copilot
+
+3. Cognizant Virtual Healthcare Solution for Remote Patient Monitoring
+   Partner: Cognizant
+   Relevance Score: 0.0233
+   Description: This facilitated workshop will help you identify the most impactful opportunities to address and design the bespoke future state blueprint, then define your technology implementation roadmap based on ...
+   URL: https://solutions.microsoftindustryinsights.com/solution/cognizant-virtual-healthcare-solution-for-remote-patient-monitoring
+
+4. Connected Platform Health & Life Sciences
+   Partner: Insight
+   Relevance Score: 0.0204
+   Description: Insight Connected Platform leverages Microsoft Azure to provide a scalable foundation for smart healthcare spaces. As a secure, centralized hub, it ingests and triggers events from any data source. Le...
+   URL: https://solutions.microsoftindustryinsights.com/solution/connected-platform-health--life-sciences
+
+5. Connected Platform Manufacturing: 12 Wk Imp (Insight-20240222114817)
+   Partner: Insight
+   Relevance Score: 0.0203
+   Description: The Insight Connected Platform leverages Microsoft Azure to improve safety, ensure security, and detect manufacturing anomalies. The secure platform is equipped with best-in-class IoT sensors to help ...
+   URL: https://solutions.microsoftindustryinsights.com/solution/connected-platform-manufacturing-12-wk-imp-insight-20240222114817
+
+================================================================================
+
+You: I am interested in demos for both solutions
+
+🔍 Searching for solutions...
+
+================================================================================
+RESPONSE:
+================================================================================
+Thank you for confirming your interest in demos for both solutions: **Higher Education Blueprint by HSO** and **greymatter Student Lifecycle CRM by Frequency Foundry**. Here’s how you can request a detailed consultation or demo for each:
+
+---
+
+### 1. **Higher Education Blueprint by HSO**
+- **Contact/Demo Request:**  
+  [Visit the solution page here](https://solutions.microsoftindustryinsights.com/solution/higher-education-blueprint)  
+  On the solution page, look for options such as “Contact Partner,” “Request Demo,” or a contact form. Fill in your details and mention your interest in a demo and any specific topics or requirements (e.g., SIS integration, automation, alumni engagement).
+
+---
+
+### 2. **greymatter Student Lifecycle CRM by Frequency Foundry**
+- **Contact/Demo Request:**  
+  [Visit the solution page here](https://solutions.microsoftindustryinsights.com/solution/greymatter-student-lifecycle-crm-by-frequency-foundry)  
+  Use the “Contact Partner” or “Request Demo” button, and provide your information. It’s helpful to share your key priorities or questions so Frequency Foundry can tailor the demo to your needs.
+
+---
+
+### **Tips for Your Inquiry**
+- When filling out the contact forms, specify that you’re seeking a live demo and mention any particular pain points or goals (e.g., student retention, system integrations, automation needs).
+- If you’d like, I can help you draft a sample inquiry message to send to both partners.
+
+**Would you like a template for your demo request, or do you have any specific requirements you’d like me to include?** Let me know how I can further assist you in connecting with the partners!
+
+================================================================================
+CITATIONS (5 solutions found):
+================================================================================
+
+1. Hitachi Solutions Engage for Health Plan and Provider Experiences
+   Partner: Hitachi Solutions America, Ltd.
+   Relevance Score: 0.0255
+   Description: We have the industry experience and the technical expertise to deliver the solutions that health payors and providers need to overcome obstacles, enhance efficiency, improve outcomes, drive business v...
+   URL: https://solutions.microsoftindustryinsights.com/solution/hitachi-solutions-engage-for-health-plan-and-provider-experiences
+
+2. Hitachi Solutions Engage Solutions for Financial Services & Insurance
+   Partner: Hitachi Solutions America, Ltd.
+   Relevance Score: 0.0253
+   Description: Hitachi Solutions leverages our deep industry and technical capabilities to deliver industry-tailored solutions for our financial services and insurance customers that align with their unique business...
+   URL: https://solutions.microsoftindustryinsights.com/solution/hitachi-solutions-engage-solutions-for-financial-services--insurance
+
+3. Azure VMware Solution Implementation: Typically, 4-Weeks (Presidio-20231206085921)
+   Partner: Presidio
+   Relevance Score: 0.0241
+   Description: Presidio is meeting Industry 4.0 head on, with a suite of solutions that improve logistics, productivity, speed-to-market, operational efficiency, and data insights. The factory of the future requires...
+   URL: https://solutions.microsoftindustryinsights.com/solution/azure-vmware-solution-implementation-typically-4-weeks-presidio-20231206085921
+
+4. Insight Lens™ Fast Start: 3 week Proof of Concept (Insight-20231130090610)
+   Partner: Insight
+   Relevance Score: 0.0232
+   Description: Insight has taken its decades of experience building award-winning Azure cloud, data and app modernization solutions and assembled our Insight Lens Accelerators.&nbsp;1. LENS for Modern Datawarehouse:...
+   URL: https://solutions.microsoftindustryinsights.com/solution/insight-lens-fast-start-3-week-proof-of-concept-insight-20231130090610
+
+5. Hitachi Solutions Proactive Security: Cyber Threat Defense 2-Week POC
+   Partner: Hitachi Solutions America, Ltd.
+   Relevance Score: 0.0227
+   Description: Hitachi Solutions leverages our deep industry and technical capabilities to formulate customized action plans for our financial services and insurance customers that align with their unique security o...
+   URL: https://solutions.microsoftindustryinsights.com/solution/hitachi-solutions-proactive-security-cyber-threat-defense-2-week-poc
+
+================================================================================
