@@ -99,11 +99,15 @@ class SearchService:
             citations = []
             for result in results:
                 try:
+                    solution_name = result.get("solution_name", "Unknown")
+                    # Create search URL instead of direct link due to website redirect issues
+                    search_url = f"https://solutions.microsoftindustryinsights.com/?search={solution_name.replace(' ', '%20')}"
+                    
                     citation = Citation(
-                        solution_name=result.get("solution_name", "Unknown"),
+                        solution_name=solution_name,
                         partner_name=result.get("partner_name", "Unknown"),
                         description=result.get("chunk_text", result.get("description", "")),
-                        url=result.get("solution_url", ""),
+                        url=search_url,
                         relevance_score=result.get("@search.score", 0.0)
                     )
                     citations.append(citation)
@@ -184,14 +188,17 @@ class SearchService:
             citations = []
             for result in results:
                 try:
+                    solution_name = result.get("solution_name", "Unknown")
                     # Use search score
                     relevance_score = result.get("@search.score", 0.0)
+                    # Create search URL instead of direct link due to website redirect issues
+                    search_url = f"https://solutions.microsoftindustryinsights.com/?search={solution_name.replace(' ', '%20')}"
                     
                     citation = Citation(
-                        solution_name=result.get("solution_name", "Unknown"),
+                        solution_name=solution_name,
                         partner_name=result.get("partner_name", "Unknown"),
                         description=result.get("chunk_text", result.get("description", "")),
-                        url=result.get("solution_url", ""),
+                        url=search_url,
                         relevance_score=relevance_score
                     )
                     citations.append(citation)

@@ -200,7 +200,8 @@ def display_citation(citation: dict, index: int):
         
         url = citation.get('url', '')
         if url:
-            st.markdown(f"[🔗 View Solution Details]({url})")
+            st.markdown(f"[🔗 Search for this solution on Microsoft Solutions Directory]({url})")
+            st.caption("💡 Tip: Click the link to search, then select the solution from the results to view full details.")
 
 
 def display_message(message: dict, is_user: bool = False):
