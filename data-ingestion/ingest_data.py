@@ -236,7 +236,7 @@ class DataIngestionPipeline:
             "description": ps_data.get('solutionDescription', ''),
             "industries": [industry, sub_industry],
             "technologies": technologies,
-            "solution_url": f"{self.base_url}/solution/{ps_data.get('partnerSolutionSlug', '')}",
+            "solution_url": f"{self.base_url}/solutiondetails/{ps_data.get('partnerSolutionSlug', '')}",
             "full_content": ps_data.get('solutionDescription', ''),
             "logo_url": ps_data.get('logoFileLink', ''),
             "partner_solution_id": ps_data.get('partnerSolutionId', '')

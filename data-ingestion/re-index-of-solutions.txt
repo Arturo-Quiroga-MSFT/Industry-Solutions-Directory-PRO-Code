@@ -1,0 +1,86 @@
+INFO:__main__:Index 'partner-solutions-index' created successfully
+INFO:__main__:Starting web scraping from Industry Solutions Directory API...
+INFO:__main__:Fetching industry menu...
+INFO:__main__:Found 10 industries in menu
+INFO:__main__:Processing industry: Defense Industrial Base
+INFO:__main__:  Fetching solutions for: Sharpen Your Competitive Edge with AI-Infused Cloud Tech
+INFO:__main__:    Found 0 solutions
+INFO:__main__:Processing industry: Education
+INFO:__main__:  Fetching solutions for: Institutional Innovation
+INFO:__main__:    Found 54 solutions
+INFO:__main__:  Fetching solutions for: Simplify and Secure IT
+INFO:__main__:    Found 14 solutions
+INFO:__main__:  Fetching solutions for: Student Success
+INFO:__main__:    Found 2 solutions
+INFO:__main__:Processing industry: Energy & Resources
+INFO:__main__:  Fetching solutions for: Advance Your Net-Zero Journey
+INFO:__main__:    Found 6 solutions
+INFO:__main__:  Fetching solutions for: Empower an AI-First Energy Workforce
+INFO:__main__:    Found 6 solutions
+INFO:__main__:  Fetching solutions for: Grow Sustainable, AI-Powered Businesses
+INFO:__main__:    Found 10 solutions
+INFO:__main__:  Fetching solutions for: Operate for a Secure and Efficient Energy Future
+INFO:__main__:    Found 51 solutions
+INFO:__main__:Processing industry: Financial Services
+INFO:__main__:  Fetching solutions for: Empowering Employees and Agents
+INFO:__main__:    Found 3 solutions
+INFO:__main__:  Fetching solutions for: Managing Risk and Compliance
+INFO:__main__:    Found 83 solutions
+INFO:__main__:  Fetching solutions for: Modernize Core Systems, Payments and Data Platforms
+INFO:__main__:    Found 16 solutions
+INFO:__main__:  Fetching solutions for: Transform the Customer Experience
+INFO:__main__:    Found 57 solutions
+INFO:__main__:Processing industry: Healthcare & Life Sciences
+INFO:__main__:  Fetching solutions for: Electronic Health Records
+INFO:__main__:    Found 9 solutions
+INFO:__main__:  Fetching solutions for: Empower the Healthcare Workforce
+INFO:__main__:    Found 34 solutions
+INFO:__main__:  Fetching solutions for: Enhance Patient and Member Experiences
+INFO:__main__:    Found 38 solutions
+INFO:__main__:  Fetching solutions for: Unlock Value from Clinical and Operational Data
+INFO:__main__:    Found 27 solutions
+INFO:__main__:Processing industry: Manufacturing & Mobility
+INFO:__main__:  Fetching solutions for: Connected Customer Experiences
+INFO:__main__:    Found 2 solutions
+INFO:__main__:  Fetching solutions for: Innovate in Engineering with AI 
+INFO:__main__:    Found 52 solutions
+INFO:__main__:  Fetching solutions for: Intelligent Factories
+INFO:__main__:    Found 37 solutions
+INFO:__main__:  Fetching solutions for: Resilient Supply Chains
+INFO:__main__:    Found 17 solutions
+INFO:__main__:Processing industry: Media & Entertainment
+INFO:__main__:  Fetching solutions for: Empower Content Creators
+INFO:__main__:    Found 0 solutions
+INFO:__main__:  Fetching solutions for: Optimize Operations
+INFO:__main__:    Found 1 solutions
+INFO:__main__:  Fetching solutions for: Personalize Customer Experiences
+INFO:__main__:    Found 0 solutions
+INFO:__main__:  Fetching solutions for: Unlock Monetization
+INFO:__main__:    Found 0 solutions
+INFO:__main__:Processing industry: Retail & Consumer Goods
+INFO:__main__:  Fetching solutions for: Design Next-Gen Products and Optimize Revenue Growth
+INFO:__main__:    Found 41 solutions
+INFO:__main__:  Fetching solutions for: Optimize Merchandising Operations
+INFO:__main__:    Found 75 solutions
+INFO:__main__:  Fetching solutions for: Transform the Shopper Experience and Build Brands People Love
+INFO:__main__:    Found 16 solutions
+INFO:__main__:Processing industry: State & Local Government
+INFO:__main__:  Fetching solutions for: Deliver Personalized Government Experiences
+INFO:__main__:    Found 0 solutions
+INFO:__main__:  Fetching solutions for: Empower the Government Workforce
+INFO:__main__:    Found 4 solutions
+INFO:__main__:  Fetching solutions for: Enable AI-Driven Decision Making
+INFO:__main__:    Found 18 solutions
+INFO:__main__:  Fetching solutions for: Optimize Critical Infrastructure
+INFO:__main__:    Found 22 solutions
+INFO:__main__:  Fetching solutions for: Secure Government Data & Protect Resources
+INFO:__main__:    Found 0 solutions
+INFO:__main__:Processing industry: Telecommunications
+INFO:__main__:  Fetching solutions for: Grow Beyond Connectivity
+INFO:__main__:    Found 0 solutions
+INFO:__main__:  Fetching solutions for: Optimize with Autonomous Networks
+INFO:__main__:    Found 0 solutions
+INFO:__main__:  Fetching solutions for: Secure and Automate Business Operations
+INFO:__main__:    Found 0 solutions
+INFO:__main__:Retrieved 695 total solutions
+INFO:__main__:Indexing 695 solutions...
