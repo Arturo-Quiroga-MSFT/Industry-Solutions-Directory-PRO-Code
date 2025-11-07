@@ -6,6 +6,21 @@ A pro-code solution to add intelligent chat capabilities to the Microsoft Indust
 
 This solution enables natural language search and partner recommendations through a conversational AI interface integrated into the existing Industry Solutions Directory website at `https://solutions.microsoftindustryinsights.com/dashboard`.
 
+## Screenshots
+
+### Enhanced Chat Interface
+
+![Industry Solutions Chat UI](docs/images/chat-ui-screenshot.png)
+
+*Modern, Microsoft-branded chat interface with:*
+- 🎨 Azure blue gradient backgrounds and professional styling
+- 💬 Conversational AI powered by Azure OpenAI
+- 🏢 Microsoft branding with industry-specific icons
+- 🔍 Intelligent search across 50+ industries
+- 📚 Citation cards with solution details and relevance scores
+
+**Live Demo:** [Try it here](https://indsolse-dev-frontend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io)
+
 ### Key Features
 
 - **Natural Language Search**: Users can ask questions in plain English about partner solutions

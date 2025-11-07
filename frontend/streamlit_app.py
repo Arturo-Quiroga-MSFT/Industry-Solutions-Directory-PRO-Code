@@ -18,7 +18,27 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for better styling
+# Industry-specific image URLs from Microsoft
+INDUSTRY_IMAGES = {
+    "Financial Services": "https://www.microsoft.com/en-us/industry/financial-services/media/financial-services-hero.jpg",
+    "Healthcare": "https://www.microsoft.com/en-us/industry/health/media/healthcare-hero.jpg",
+    "Manufacturing": "https://www.microsoft.com/en-us/industry/manufacturing/media/manufacturing-hero.jpg",
+    "Education": "https://www.microsoft.com/en-us/education/media/education-hero.jpg",
+    "Retail": "https://www.microsoft.com/en-us/industry/retail-consumer-goods/media/retail-hero.jpg",
+    "Energy": "https://www.microsoft.com/en-us/industry/energy/media/energy-hero.jpg"
+}
+
+# Industry icons (emojis for better cross-platform support)
+INDUSTRY_ICONS = {
+    "Financial Services": "💰",
+    "Healthcare": "🏥",
+    "Manufacturing": "🏭",
+    "Education": "📚",
+    "Retail": "🛍️",
+    "Energy": "⚡"
+}
+
+# Custom CSS for better styling with Microsoft branding
 st.markdown("""
 <style>
     /* Remove max-width constraint to use full available space */
@@ -26,19 +46,47 @@ st.markdown("""
         max-width: 100%;
         padding-left: 2rem;
         padding-right: 2rem;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     }
+    
+    /* Header styling */
+    .app-header {
+        background: linear-gradient(90deg, #0078d4 0%, #50e6ff 100%);
+        padding: 2rem;
+        border-radius: 0.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        color: white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .app-header h1 {
+        color: white;
+        font-size: 2.5rem;
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .app-header p {
+        color: #f0f0f0;
+        font-size: 1.1rem;
+        margin-top: 0.5rem;
+    }
+    
     .chat-message {
-        padding: 1rem;
+        padding: 1.5rem;
         border-radius: 0.5rem;
         margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .user-message {
-        background-color: #e3f2fd;
-        border-left: 4px solid #2196f3;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-left: 4px solid #4c51bf;
     }
     .assistant-message {
-        background-color: #f5f5f5;
-        border-left: 4px solid #4caf50;
+        background-color: #ffffff;
+        border-left: 4px solid #0078d4;
     }
     .citation-card {
         background-color: #fff;
@@ -46,10 +94,15 @@ st.markdown("""
         border-radius: 0.5rem;
         padding: 1rem;
         margin-bottom: 0.5rem;
+        transition: transform 0.2s;
+    }
+    .citation-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     .citation-title {
         font-weight: bold;
-        color: #1976d2;
+        color: #0078d4;
         font-size: 1.1rem;
     }
     .citation-partner {
@@ -57,12 +110,34 @@ st.markdown("""
         font-size: 0.9rem;
     }
     .relevance-score {
-        background-color: #4caf50;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 0.2rem 0.5rem;
+        padding: 0.3rem 0.7rem;
         border-radius: 0.3rem;
         font-size: 0.8rem;
         font-weight: bold;
+    }
+    
+    /* Industry category styling */
+    .industry-category {
+        padding: 0.5rem;
+        margin: 0.5rem 0;
+        border-radius: 0.3rem;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    
+    /* Sidebar enhancements */
+    .sidebar .sidebar-content {
+        background-color: #f8f9fa;
+    }
+    
+    /* Microsoft logo placeholder */
+    .ms-logo {
+        text-align: center;
+        padding: 1rem;
+        background: white;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -178,16 +253,29 @@ def clean_html(text: str) -> str:
 
 
 def display_citation(citation: dict, index: int):
-    """Display a citation card"""
+    """Display a citation card with visual enhancements"""
     with st.expander(f"📄 {citation.get('solution_name', 'Unknown Solution')}", expanded=False):
-        col1, col2 = st.columns([3, 1])
+        # Add solution icon/thumbnail placeholder
+        col_img, col_content = st.columns([1, 4])
         
-        with col1:
-            st.markdown(f"**Partner:** {citation.get('partner_name', 'Unknown Partner')}")
+        with col_img:
+            # Use a generic partner/solution icon
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                <span style="font-size: 2rem;">🎯</span>
+            </div>
+            """, unsafe_allow_html=True)
         
-        with col2:
-            score = citation.get('relevance_score', 0)
-            st.markdown(f"<span class='relevance-score'>Score: {score:.4f}</span>", unsafe_allow_html=True)
+        with col_content:
+            col1, col2 = st.columns([3, 1])
+            
+            with col1:
+                st.markdown(f"**Partner:** {citation.get('partner_name', 'Unknown Partner')}")
+            
+            with col2:
+                score = citation.get('relevance_score', 0)
+                st.markdown(f"<span class='relevance-score'>Score: {score:.4f}</span>", unsafe_allow_html=True)
         
         # Clean and display description
         description = citation.get('description', 'No description available')
@@ -255,6 +343,14 @@ def display_message(message: dict, is_user: bool = False):
 def sidebar():
     """Render the sidebar"""
     with st.sidebar:
+        # Microsoft branding
+        st.markdown("""
+        <div class="ms-logo">
+            <img src="https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE1Mu3b?ver=5c31" 
+                 alt="Microsoft Logo" style="width: 150px; margin-bottom: 0.5rem;">
+        </div>
+        """, unsafe_allow_html=True)
+        
         st.title("🏢 Industry Solutions Directory")
         st.markdown("---")
         
@@ -301,7 +397,8 @@ def sidebar():
         }
         
         for category, questions in examples.items():
-            with st.expander(category):
+            icon = INDUSTRY_ICONS.get(category, "📁")
+            with st.expander(f"{icon} {category}"):
                 for question in questions:
                     if st.button(question, key=question, use_container_width=True):
                         st.session_state.selected_question = question
@@ -349,15 +446,30 @@ def main():
     # Render sidebar
     sidebar()
     
-    # Main content
-    st.title("💬 Industry Solutions Chat")
-    st.markdown("Ask questions about Microsoft partner solutions across different industries.")
+    # Main content with header banner
+    st.markdown("""
+    <div class="app-header">
+        <h1>💬 Industry Solutions Chat</h1>
+        <p>Discover Microsoft partner solutions powered by AI • Serving 50+ industries worldwide</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Display chat history
     chat_container = st.container()
     with chat_container:
         if not st.session_state.messages:
-            st.info("👋 Welcome! Ask me about industry solutions or select an example question from the sidebar.")
+            # Welcome message with visual elements
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                st.markdown("""
+                <div style="text-align: center; padding: 2rem; background: white; border-radius: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <img src="https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RWfkqT?ver=2740" 
+                         alt="Solutions" style="width: 200px; margin-bottom: 1rem; border-radius: 0.5rem;">
+                    <h3 style="color: #0078d4;">👋 Welcome to Industry Solutions Directory!</h3>
+                    <p style="color: #666;">Ask me about Microsoft partner solutions or select an example question from the sidebar.</p>
+                    <p style="color: #999; font-size: 0.9rem;">Powered by Azure OpenAI & Cognitive Search</p>
+                </div>
+                """, unsafe_allow_html=True)
         else:
             for msg in st.session_state.messages:
                 display_message(msg, is_user=msg.get('role') == 'user')
