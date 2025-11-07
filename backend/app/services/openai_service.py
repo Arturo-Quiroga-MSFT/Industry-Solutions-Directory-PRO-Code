@@ -183,7 +183,8 @@ RESPONSE FORMAT:
         citations: list
     ) -> list[str]:
         """
-        Generate contextual follow-up questions based on the conversation
+        Generate contextual follow-up questions by extracting and converting
+        the "Next Steps" section from the assistant's response into clickable questions
         
         Args:
             user_query: The user's original question
@@ -191,58 +192,108 @@ RESPONSE FORMAT:
             citations: List of Citation objects with solution information
             
         Returns:
-            List of 3-4 suggested follow-up questions
+            List of 3-4 suggested follow-up questions based on Next Steps
         """
         try:
+            # Try to extract questions from "Next Steps:" section
+            import re
+            
+            # Look for "Next Steps:" section and extract the bullet points
+            next_steps_match = re.search(
+                r'Next Steps:\s*\n((?:\s*[•\-\*]\s*.+\n?)+)',
+                assistant_response,
+                re.IGNORECASE | re.MULTILINE
+            )
+            
+            if next_steps_match:
+                # Extract the bullet points
+                next_steps_text = next_steps_match.group(1)
+                # Parse bullet points - remove bullets and clean up
+                bullet_pattern = r'^\s*[•\-\*]\s*(.+)$'
+                bullets = re.findall(bullet_pattern, next_steps_text, re.MULTILINE)
+                
+                if bullets:
+                    # Convert statements into questions using GPT
+                    prompt = f"""Convert these next step statements into natural follow-up questions that a user would ask. Keep them conversational and concise.
+
+STATEMENTS:
+{chr(10).join(f"- {b}" for b in bullets)}
+
+REQUIREMENTS:
+- Convert each statement into a clear question
+- Keep questions under 15 words
+- Make them conversational and natural
+- Remove any question marks or numbers from the original text
+- Return ONLY the questions, one per line, without numbering or bullet points"""
+
+                    response = self.client.chat.completions.create(
+                        model=self.chat_model,
+                        messages=[
+                            {"role": "system", "content": "You are a helpful assistant that converts statements into natural follow-up questions."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        top_p=0.9
+                    )
+                    
+                    questions_text = response.choices[0].message.content.strip()
+                    questions = [q.strip() for q in questions_text.split('\n') if q.strip()]
+                    
+                    # Clean up questions - remove any remaining bullets or numbers
+                    questions = [re.sub(r'^\d+[\.\)]\s*', '', q) for q in questions]
+                    questions = [re.sub(r'^[•\-\*]\s*', '', q) for q in questions]
+                    
+                    # Limit to 3-4 questions
+                    if len(questions) > 4:
+                        questions = questions[:4]
+                    
+                    if len(questions) >= 2:  # At least 2 questions extracted
+                        logger.info(f"Extracted {len(questions)} follow-up questions from Next Steps")
+                        return questions
+            
+            # Fallback: Generate questions based on conversation context if no Next Steps found
+            logger.info("No Next Steps found, generating contextual questions")
+            
             # Build context about the solutions mentioned
             solutions_context = ""
             if citations:
                 solutions_context = "\n\nSolutions mentioned:\n"
-                for citation in citations[:3]:  # Limit to top 3
+                for citation in citations[:3]:
                     solutions_context += f"- {citation.solution_name} by {citation.partner_name}\n"
-                    solutions_context += f"  Industries: {', '.join(citation.industries) if citation.industries else 'N/A'}\n"
-                    solutions_context += f"  Technologies: {', '.join(citation.technologies) if citation.technologies else 'N/A'}\n"
             
-            prompt = f"""Based on this conversation about Microsoft partner solutions, generate 3-4 specific, helpful follow-up questions that would naturally guide the user to explore solutions deeper or ask related queries.
+            prompt = f"""Based on this conversation, generate 3 specific follow-up questions that would help the user explore the solutions deeper.
 
 USER QUESTION: {user_query}
 
-ASSISTANT RESPONSE: {assistant_response}
+ASSISTANT RESPONSE (first 500 chars): {assistant_response[:500]}
 {solutions_context}
 
 REQUIREMENTS:
-- Generate exactly 3-4 questions
-- Make questions specific to the solutions and context discussed
-- Focus on practical next steps (e.g., implementation, costs, integration, use cases)
-- Keep questions concise (one sentence each)
-- Make questions actionable and valuable
-- Vary the question types (details, comparisons, alternatives, specifics)
-
-Return ONLY the questions, one per line, without numbering or bullet points."""
+- Generate exactly 3 questions
+- Make them specific to the solutions mentioned
+- Focus on practical aspects (implementation, costs, integration, comparisons)
+- Keep under 15 words each
+- Return ONLY the questions, one per line, without numbering"""
 
             response = self.client.chat.completions.create(
                 model=self.chat_model,
                 messages=[
-                    {"role": "system", "content": "You are a helpful assistant that generates insightful follow-up questions to guide users exploring Microsoft partner solutions."},
+                    {"role": "system", "content": "You are a helpful assistant that generates relevant follow-up questions."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.8,  # Higher temperature for more creative questions
                 top_p=0.9
             )
             
             questions_text = response.choices[0].message.content.strip()
-            # Split by newlines and clean up
             questions = [q.strip() for q in questions_text.split('\n') if q.strip()]
             
-            # Ensure we have 3-4 questions
-            if len(questions) > 4:
-                questions = questions[:4]
+            # Ensure we have 3 questions
+            if len(questions) > 3:
+                questions = questions[:3]
             elif len(questions) < 3:
-                # Fallback generic questions if generation fails
                 questions = [
-                    "Can you provide more details about the implementation process?",
-                    "What are the pricing models for these solutions?",
-                    "How do these solutions integrate with existing systems?"
+                    "Can you tell me more about these solutions?",
+                    "What are the implementation requirements?",
+                    "How do these compare to other options?"
                 ]
             
             logger.info(f"Generated {len(questions)} follow-up questions")
