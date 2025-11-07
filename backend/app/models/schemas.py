@@ -27,6 +27,7 @@ class ChatMessage(BaseModel):
     content: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     citations: Optional[List[Dict[str, Any]]] = Field(None, description="Source citations for the response")
+    follow_up_questions: Optional[List[str]] = Field(None, description="Suggested follow-up questions")
 
 
 class ChatRequest(BaseModel):
@@ -63,6 +64,7 @@ class ChatResponse(BaseModel):
     session_id: str = Field(..., description="Session ID for this conversation")
     citations: List[Citation] = Field(default_factory=list, description="Source citations")
     message_id: str = Field(..., description="Unique identifier for this message")
+    follow_up_questions: Optional[List[str]] = Field(None, description="Suggested follow-up questions")
     
     class Config:
         json_schema_extra = {
@@ -78,7 +80,11 @@ class ChatResponse(BaseModel):
                         "relevance_score": 0.95
                     }
                 ],
-                "message_id": "msg-12345"
+                "message_id": "msg-12345",
+                "follow_up_questions": [
+                    "What are the implementation timelines for these solutions?",
+                    "Can you show me AI solutions specifically for patient engagement?"
+                ]
             }
         }
 

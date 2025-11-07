@@ -84,7 +84,8 @@ class CosmosDBService:
         session_id: str,
         role: MessageRole,
         content: str,
-        citations: Optional[List[Dict[str, Any]]] = None
+        citations: Optional[List[Dict[str, Any]]] = None,
+        follow_up_questions: Optional[List[str]] = None
     ) -> str:
         """
         Add a message to a session
@@ -94,6 +95,7 @@ class CosmosDBService:
             role: Message role (user/assistant)
             content: Message content
             citations: Optional citations for assistant messages
+            follow_up_questions: Optional follow-up questions for assistant messages
             
         Returns:
             Message ID
@@ -114,6 +116,10 @@ class CosmosDBService:
                 "timestamp": datetime.utcnow().isoformat(),
                 "citations": citations or []
             }
+            
+            # Add follow-up questions if provided (for assistant messages)
+            if follow_up_questions:
+                message["follow_up_questions"] = follow_up_questions
             
             # Add message to session
             session["messages"].append(message)

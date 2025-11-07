@@ -12,8 +12,10 @@ COSMOS_ACCOUNT="indsolse-dev-db-okumlm"
 # IP addresses that need access
 # 24.226.125.69 - Your laptop
 # 9.223.246.165 - V1 apps (indsolse-dev-backend)
-# 74.241.205.78 - V2 apps (indsolse-dev-backend-v2)
-IP_RANGE_FILTER="24.226.125.69,9.223.246.165,74.241.205.78"
+# 74.241.205.78 - V2 apps initial (indsolse-dev-backend-v2)
+# 20.240.37.231 - V2 apps after restart
+# 74.241.211.241 - V2 apps after v2.1 revision deployment
+IP_RANGE_FILTER="24.226.125.69,9.223.246.165,74.241.205.78,20.240.37.231,74.241.211.241"
 
 echo "=================================================="
 echo "Fixing Cosmos DB Network Configuration"

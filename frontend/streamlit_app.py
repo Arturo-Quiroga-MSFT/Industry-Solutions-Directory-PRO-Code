@@ -221,6 +221,29 @@ def display_message(message: dict, is_user: bool = False):
         </div>
         """, unsafe_allow_html=True)
         
+        # Display follow-up questions if available
+        follow_up_questions = message.get('follow_up_questions', [])
+        if follow_up_questions:
+            st.markdown("#### 💬 Follow-up Questions")
+            st.caption("Click a question to continue the conversation:")
+            
+            # Display questions as clickable pills in columns
+            cols = st.columns(min(len(follow_up_questions), 2))
+            for i, question in enumerate(follow_up_questions):
+                with cols[i % 2]:
+                    # Use unique key based on message index and question index
+                    msg_idx = st.session_state.messages.index(message)
+                    button_key = f"followup_{msg_idx}_{i}"
+                    if st.button(
+                        f"❓ {question}", 
+                        key=button_key, 
+                        use_container_width=True,
+                        type="secondary"
+                    ):
+                        # Store the selected question to be processed
+                        st.session_state.selected_followup = question
+                        st.rerun()
+        
         # Display citations if available
         citations = message.get('citations', [])
         if citations:
@@ -320,6 +343,9 @@ def main():
     if 'selected_question' not in st.session_state:
         st.session_state.selected_question = None
     
+    if 'selected_followup' not in st.session_state:
+        st.session_state.selected_followup = None
+    
     # Render sidebar
     sidebar()
     
@@ -382,11 +408,14 @@ def main():
     # Chat input
     st.markdown("---")
     
-    # Check if a question was selected from sidebar
+    # Check if a question was selected from sidebar or follow-up
     initial_value = ""
     if st.session_state.selected_question:
         initial_value = st.session_state.selected_question
         st.session_state.selected_question = None
+    elif st.session_state.selected_followup:
+        initial_value = st.session_state.selected_followup
+        st.session_state.selected_followup = None
     
     user_input = st.chat_input("Type your question here...", key="chat_input")
     
@@ -407,11 +436,12 @@ def main():
             result = client.send_message(user_input, st.session_state.session_id)
         
         if result:
-            # Add assistant response to history
+            # Add assistant response to history with follow-up questions
             st.session_state.messages.append({
                 'role': 'assistant',
                 'content': result.get('response', ''),
-                'citations': result.get('citations', [])
+                'citations': result.get('citations', []),
+                'follow_up_questions': result.get('follow_up_questions', [])
             })
         
         # Rerun to display new messages

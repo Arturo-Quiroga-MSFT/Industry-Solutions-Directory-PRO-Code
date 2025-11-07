@@ -175,4 +175,85 @@ RESPONSE FORMAT:
         except Exception as e:
             logger.error(f"Error generating summary: {e}")
             raise
+    
+    async def generate_follow_up_questions(
+        self, 
+        user_query: str, 
+        assistant_response: str, 
+        citations: list
+    ) -> list[str]:
+        """
+        Generate contextual follow-up questions based on the conversation
+        
+        Args:
+            user_query: The user's original question
+            assistant_response: The assistant's response
+            citations: List of Citation objects with solution information
+            
+        Returns:
+            List of 3-4 suggested follow-up questions
+        """
+        try:
+            # Build context about the solutions mentioned
+            solutions_context = ""
+            if citations:
+                solutions_context = "\n\nSolutions mentioned:\n"
+                for citation in citations[:3]:  # Limit to top 3
+                    solutions_context += f"- {citation.solution_name} by {citation.partner_name}\n"
+                    solutions_context += f"  Industries: {', '.join(citation.industries) if citation.industries else 'N/A'}\n"
+                    solutions_context += f"  Technologies: {', '.join(citation.technologies) if citation.technologies else 'N/A'}\n"
+            
+            prompt = f"""Based on this conversation about Microsoft partner solutions, generate 3-4 specific, helpful follow-up questions that would naturally guide the user to explore solutions deeper or ask related queries.
+
+USER QUESTION: {user_query}
+
+ASSISTANT RESPONSE: {assistant_response}
+{solutions_context}
+
+REQUIREMENTS:
+- Generate exactly 3-4 questions
+- Make questions specific to the solutions and context discussed
+- Focus on practical next steps (e.g., implementation, costs, integration, use cases)
+- Keep questions concise (one sentence each)
+- Make questions actionable and valuable
+- Vary the question types (details, comparisons, alternatives, specifics)
+
+Return ONLY the questions, one per line, without numbering or bullet points."""
+
+            response = self.client.chat.completions.create(
+                model=self.chat_model,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant that generates insightful follow-up questions to guide users exploring Microsoft partner solutions."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.8,  # Higher temperature for more creative questions
+                top_p=0.9
+            )
+            
+            questions_text = response.choices[0].message.content.strip()
+            # Split by newlines and clean up
+            questions = [q.strip() for q in questions_text.split('\n') if q.strip()]
+            
+            # Ensure we have 3-4 questions
+            if len(questions) > 4:
+                questions = questions[:4]
+            elif len(questions) < 3:
+                # Fallback generic questions if generation fails
+                questions = [
+                    "Can you provide more details about the implementation process?",
+                    "What are the pricing models for these solutions?",
+                    "How do these solutions integrate with existing systems?"
+                ]
+            
+            logger.info(f"Generated {len(questions)} follow-up questions")
+            return questions
+            
+        except Exception as e:
+            logger.error(f"Error generating follow-up questions: {e}")
+            # Return generic fallback questions
+            return [
+                "Can you tell me more about these solutions?",
+                "What industries are these solutions best suited for?",
+                "Are there similar solutions I should consider?"
+            ]
 

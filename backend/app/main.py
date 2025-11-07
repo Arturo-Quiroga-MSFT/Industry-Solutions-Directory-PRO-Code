@@ -146,7 +146,15 @@ async def chat(request: ChatRequest):
             chat_history=chat_history
         )
         
-        # Step 4: Store messages in Cosmos DB
+        # Step 4: Generate follow-up questions
+        logger.info("Generating follow-up questions...")
+        follow_up_questions = await openai_service.generate_follow_up_questions(
+            user_query=request.message,
+            assistant_response=response_text,
+            citations=citations
+        )
+        
+        # Step 5: Store messages in Cosmos DB
         # Store user message
         await cosmos_service.add_message(
             session_id=session_id,
@@ -154,12 +162,13 @@ async def chat(request: ChatRequest):
             content=request.message
         )
         
-        # Store assistant message with citations
+        # Store assistant message with citations and follow-up questions
         message_id = await cosmos_service.add_message(
             session_id=session_id,
             role=MessageRole.ASSISTANT,
             content=response_text,
-            citations=[citation.model_dump() for citation in citations]
+            citations=[citation.model_dump() for citation in citations],
+            follow_up_questions=follow_up_questions
         )
         
         # Return response
@@ -167,7 +176,8 @@ async def chat(request: ChatRequest):
             response=response_text,
             session_id=session_id,
             citations=citations,
-            message_id=message_id
+            message_id=message_id,
+            follow_up_questions=follow_up_questions
         )
         
     except Exception as e:
