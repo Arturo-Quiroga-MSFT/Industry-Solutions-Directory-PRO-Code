@@ -1,6 +1,103 @@
-# Data Ingestion Script
+# Data Ingestion - Industry Solutions Directory
 
-This script scrapes partner solutions from the Industry Solutions Directory website and indexes them in Azure AI Search with vector embeddings for semantic search.
+**Solution Owner:** Arturo Quiroga  
+**Role:** Principal Industry Solutions Architect, Microsoft  
+**Purpose:** Data ingestion pipeline to index Microsoft partner solutions from the Industry Solutions Directory into Azure AI Search for AI-powered search
+
+---
+
+## Directory Structure
+
+```
+data-ingestion/
+├── README.md                      # This file
+├── requirements.txt               # Python dependencies
+├── verify_index.py                # Verify indexed data
+├── partner_analysis.py            # Analyze partner statistics
+├── API_INVESTIGATION.md           # API discovery documentation
+├── RELEVANCE_SCORE.md             # Search relevance documentation
+│
+├── integrated-vectorization/      # ⭐ CURRENT PRODUCTION APPROACH
+│   ├── README.md
+│   ├── 01_create_vectorizer.py
+│   ├── 02_create_index.py
+│   ├── 03_ingest_data.py
+│   └── 04_test_search.py
+│
+├── archive/                       # Historical/archived files
+│   ├── README.md
+│   ├── old-manual-ingestion/      # Old client-side vectorization approach
+│   ├── mcs-compatibility/         # Old MCS compatibility attempts
+│   └── logs-and-output/           # Historical logs
+│
+└── reports/                       # Current reports and analysis
+    ├── README.md
+    ├── current_index_verification.txt
+    ├── full_ingestion_summary.md
+    └── solutions-found.json
+```
+
+---
+
+## 🎯 Quick Start (Current Approach)
+
+The **production approach** uses Azure AI Search **integrated vectorization** (v2.8+):
+
+```bash
+cd integrated-vectorization
+
+# 1. Create vectorizer (one-time)
+python 01_create_vectorizer.py
+
+# 2. Create index with integrated vectorization (one-time)
+python 02_create_index.py
+
+# 3. Ingest data
+python 03_ingest_data.py
+
+# 4. Test search
+python 04_test_search.py
+```
+
+**Benefits of integrated-vectorization:**
+- ✅ Automatic query vectorization (no client-side embedding needed)
+- ✅ Direct REST API (no Python SDK dependency issues)
+- ✅ Simpler code and maintenance
+- ✅ Better performance
+
+See [`integrated-vectorization/README.md`](integrated-vectorization/README.md) for details.
+
+---
+
+## Current Index Statistics
+
+- **Index Name:** `partner-solutions-integrated`
+- **Documents:** 535 documents
+- **Unique Solutions:** 376 partner solutions
+- **Industries:** 10+ major industries covered
+- **Vectorization:** Azure OpenAI text-embedding-3-large (3072 dimensions)
+
+Run `python verify_index.py` to see current statistics.
+
+---
+
+## Historical Context
+
+### Old Manual Approach (Archived)
+
+The original implementation (archived in `archive/old-manual-ingestion/`) used:
+- Client-side embedding generation with Python SDK
+- Manual chunking and vectorization
+- azure-search-documents 11.6.0 (had compatibility issues)
+
+**Why it was replaced:**
+- Python SDK incompatibility with integrated vectorization
+- More complex code requiring client-side embedding
+- Maintenance burden for embedding generation
+
+See [`archive/README.md`](archive/README.md) for historical context.
+
+---
 
 ## Web Scraping Implementation
 
