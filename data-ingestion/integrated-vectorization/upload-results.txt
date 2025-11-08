@@ -1,0 +1,27 @@
+python 01_export_to_blob.py
+============================================================
+Export ISD Data to Azure Blob Storage
+============================================================
+Fetching industry menu from: https://mssoldir-app-prd.azurewebsites.net/api/Industry/getMenu
+
+📥 Fetching solutions from ISD API...
+Processing industries: 100%|█████████████████████████████████████████| 10/10 [00:07<00:00,  1.31it/s]
+
+✅ Processed 695 solutions from 10 industries and 40 themes
+
+📤 Uploading 695 documents to Blob Storage...
+✅ Created container: industry-solutions-data
+Uploading blobs: 100%|█████████████████████████████████████████████| 695/695 [01:28<00:00,  7.81it/s]
+
+✅ Uploaded 695 documents to blob storage
+   Container: industry-solutions-data
+   Blobs: solutions/*.json
+
+============================================================
+✅ Export Complete!
+============================================================
+
+Next Steps:
+  1. Run 02_create_index.py to create the search index
+  2. Run 03_create_skillset.py to set up chunking and embedding
+  3. Run 04_create_indexer.py to start the indexing pipeline

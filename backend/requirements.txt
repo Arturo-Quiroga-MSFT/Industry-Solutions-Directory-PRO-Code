@@ -8,7 +8,6 @@ python-multipart
 # Azure SDK
 azure-identity
 azure-cosmos
-azure-search-documents
 azure-ai-inference
 azure-core
 azure-monitor-opentelemetry

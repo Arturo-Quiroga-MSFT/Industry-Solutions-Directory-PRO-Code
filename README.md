@@ -19,7 +19,9 @@ This solution enables natural language search and partner recommendations throug
 - 🔍 Intelligent search across 50+ industries
 - 📚 Citation cards with solution details and relevance scores
 
-**Live Demo:** [Try it here](https://indsolse-dev-frontend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io)
+**Live Demo:** [Try it here](https://indsolse-dev-frontend-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io)
+**API Endpoint:** https://indsolse-dev-backend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io
+**Current Version:** v2.8 (REST API with integrated vectorization)
 
 ### Key Features
 
@@ -36,9 +38,11 @@ The solution uses a modern RAG architecture with the following components:
 
 ### Backend (Python FastAPI)
 - REST API for chat interactions
-- Integration with Azure OpenAI for LLM capabilities
-- Azure AI Search for hybrid vector + keyword search
+- **Direct REST API integration** with Azure AI Search (no Python SDK)
+- **Integrated vectorization** using Azure AI Search vectorizer (automatic query vectorization)
+- Integration with Azure OpenAI for LLM chat completions
 - Azure Cosmos DB for conversation persistence
+- Passwordless authentication via DefaultAzureCredential
 
 ### Frontend (JavaScript Widget)
 - Lightweight embeddable chat widget
@@ -161,8 +165,9 @@ AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-3-large
 
 # Azure AI Search Configuration
 AZURE_SEARCH_ENDPOINT=https://your-search.search.windows.net
-AZURE_SEARCH_INDEX_NAME=partner-solutions-index
+AZURE_SEARCH_INDEX_NAME=partner-solutions-integrated
 # Note: Using Azure CLI authentication (no API key needed)
+# Note: Index uses integrated vectorization (automatic query vectorization)
 
 # Azure Cosmos DB Configuration
 AZURE_COSMOS_ENDPOINT=https://your-cosmos.documents.azure.com:443/
@@ -205,7 +210,11 @@ python ingest_data.py
 - `getMenu` - Lists all industries and themes
 - `GetThemeDetalsByViewId?slug={themeSlug}` - Gets partner solutions for each theme
 
-**Vector Embeddings**: Uses `text-embedding-3-large` model with **3072 dimensions** (not 1536).
+**Vector Configuration**: 
+- Index: `partner-solutions-integrated` with **integrated vectorization**
+- Vectorizer: Azure OpenAI `text-embedding-3-large` (3072 dimensions)
+- Automatic query vectorization: Queries are vectorized by Azure Search service
+- No client-side embedding generation required
 
 See `data-ingestion/API_INVESTIGATION.md` for details on the data source discovery process.
 
@@ -425,7 +434,10 @@ pylint app/
 - **Solution**: The config now includes `extra = "ignore"` to allow optional fields in `.env`
 
 **Issue**: Vector dimension mismatch (1536 vs 3072)
-- **Solution**: The `text-embedding-3-large` model produces 3072-dimension vectors. Index and ingestion scripts are configured correctly.
+- **Solution**: The `text-embedding-3-large` model produces 3072-dimension vectors. Index uses integrated vectorization.
+
+**Issue**: "Field 'content_vector' does not have a vectorizer defined" error
+- **Solution**: This was caused by Python SDK (azure-search-documents 11.6.0) incompatibility with integrated vectorization. **Fixed in v2.8** by switching to direct REST API calls with API version 2024-07-01.
 
 **Issue**: Cosmos DB firewall blocking local development
 - **Solution**: Add your public IP to the firewall allow list:

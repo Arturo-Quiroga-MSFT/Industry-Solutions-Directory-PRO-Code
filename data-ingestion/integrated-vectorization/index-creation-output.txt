@@ -1,0 +1,7 @@
+python 02_create_index.py
+Traceback (most recent call last):
+  File "/Users/arturoquiroga/Industry-Solutions-Directory-PRO-Code/data-ingestion/integrated-vectorization/02_create_index.py", line 14, in <module>
+    from azure.search.documents.indexes.models import (
+    ...<11 lines>...
+    )
+ImportError: cannot import name 'AzureOpenAIVectorizer' from 'azure.search.documents.indexes.models' (/Users/arturoquiroga/Industry-Solutions-Directory-PRO-Code/.venv/lib/python3.13/site-packages/azure/search/documents/indexes/models/__init__.py)
