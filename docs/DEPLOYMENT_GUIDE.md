@@ -1,5 +1,10 @@
 # Deployment Guide
 
+**Solution Owner:** Arturo Quiroga  
+**Role:** Principal Industry Solutions Architect, Microsoft  
+**Purpose:** Step-by-step deployment instructions for the Industry Solutions Directory AI Chat Assistant  
+**Last Updated:** November 8, 2025
+
 Complete step-by-step guide to deploy the Industry Solutions Chat Assistant to production.
 
 ## Table of Contents

@@ -1,5 +1,11 @@
 """
 Configuration settings for the Industry Solutions Chat API
+
+Solution Owner: Arturo Quiroga
+Role: Principal Industry Solutions Architect, Microsoft
+Purpose: Configuration management for AI-powered chat assistant that enables
+         natural language search and partner recommendations
+
 Loads from environment variables with sensible defaults
 """
 from pydantic_settings import BaseSettings

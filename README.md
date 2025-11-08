@@ -1,5 +1,9 @@
 # Industry Solutions Directory - AI Chat Assistant
 
+**Solution Owner:** Arturo Quiroga  
+**Role:** Principal Industry Solutions Architect, Microsoft  
+**Purpose:** Pro-code AI chat solution to enable natural language search and intelligent partner recommendations for the Microsoft Industry Solutions Directory website
+
 A pro-code solution to add intelligent chat capabilities to the Microsoft Industry Solutions Directory website using Azure AI services and the RAG (Retrieval-Augmented Generation) pattern.
 
 ## Overview
@@ -483,9 +487,11 @@ python -m app.main
 
 ## Team & Contact
 
-- **Technical Lead**: Arturo Quiroga
+- **Solution Owner & Technical Lead**: Arturo Quiroga, Principal Industry Solutions Architect
 - **Product Owner**: Will Casavan
 - **Development Team**: Jason, Thomas, Arturo
+
+**Purpose**: This solution provides AI-powered natural language search capabilities to help customers discover relevant Microsoft partner solutions across 50+ industries through conversational queries, improving engagement and reducing time-to-find relevant solutions on the Industry Solutions Directory website.
 
 For questions or support, contact the team via Microsoft Teams.
 

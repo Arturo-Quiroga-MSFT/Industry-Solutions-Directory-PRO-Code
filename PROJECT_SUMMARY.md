@@ -1,7 +1,10 @@
 # Project Summary: Industry Solutions Directory - AI Chat Assistant
 
+**Solution Owner:** Arturo Quiroga  
+**Role:** Principal Industry Solutions Architect, Microsoft  
 **Date**: November 4, 2025  
 **Project**: AI-powered chat assistant for Microsoft Industry Solutions Directory  
+**Purpose:** Enable natural language search and AI-powered partner solution recommendations to improve user discovery and engagement on the Industry Solutions Directory website  
 **Team**: Arturo Quiroga (Technical Lead), Will Casavan (Product Owner), Jason, Thomas  
 **Status**: Pro-code solution architecture and implementation complete ✅
 

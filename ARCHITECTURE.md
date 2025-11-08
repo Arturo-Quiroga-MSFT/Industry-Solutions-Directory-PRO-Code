@@ -1,5 +1,10 @@
 # Industry Solutions Directory - AI Chat Assistant Architecture
 
+**Solution Owner:** Arturo Quiroga  
+**Role:** Principal Industry Solutions Architect, Microsoft  
+**Last Updated:** November 8, 2025  
+**Purpose:** Comprehensive technical architecture for the AI-powered chat assistant that enables natural language search and intelligent partner solution recommendations for the Microsoft Industry Solutions Directory
+
 ## Executive Summary
 
 This document outlines the pro-code architecture for adding intelligent chat capabilities to the Microsoft Industry Solutions Directory website (https://solutions.microsoftindustryinsights.com/dashboard). The solution enables natural language search and partner recommendations using Azure AI services.

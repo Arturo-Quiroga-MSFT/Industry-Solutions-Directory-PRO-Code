@@ -1,5 +1,10 @@
 # Cost Estimation: Pro-Code vs Low-Code Approach
 
+**Solution Owner:** Arturo Quiroga  
+**Role:** Principal Industry Solutions Architect, Microsoft  
+**Purpose:** Detailed cost analysis and comparison for the Industry Solutions Directory AI Chat Assistant  
+**Last Updated:** November 8, 2025
+
 This document provides a detailed cost comparison between the pro-code solution and a Copilot Studio (low-code) alternative.
 
 ## Pro-Code Solution Monthly Costs

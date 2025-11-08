@@ -1,0 +1,511 @@
+================================================================================
+Verifying Index: partner-solutions-integrated
+Endpoint: https://indsolse-dev-srch-okumlm.search.windows.net
+================================================================================
+
+1. DOCUMENT COUNT
+--------------------------------------------------------------------------------
+Total documents in index: 535
+
+2. SAMPLE DOCUMENTS (First 5)
+--------------------------------------------------------------------------------
+
+Document 1:
+  Solution Name: Integrated Revenue Cycle Management Systems
+  Partner Name: Striim
+  Industries: ["Healthcare & Life Sciences","Empower the Healthcare Workforce"]
+  Technologies: ["Cloud and AI Platforms"]
+  Description: Striim empowers hospital systems by facilitating real-time data integration, ML-driven analytics, an...
+
+Document 2:
+  Solution Name: Aspen Mtell (AspenTech-20240123081528)
+  Partner Name: AspenTech
+  Industries: ["Manufacturing & Mobility","Innovate in Engineering with AI "]
+  Technologies: ["Cloud and AI Platforms"]
+  Description: <p>Aspen Mtell is a condition monitoring solution that prevents machines from breaking down, makes t...
+
+Document 3:
+  Solution Name: Flywheel Core
+  Partner Name: Flywheel
+  Industries: ["Healthcare & Life Sciences","Unlock Value from Clinical and Operational Data"]
+  Technologies: ["Cloud and AI Platforms"]
+  Description: The Flywheel medical imaging platform empowers healthcare innovation by streamlining imaging data ma...
+
+Document 4:
+  Solution Name: PwC Factory Intelligence (PwC-20240112070250)
+  Partner Name: PwC
+  Industries: ["Manufacturing & Mobility","Intelligent Factories"]
+  Technologies: ["Security"]
+  Description: <p id="isPasted"><strong>PwC Factory Intelligence - A new perspective onto the company&#39;s effecti...
+
+Document 5:
+  Solution Name: 
+  Partner Name: 
+  Industries: ["Retail & Consumer Goods","Transform the Shopper Experience and Build Brands People Love"]
+  Technologies: ["Spotlight"]
+  Description: ...
+
+3. UNIQUE SOLUTIONS
+--------------------------------------------------------------------------------
+Total unique solutions: 376
+
+Unique solutions list:
+  -  (by )
+  -  DXC OpenAI Integration Service (by DXC Technology)
+  -  Perform+ Suite - Healthcare Quality Analytics & Provider Performance (by CitiusTech Inc.)
+  - AI Accelerated Modernization with GitHub Copilot (by Slalom Consulting)
+  - AI Legislative Research Solution for Government (by Quisitive)
+  - AI Permit Processing Assistant Application (by RSM US LLP)
+  - AI-Powered Supply Chain (by Adastra)
+  - Accenture (by Accenture)
+  - Adobe Commerce (by Adobe)
+  - Adobe Customer Journey Analytics (by Adobe)
+  - Adobe Customer Journey Analytics (Adobe-20231025040802) (by Adobe)
+  - Adobe Journey Optimizer (by Adobe)
+  - Adobe Real-Time Customer Data Platform (RTCDP) (by Adobe)
+  - Advanced Enterprise Asset Management (by RSM US LLP)
+  - Advanced Production Floor Execution (by RSM US LLP)
+  - Advanced Supply Chain Management by HSO (by HSO)
+  - Agentic KYC – Strategy & Implementation (by Capgemini Technology Services Ltd)
+  - Amperity Customer Data Cloud - Full License (Amperity-20240125095624) (by Amperity)
+  - Amperity Customer Data Platform - Full License (by Amperity)
+  - Amperity-20231205093406 (by Amperity)
+  - Andor Health (by Andor Health)
+  - Ansys Digital Twin (by Ansys)
+  - Anthology Engage (Anthology-20240201081550) (by Anthology)
+  - Anthology Finance and HCM (by Anthology)
+  - Anthology Raise (Anthology-20240201080211) (by Anthology)
+  - Anthology Reach (by Anthology)
+  - Anthology Student (by Anthology)
+  - Application Modernization Assessment (by TTEC Digital)
+  - ArcGIS  (by Esri)
+  - Aspen Fidelis (by AspenTech)
+  - Aspen InfoPlus.21 (by AspenTech)
+  - Aspen Mtell (AspenTech-20240123081528) (by AspenTech)
+  - Aspen Supply Chain Management (by AspenTech)
+  - Aspen Unified PIMS (AspenTech-20240123083346) (by AspenTech)
+  - AspenTech (by AspenTech)
+  - AspenTech Concurrent Engineering (by AspenTech)
+  - AspenTech Inmation (by AspenTech)
+  - AspenTech Inmation™ (AspenTech-20240123082446) (by AspenTech)
+  - AspenTech Process Digital Twin (AspenTech-20240123084909) (by AspenTech)
+  - AspenTech Subsurface Science & Engineering Solutions (by AspenTech)
+  - Asset Monitoring Pro with Copilot (by RSM US LLP)
+  - Avanade ai.RETAIL (by Avanade)
+  - AvePoint Confidence Platform (by AvePoint Inc)
+  - AvePoint Inc  (by AvePoint Inc)
+  - Axon AI (by Axon)
+  - Azure Innovate: AI & Analytics Assessment (by RSM US LLP)
+  - Azure Innovate: AI Design Quickstart (by RSM US LLP)
+  - Azure NetApp Files (by NetApp)
+  - Azure VMware Solution Implementation: Typically, 4-Weeks (Presidio-20231206085921) (by Presidio)
+  - Azure VMware Solution Implementation: Typically, 4-Weeks (Presidio-20231206123655) (by Presidio)
+  - BDO (by BDO)
+  - Backbase Engagement Banking Platform (by Backbase)
+  - Bank Guarantee Collaboration  (by Capgemini Technology Services Ltd)
+  - Bion for Manufacturing: Data Warehouse Accelerator (by Core BTS)
+  - Blackbaud Enterprise Fundraising CRM (by Blackbaud)
+  - Blackbaud Raiser's Edge NXT (by Blackbaud)
+  - BlueVoyant-20240319060716 (by BlueVoyant)
+  - CDW (by CDW)
+  - CGI Advantage (by CGI)
+  - CIS Hardened Images (by Center for Internet Security)
+  - CMMC Implementation for Microsoft 365 (8 Wk Proj) (Summit 7-20231130090141) (by Summit 7)
+  - CMMC Implementation for Microsoft 365 (8 Wk Proj) (Summit 7-20240112051759) (by Summit 7)
+  - CPGXPress-SAP S/4HANA Industry Solution for CPG Industry (Cognizant-20231205092130) (by Cognizant)
+  - CRM Accelerator for Financial Services (by HSO)
+  - Calian (by Calian)
+  - Calico for Financial Services (by Tigera)
+  - Canary Speech (by Canary Speech)
+  - Clinical Advisor (by HCLTech)
+  - Clinical Document Automation Solution  (by WinWire )
+  - Clinical Workflow Optimization (by Striim)
+  - Cloud Unity Azure Virtual Classroom (by Cloud Unity )
+  - Cloud Unity Classroom (Cloud Unity -20240201103949) (by Cloud Unity )
+  - Coffee+Dunn (by Coffee+Dunn)
+  - Cognite Data Fusion (by Cognite)
+  - Cognite Data Fusion (Cognite-20231227034722) (by Cognite)
+  - Cognitive Plant Ops Adviser: 8-week Implementation (Tata Consultancy Services-20231206125017) (by Tata Consultancy Services)
+  - Cognizant AI Powered Virtual Clinician (by Cognizant)
+  - Cognizant Ad Moderation Solution (by Cognizant)
+  - Cognizant HawkEye: Enterprise-grade integration, interaction and insights platform for retail – 12 Week Proof of Concept (Cognizant Technology Solutions-20240110090453) (by Cognizant Technology Solutions)
+  - Cognizant Intelligent Claims Advisor for Duck Creek (by Cognizant)
+  - Cognizant Manufacturing Agent for Microsoft 365 Copilot (by Cognizant)
+  - Cognizant Technology Solutions (by Cognizant Technology Solutions)
+  - Cognizant Technology Solutions AML Transaction Monitoring (by Cognizant Technology Solutions)
+  - Cognizant Technology Solutions-20240110090453 (by Cognizant Technology Solutions)
+  - Cognizant Virtual Healthcare Solution for Remote Patient Monitoring (by Cognizant)
+  - Cognizant's Cyber Threat Defense (by Cognizant)
+  - Cognizant's Frontline Worker with Store Operations Assist (by Cognizant Technology Solutions)
+  - Cognizant's Frontline Worker with Store Operations Assist (Cognizant-20231205091331) (by Cognizant)
+  - Cohesity Data Cloud (by Cohesity)
+  - Commvault  (by Commvault)
+  - Commvault Cloud: Backup & Recovery (For Service Providers) (by Commvault)
+  - Compliance Monitoring in Real Time (by Striim)
+  - Compliance and Security Suite (by Theta Lake)
+  - Connected Factory (ICONICS-20240429095137) (by ICONICS)
+  - Connected Factory by APEx - 6 Wk Implementation (by Cognizant Technology Solutions)
+  - Connected Platform Health & Life Sciences (by Insight)
+  - Connected Platform Manufacturing: 12 Wk Imp (Insight-20240222114817) (by Insight)
+  - Connected Platform Restaurants & Retail: 12 Wk Imp (Insight-20240223120339) (by Insight)
+  - Contract and Grants Management (by RSM US LLP)
+  - Copilot Readiness Assessment (by TTEC Digital)
+  - Cordant™ Asset Performance Management (APM) (by Baker Hughes)
+  - Cordant™ Machine Health (by Baker Hughes)
+  - Cordant™ Process Optimization (by Baker Hughes)
+  - Core BTS Migrator for Azure Adoption: 7-Wk Imp (Core BTS-20231206122054) (by Core BTS)
+  - Core Banking Transformation: 1 hour Workshop (by Wipro Ltd)
+  - Credential Management (by RSM US LLP)
+  - Customer 360 (by Striim)
+  - Customer Insights Improve Retention (by Striim)
+  - Cyber Portfolio Rationalization (by PwC)
+  - DXC Intelligent Boost (by DXC Technology)
+  - DXC Intelligent Boost (DXC Technology-20231214031606) (by DXC Technology)
+  - DXC OpenAI Integration Service (by DXC Technology)
+  - DXC OpenAI Integration Service (DXC Technology-20231206123204) (by DXC Technology)
+  - Data Platform Modernization Assessment (by TTEC Digital)
+  - Data and AI (by Avanade)
+  - DataArt New York (by DataArt)
+  - Delinea Secret Server (by Delinea)
+  - Demand Response and Load Management (by Striim)
+  - Digitalization for Life Science Product Distribution (by FPT)
+  - DnA Accelerator for Financial Services (by HSO)
+  - DnA Accelerator for Life Science Manufacturing (by HSO)
+  - DnA Accelerator for Manufacturing (HSO-20240419041609) (by HSO)
+  - Docusign Intelligent Agreement Management (IAM) (by Docusign)
+  - Duck Creek OnDemand (by Duck Creek Technologies)
+  - Dynamics 365 Customer Insights – Journeys (Marketing) (by Coffee+Dunn)
+  - ESG Management Solution (PwC-20231221103554) (by PwC)
+  - EY (by EY)
+  - EY Comply (by EY)
+  - EY Customer Experience Accelerator (by EY)
+  - EY Demand Forecasting and Inventory Optimization (by EY)
+  - EY Digital Enablement Energy Platform (by EY)
+  - EY Grants Accelerator (EYGA) (by EY)
+  - EY Intelligent Forecasting and Scenario Modeling Solution (by EY)
+  - EY Know Your Customer (KYC) (by EY)
+  - EY Lifecycle Navigation (by EY)
+  - EY Modern Retail (by EY)
+  - EY Space for Earth (by EY)
+  - EY UtilityWave (by EY)
+  - EcoStruxure DERMS (by Schneider Electric)
+  - Elastic Search (Elasticsearch) (by Elastic)
+  - EmbedFAST (Embed Power BI) (by MAQ Software)
+  - Energy Data Centricity: Services to Support Client's Adoption of the OSDU ADME Platform (by Wipro Ltd)
+  - Ensono Cloud-Connected Mainframe for Microsoft Azure (by Ensono)
+  - Enterprise Agent Framework Assessment (by TTEC Digital)
+  - Enterprise Data Solution (by SLB)
+  - Epic on Azure (by Sapphire Cloud LLC Dba Sapphire Health)
+  - Epic on Azure: Comprehensive Cloud Migration Services (by Tegria Services Group - Us, Inc.)
+  - Epiq Data Security (by Epiq)
+  - FHIR Data Integration ETL Framework (by Cognizant)
+  - FIS Treasury and Risk Manager - Integrity Edition (by FIS)
+  - Fabric Data Solution & Generative AI: 12-week Implementation (by Quisitive)
+  - FinServ Defender (by Valorem Reply)
+  - Finastra ALM IQ (by Finastra )
+  - Finastra Cash Management (by Finastra )
+  - Finastra ESG Service (by Finastra )
+  - Finastra Loan IQ (by Finastra )
+  - Finastra Trade Innovation (by Finastra )
+  - Fiserv DNA (by Fiserv)
+  - Fiserv Enteract (by Fiserv)
+  - Fivetran Data Pipelines (by Fivetran)
+  - Fivetran Data Pipelines  (by Fivetran)
+  - Flintfox Intelligent Pricing Platform for Retail (Flintfox: Intelligent Pricing Platform-20231205090656) (by Flintfox: Intelligent Pricing Platform)
+  - Flywheel Core (by Flywheel)
+  - Forsyte Guardian 365 (by Forsyte Guardian 365)
+  - GaliEye (by Terawe Corporation)
+  - GaliEye (Terawe Corporation-20240306043450) (by Terawe Corporation)
+  - GenAI Patient Safety Narrative (by CitiusTech Inc.)
+  - GenAI Quality and Trust Solution (by CitiusTech Inc.)
+  - Greenhouse Gas Applicability and Materiality Assessment with Microsoft Sustainability Manager (by RSM US LLP)
+  - HCL Digital Treasury as a Service on Azure (by HCL Technologies)
+  - HCL Novus Bank  (by HCL Technologies)
+  - HCL Tech MVision (by HCL Technologies)
+  - HCL Technologies (by HCLTech)
+  - HCL Technologies Real-Time In-Store Insights (by HCL Technologies)
+  - HCLTech Connected Manufacturing Solution (Real-time Manufacturing Insights-RMI) (HCLTech-20231025053526) (by HCLTech)
+  - HCLTech Extended Reality (XR) as a Service (AR/VR/MR) (HCLTech-20231025052853) (by HCLTech)
+  - HCLTech Intelligent Asset Tracking & Management - IATM (HCLTech-20231025054258) (by HCLTech)
+  - HCLTech Product Life Cycle Management (PLM) (by HCLTech)
+  - HCLTech Solution for Intelligent Sustainability Operations - NIO (HCLTech-20231025053909) (by HCLTech)
+  - HEADSTART for Industrial Equipment and Complex Manufacturers (by Sikich)
+  - HITRUST MyCSF Subscription (by HITRUST)
+  - Health Catalyst (by Health Catalyst)
+  - HealthVista AI (by Valorem Reply)
+  - Healthcare Data Platform (by 3Cloud Solutions)
+  - Healthcare Platform Assessment (by Vervint)
+  - Hexagon Asset Investment Planning Solutions (Hexagon ALI-20240329080330) (by Hexagon ALI)
+  - Higher Education Blueprint (by HSO)
+  - Hitachi Solutions Empower (by Hitachi Solutions America, Ltd.)
+  - Hitachi Solutions Engage Solutions for Financial Services & Insurance (by Hitachi Solutions America, Ltd.)
+  - Hitachi Solutions Engage for Health Plan and Provider Experiences (by Hitachi Solutions America, Ltd.)
+  - Hitachi Solutions Modern Data and Analytics Platform Assessment for Financial Services (by Hitachi Solutions America, Ltd.)
+  - Hitachi Solutions Proactive Security: Cyber Threat Defense 2-Week POC (by Hitachi Solutions America, Ltd.)
+  - Honeywell Flight Efficiency (by Honeywell)
+  - Honeywell Forge Performance+ for Industrials | Production Intelligence (by Honeywell)
+  - Honeywell Forge Sustainability+ for Buildings | Carbon and Energy Management (by Honeywell)
+  - Honeywell Forge Sustainability+ for Industrials | Emissions Management (by Honeywell)
+  - Honeywell Forge for Industrials | Asset Performance Management (by Honeywell)
+  - Honeywell Process Digital Twin (by Honeywell)
+  - HxGN SDx2 (by Hexagon ALI)
+  - IBM Banking Operations GenAI Copilot ( KYC ) solution (by IBM Corporation)
+  - Icertis Contract Intelligence (ICI) (by Icertis Inc)
+  - Improve constituent experiences: Building connected communities  (by Avanade)
+  - Industry Business Solutions for Healthcare powered by Microsoft Fabric (Wipro Ltd-20240104084206) (by Wipro Ltd)
+  - Informatica Intelligent Data Management Cloud (IDMC) (by Informatica)
+  - Infrastructure Modernization Assessment (by TTEC Digital)
+  - Insight Connected Platform (by Insight)
+  - Insight Lens Accelerators (by Insight)
+  - Insight Lens for Gen AI Accelerator: 2 weeks (Insight-20231206121450) (by Insight)
+  - Insight Lens™ Fast Start: 3 week Proof of Concept (Insight-20231130090610) (by Insight)
+  - Insight Lens™ Fast Start: 3 week Proof of Concept (Insight-20231212093202) (by Insight)
+  - InsurHub Analytics Accelerator (by BDO Canada)
+  - Integrated Revenue Cycle Management Systems (by Striim)
+  - Intelligent Employee Experience (PwC-20240112070250) (by PwC)
+  - Intelligent Insights for Manufacturing on DDP (Wipro Ltd-20240104084206) (by Wipro Ltd)
+  - Inventory.ai (by Valorem Reply)
+  - Invoke Data Risk Assessment (by Invoke)
+  - Keyfactor (by Keyfactor)
+  - KnowledgeFusion Solution  (by WinWire )
+  - Kyndryl (by Kyndryl)
+  - Kyndryl Anti-Money Laundering Platform (by Kyndryl)
+  - Kyndryl Frontline Worker Workshop (by Kyndryl)
+  - Lambent Spaces (by Lambent Spaces)
+  - Life Science Essentials (by RSM US LLP)
+  - Life Sciences Catalyst: 1-Day Workshop (by RSM US LLP)
+  - Life Sciences Catalyst: 2-Week Workshop (by RSM US LLP)
+  - Life Sciences Revenue Contract Management (by RSM US LLP)
+  - Lightbeam Health Solutions (by Lightbeam Health Solutions)
+  - LoyaltyOne Customer Loyalty Management Solution (Cognizant-20231205092345) (by Cognizant)
+  - M365 Copilot Security Readiness (by Slalom Consulting)
+  - MCA Connect Inspire Platform™ (by MCA Connect)
+  - MK.IO (by MediaKind)
+  - Manage Compliance Obligations & Risks with Microsoft Purview (by BDO Canada)
+  - Managed Cyber Risk Reduction (MCRR) (by Critical Start)
+  - Manufacturing & Distribution Essentials (by RSM US LLP)
+  - MazikCare Care Path (by Quisitive)
+  - MazikCare Copilot (by Quisitive)
+  - Mentoring Service (Mobile Mentor-20240429081248) (by Mobile Mentor)
+  - Merge Imaging Suite (by Merge by Merative)
+  - Microsoft 365 Copilot Enterprise Deployment & Academy for Oil, Gas, & Energy (by Cyclotron, Inc.)
+  - Mobile Mentor (by Mobile Mentor)
+  - Mobile Mentor Mentoring Service (by Mobile Mentor)
+  - Mobile Mentor-20240319104911 (by Mobile Mentor)
+  - NEXUS for Banking (by EY)
+  - NEXUS for Insurance (by EY)
+  - NICE CXone (by NICE)
+  - NICE CXone (by NICE CXone)
+  - NICE CXone (NICE-20240419022414) (by NICE)
+  - NICE-20240419022414 (by NICE)
+  - Nasuni on Azure for Manufacturing (by Nasuni)
+  - Nerdio Manager for Enterprise (by Nerdio)
+  - Nerdio Manager for Enterprise  (by Nerdio)
+  - Netrix Global (by Netrix Global)
+  - Netrix Global Copilot for Microsoft 365 Workshop (by Netrix Global)
+  - Netwoven Fabric Adoption: 2-Hr Briefing (Netwoven -20240110040828) (by Netwoven )
+  - Neudesic Care Management Platform (by Neudesic)
+  - Neudesic Document Intelligence Platform (DIP) (by Neudesic)
+  - Neudesic's Rate Case Solution - Azure OpenAI (by Neudesic)
+  - Neudesic’s Data & AI Platform Accelerator for Microsoft Azure (by Neudesic)
+  - Neudesic’s Data Governance Accelerator (by Neudesic)
+  - Nuance Contact Center AI (by Nuance Communications )
+  - Nuventive Improvement Platform (by Nuventive LLC)
+  - OpenAI Jumpstart Workshop (by Neudesic)
+  - OpenBlue Enterprise Manager (Johnson Controls, Inc.-20231206084325) (by Johnson Controls, Inc.)
+  - Oxford Computer Group eduSOC (by Oxford Computer Group)
+  - Paige Prostate Suite  (by Paige.AI)
+  - Paige Prostate Suite and Paige Breast Suite (by Paige.AI)
+  - Palo Alto Networks (by Palo Alto Networks)
+  - Parsons iNET® (Parsons-20240112100451) (by Parsons)
+  - Patient Messaging Automation: Proof of Concept (by RSM US LLP)
+  - Peloton Computer Systems (by Peloton Computer Systems)
+  - Personalized Customer Experiences (by Striim)
+  - Personalized Patient Care (by Striim)
+  - Personetics Personalized Engagement Platform (by Personetics)
+  - Plex Smart Manufacturing Platform from Rockwell Automation (Rockwell Automation-20231130094931) (by Rockwell Automation)
+  - PointClickCare (by PointClickCare)
+  - Predictive Maintenance for Energy Infrastructure (by Striim)
+  - Presidio (by Presidio)
+  - Private 5G Vision AI for Worker Health and Safety (by Cognizant Technology Solutions)
+  - Production Variance Analysis with Copilot (by RSM US LLP)
+  - Production Yield Optimization (PYO) with Autonomous AI (Fractal-20240429092327) (by Fractal)
+  - Profisee Master Data Management (MDM) (by Profisee)
+  - Property Tax Solution (by RSM US LLP)
+  - Protiviti (by Protiviti)
+  - Public Finance Manager (by EY)
+  - PwC (by PwC)
+  - PwC Cloud for Healthcare (by PwC)
+  - PwC Digital Manufacturing (PwC-20240102103640) (by PwC)
+  - PwC Digital Relationship Management Solution (by PwC)
+  - PwC Factory Intelligence (PwC-20240112070250) (by PwC)
+  - PwC Infinite Financial Solutions (by PwC)
+  - PwC Total Professional Effort (TPE) (by PwC)
+  - Quality Control and Defect Detection (by Striim)
+  - RFP & Grant AI Writing Assistant (by RSM US LLP)
+  - RSM Advanced Retail Store Allocation & Model Based Replenishment  (by RSM)
+  - RSM Copilot for Service (by RSM US LLP)
+  - RSM D2C Advanced Contact Center  (by RSM)
+  - RSM ProShip Connector  (by RSM)
+  - RSM Retail - Subscription and Curated Club (by RSM)
+  - RSM Retail Advanced Product Information Management  (by RSM)
+  - RSM Retail Advanced Purchasing  (by RSM)
+  - RSM Retail Ecommerce Integration (by RSM)
+  - RSM Retail Manhattan WMS Integration  (by RSM)
+  - RSM Retail Order Inquiries with Copilot  (by RSM)
+  - RSM Retail Rebate and Scanback Management  (by RSM)
+  - RSM Retail Special Order Raincheck Management  (by RSM)
+  - RSM Retail WMS Integration  (by RSM)
+  - RSM ServiceNow Document Integration (by RSM US LLP)
+  - Real-Time AI Insights for Retail Growth (by Confluent)
+  - Real-Time Fraud Detection (by Striim)
+  - Real-Time Inventory Management (by Striim)
+  - Recording Insights (by ASC Technologies AG)
+  - RecruitPro X (by PrenticeWorx)
+  - Red Canary MXDR for Microsoft (Red Canary-20231206122525) (by Red Canary)
+  - Red Canary Managed Detection and Response (MDR) (by Red Canary)
+  - Reporting Platform Modernization Assessment (by TTEC Digital)
+  - Rescale - Full-Stack Cloud HPC Platform on Azure (Rescale-20231206081733) (by Rescale)
+  - Retail & Consumer Goods Catalyst: 1-Day Workshop  (by RSM)
+  - Retail & Consumer Goods Catalyst: 2-Week Workshop (by RSM)
+  - Retail Commerce: 4-Week Implementation  (by RSM)
+  - Revenue Cycle Automation Quick Start (by RSM US LLP)
+  - Risk Management (by Striim)
+  - Rubrik (by Rubrik.com)
+  - Rubrik Security Cloud (by Rubrik.com)
+  - SAS for Student Insights (by SAS)
+  - SAS® Model Risk Management (by SAS Institute Inc.)
+  - SOPHiA DDM™ Platform  (by SOPHiA GENETICS)
+  - Sectra One Cloud (by Sectra Imaging IT Solutions AB)
+  - Seeq Industrial Analytics Platform Suite (Seeq-20231215010242) (by Seeq)
+  - Seismic Enablement Cloud for Financial Services (by Seismic)
+  - ServiceNow on Azure (ServiceNow-20240112102526) (by ServiceNow)
+  - Shift Technology (by Shift Technology)
+  - Sitecore Content Hub DAM (Sitecore-20231213082350) (by Sitecore)
+  - SmartMine Analytics Accelerator (by BDO Canada)
+  - Splunk on Azure for the Retail Industry (by Splunk, a Cisco company)
+  - Spyglass Fabric Solution in 30 Days for Education (by Spyglass MTG)
+  - Spyglass Microsoft Fabric 1:1 Workshop (by Spyglass MTG)
+  - StarRez-20240130052344 (by StarRez)
+  - Sunrise 365® Supply Chain and Retail (by Sunrise Technologies, Inc)
+  - Supply Chain Optimization (by Striim)
+  - Supply Chain Planning (by RSM US LLP)
+  - Supporting Citizen Engagement with Responsive, Virtual Experiences (311) (by RSM US LLP)
+  - TCS (by TCS)
+  - TCS Digital Manufacturing Platform (TCS-20231205092914) (by TCS)
+  - TCS PLM on Cloud (Tata Consultancy Services-20231025052302) (by Tata Consultancy Services)
+  - TTEC Digital Solution for Customer Insights for Financial Services: 4-Wk Workshop (by TTEC Digital)
+  - Tanium Autonomous Endpoint Management (by Tanium)
+  - Tata Consultancy Services Limited-20231129112207 (by Tata Consultancy Services Limited)
+  - Tata Consultancy Services TCS BaNCS (by Tata Consultancy Services)
+  - Teladoc (by Teladoc)
+  - Teradata AI Unlimited - Public Preview with Financial Services Industry Data Model (by Teradata)
+  - Terawe Corporation ManageX (by Terawe Corporation)
+  - Terawe Corporation-20240306043450 (by Terawe Corporation)
+  - Territorium (by Territorium)
+  - Theta Lake (by Theta Lake)
+  - TrialRun (Fractal AI-20231214103905) (by Fractal AI)
+  - TrialRun (Fractal-20240429092641) (by Fractal)
+  - Truveta (by Truveta)
+  - Unified Customer Intelligence (Wipro Ltd-20240104084206) (by Wipro Ltd)
+  - Utility 360 (Cognizant Technology Solutions-20240110090453) (by Cognizant Technology Solutions)
+  - Vendor Management Analysis with Copilot (by RSM US LLP)
+  - Willow (by Willow)
+  - Windchill+ PLM for Multi-Enterprise Collaboration (PTC-20231130092100) (by PTC)
+  - Wipro Endless Aisle (Wipro Ltd-20240110094807) (by Wipro Ltd)
+  - Wipro Intelligent Volume Optimization and Risk-management (IVOR) (by Wipro Ltd)
+  - Wipro's Smart i-Building (Wipro Ltd-20240104084206) (by Wipro Ltd)
+  - Wolters Kluwer (by Wolters Kluwer)
+  - Workforce Optimizations (by Striim)
+  - X·CELERATE Insights (by Xoriant)
+  - Zafin (by Zafin)
+  - Zscaler Zero Trust Exchange (by Zscaler)
+  - eGroup | Enabling Technologies Copilot for Microsoft 365 Launch Protocols (by eGroup | Enabling Technologies)
+  - fsi360 (by HSO)
+  - greymatter Student Lifecycle CRM by Frequency Foundry (by greymatter Student Lifecycle CRM by Frequency Foundry)
+  - o9 Integrated Business Planning (o9 Solutions-20240103091437) (by o9 Solutions)
+  - retail360 (by HSO)
+  - tutch - powering smarter stores with technology (Tutch USA -20231227023118) (by Tutch USA )
+
+4. SOLUTIONS BY INDUSTRY
+--------------------------------------------------------------------------------
+   : 2906 documents
+  ": 2140 documents
+  &: 365 documents
+  ,: 554 documents
+  -: 57 documents
+  A: 70 documents
+  B: 31 documents
+  C: 269 documents
+  D: 99 documents
+  E: 405 documents
+  F: 184 documents
+  G: 194 documents
+  H: 135 documents
+  I: 249 documents
+  J: 3 documents
+  L: 146 documents
+  M: 348 documents
+  N: 31 documents
+  O: 217 documents
+  P: 103 documents
+  R: 254 documents
+  S: 362 documents
+  T: 64 documents
+  U: 27 documents
+  V: 27 documents
+  W: 35 documents
+  Y: 3 documents
+  Z: 3 documents
+  [: 535 documents
+  ]: 535 documents
+  a: 2065 documents
+  b: 143 documents
+  c: 1329 documents
+  d: 511 documents
+  e: 3081 documents
+  f: 453 documents
+  g: 505 documents
+  h: 397 documents
+  i: 2353 documents
+  k: 137 documents
+  l: 899 documents
+  m: 532 documents
+  n: 2506 documents
+  o: 1360 documents
+  p: 485 documents
+  r: 1607 documents
+  s: 1098 documents
+  t: 1655 documents
+  u: 756 documents
+  v: 291 documents
+  w: 118 documents
+  x: 113 documents
+  y: 238 documents
+  z: 112 documents
+   : 38 documents
+
+5. TEST SEARCH - 'education'
+--------------------------------------------------------------------------------
+
+  Result 1:
+    Solution: Anthology Engage (Anthology-20240201081550)
+    Partner: Anthology
+    Industries: ["Education","Institutional Innovation"]
+
+  Result 2:
+    Solution: Anthology Student
+    Partner: Anthology
+    Industries: ["Education","Institutional Innovation"]
+
+  Result 3:
+    Solution: Anthology Finance and HCM
+    Partner: Anthology
+    Industries: ["Education","Institutional Innovation"]
+
+6. TEST VECTOR SEARCH - 'AI solutions for healthcare'
+--------------------------------------------------------------------------------
+
+================================================================================
+Verification Complete!
+================================================================================

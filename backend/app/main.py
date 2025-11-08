@@ -2,10 +2,11 @@
 Main FastAPI application for Industry Solutions Chat API
 """
 import logging
+import json
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 import uuid
 
 from app.config import settings
@@ -182,6 +183,101 @@ async def chat(request: ChatRequest):
         
     except Exception as e:
         logger.error(f"Error processing chat request: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error processing request: {str(e)}"
+        )
+
+
+@app.post("/api/chat/stream")
+async def chat_stream(request: ChatRequest):
+    """
+    Streaming chat endpoint
+    Implements RAG pattern with Server-Sent Events (SSE) streaming
+    """
+    try:
+        # Get or create session
+        session_id = request.session_id or str(uuid.uuid4())
+        
+        # Ensure session exists
+        await cosmos_service.create_session(session_id)
+        
+        # Search for relevant solutions
+        logger.info(f"Searching for: {request.message[:50]}...")
+        citations = await search_service.semantic_hybrid_search(
+            query=request.message,
+            filters=request.filters
+        )
+        
+        # Retrieve chat history for context
+        chat_history = await cosmos_service.get_session_history(session_id)
+        
+        # Store user message
+        await cosmos_service.add_message(
+            session_id=session_id,
+            role=MessageRole.USER,
+            content=request.message
+        )
+        
+        async def generate_stream():
+            """Generator function for SSE streaming"""
+            try:
+                # Send session info and citations first
+                yield f"data: {json.dumps({'type': 'session', 'session_id': session_id})}\\n\\n"
+                yield f"data: {json.dumps({'type': 'citations', 'citations': [c.model_dump() for c in citations]})}\\n\\n"
+                
+                # Stream the response
+                full_response = ""
+                async for chunk in openai_service.generate_response_stream(
+                    user_message=request.message,
+                    context=citations,
+                    chat_history=chat_history
+                ):
+                    full_response += chunk
+                    yield f"data: {json.dumps({'type': 'content', 'content': chunk})}\n\n"
+                
+                # Generate follow-up questions
+                logger.info("Generating follow-up questions...")
+                follow_up_questions = await openai_service.generate_follow_up_questions(
+                    user_query=request.message,
+                    assistant_response=full_response,
+                    citations=citations
+                )
+                
+                # Store assistant message with citations and follow-up questions
+                message_id = await cosmos_service.add_message(
+                    session_id=session_id,
+                    role=MessageRole.ASSISTANT,
+                    content=full_response,
+                    citations=[citation.model_dump() for citation in citations],
+                    follow_up_questions=follow_up_questions
+                )
+                
+                # Send follow-up questions
+                yield f"data: {json.dumps({'type': 'follow_up', 'questions': follow_up_questions})}\n\n"
+                
+                # Send message ID
+                yield f"data: {json.dumps({'type': 'message_id', 'message_id': message_id})}\n\n"
+                
+                # Send done signal
+                yield f"data: {json.dumps({'type': 'done'})}\n\n"
+                
+            except Exception as e:
+                logger.error(f"Error in streaming: {e}")
+                yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
+        
+        return StreamingResponse(
+            generate_stream(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error processing streaming chat request: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing request: {str(e)}"

@@ -7,6 +7,7 @@ import requests
 import uuid
 import re
 import os
+import json
 from typing import Optional
 
 
@@ -150,6 +151,7 @@ class ChatClient:
         # Use environment variable if available, otherwise default to localhost
         self.base_url = base_url or os.getenv("BACKEND_API_URL", "http://localhost:8000")
         self.chat_endpoint = f"{self.base_url}/api/chat"
+        self.chat_stream_endpoint = f"{self.base_url}/api/chat/stream"
         self.health_endpoint = f"{self.base_url}/api/health"
         self.history_endpoint = f"{self.base_url}/api/chat/history"
         self.summary_endpoint = f"{self.base_url}/api/chat/summary"
@@ -163,8 +165,49 @@ class ChatClient:
         except requests.exceptions.RequestException:
             return False
     
+    def send_message_stream(self, message: str, session_id: str):
+        """Send a message and stream the response"""
+        try:
+            payload = {
+                "message": message,
+                "session_id": session_id
+            }
+            
+            response = requests.post(
+                self.chat_stream_endpoint,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                stream=True,
+                timeout=60
+            )
+            
+            if response.status_code == 200:
+                # Parse SSE stream
+                for line in response.iter_lines():
+                    if line:
+                        line = line.decode('utf-8').strip()
+                        if line.startswith('data: '):
+                            try:
+                                json_str = line[6:].strip()  # Remove 'data: ' prefix and whitespace
+                                if json_str:  # Only parse non-empty strings
+                                    data = json.loads(json_str)
+                                    yield data
+                            except json.JSONDecodeError as e:
+                                # Skip malformed JSON lines
+                                continue
+            else:
+                st.error(f"API returned status code {response.status_code}")
+                return None
+                
+        except requests.exceptions.Timeout:
+            st.error("Request timed out. The backend may be processing a complex query.")
+            return None
+        except requests.exceptions.RequestException as e:
+            st.error(f"Failed to connect to API: {str(e)}")
+            return None
+    
     def send_message(self, message: str, session_id: str) -> Optional[dict]:
-        """Send a message to the chat API"""
+        """Send a message to the chat API (non-streaming fallback)"""
         try:
             payload = {
                 "message": message,
@@ -542,22 +585,81 @@ def main():
             'content': user_input
         })
         
-        # Show thinking spinner
+        # Create placeholder for streaming response
         with st.spinner("🔍 Searching for solutions..."):
             client = ChatClient()
-            result = client.send_message(user_input, st.session_state.session_id)
+            
+            # Create empty response container
+            response_data = {
+                'session_id': None,
+                'citations': [],
+                'content': '',
+                'follow_up_questions': []
+            }
+            
+            # Create a placeholder for the streaming response
+            message_placeholder = st.empty()
+            
+            # Stream the response
+            try:
+                for event in client.send_message_stream(user_input, st.session_state.session_id):
+                    if event is None:
+                        break
+                    
+                    event_type = event.get('type')
+                    
+                    if event_type == 'session':
+                        response_data['session_id'] = event.get('session_id')
+                        st.session_state.session_id = response_data['session_id']
+                    
+                    elif event_type == 'citations':
+                        response_data['citations'] = event.get('citations', [])
+                    
+                    elif event_type == 'content':
+                        # Append content chunk
+                        content_chunk = event.get('content', '')
+                        if content_chunk:  # Only update if we have content
+                            response_data['content'] += content_chunk
+                            # Update the placeholder with current content
+                            message_placeholder.markdown(f"**Assistant:** {response_data['content']}▌")
+                    
+                    elif event_type == 'follow_up':
+                        response_data['follow_up_questions'] = event.get('questions', [])
+                    
+                    elif event_type == 'message_id':
+                        # Store message ID if provided
+                        response_data['message_id'] = event.get('message_id')
+                    
+                    elif event_type == 'done':
+                        # Remove cursor and finalize
+                        if response_data['content']:
+                            message_placeholder.markdown(f"**Assistant:** {response_data['content']}")
+                        break
+                    
+                    elif event_type == 'error':
+                        error_msg = event.get('error', 'Unknown error occurred')
+                        st.error(f"Error: {error_msg}")
+                        break
+            except Exception as e:
+                st.error(f"Streaming error: {str(e)}")
+                # Fall back to showing whatever content we received
+                if response_data['content']:
+                    message_placeholder.markdown(f"**Assistant:** {response_data['content']}")
         
-        if result:
-            # Add assistant response to history with follow-up questions
+        # Only add to history and rerun if we got content
+        if response_data.get('content'):
+            # Add assistant response to history
             st.session_state.messages.append({
                 'role': 'assistant',
-                'content': result.get('response', ''),
-                'citations': result.get('citations', []),
-                'follow_up_questions': result.get('follow_up_questions', [])
+                'content': response_data['content'],
+                'citations': response_data.get('citations', []),
+                'follow_up_questions': response_data.get('follow_up_questions', [])
             })
-        
-        # Rerun to display new messages
-        st.rerun()
+            # Rerun to display new messages
+            st.rerun()
+        else:
+            # No content received - show error
+            st.error("No response received from the server. Please try again.")
 
 
 if __name__ == "__main__":

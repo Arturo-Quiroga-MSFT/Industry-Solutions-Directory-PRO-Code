@@ -132,10 +132,12 @@ class OpenAIService:
             # Stream the response
             full_response = ""
             for chunk in stream:
-                if chunk.choices[0].delta.content is not None:
-                    content = chunk.choices[0].delta.content
-                    full_response += content
-                    yield content
+                # Check if choices exist and has content
+                if chunk.choices and len(chunk.choices) > 0:
+                    if chunk.choices[0].delta.content is not None:
+                        content = chunk.choices[0].delta.content
+                        full_response += content
+                        yield content
             
             logger.info(f"Streamed response with {len(full_response)} characters")
             
