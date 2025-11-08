@@ -84,6 +84,65 @@ class OpenAIService:
             logger.error(f"Error generating response: {e}")
             raise
     
+    async def generate_response_stream(
+        self,
+        user_message: str,
+        context: List[Citation],
+        chat_history: Optional[List[ChatMessage]] = None
+    ):
+        """
+        Generate a streaming response using RAG pattern
+        
+        Args:
+            user_message: User's current message
+            context: Retrieved context from search (citations)
+            chat_history: Previous conversation messages
+            
+        Yields:
+            Chunks of AI-generated response
+        """
+        try:
+            # Build the system prompt with RAG context
+            system_prompt = self._build_system_prompt(context)
+            
+            # Build messages list
+            messages = [{"role": "system", "content": system_prompt}]
+            
+            # Add chat history if available (limit to max_history_messages)
+            if chat_history:
+                recent_history = chat_history[-(settings.max_history_messages * 2):]
+                for msg in recent_history:
+                    if msg.role == MessageRole.USER:
+                        messages.append({"role": "user", "content": msg.content})
+                    elif msg.role == MessageRole.ASSISTANT:
+                        messages.append({"role": "assistant", "content": msg.content})
+            
+            # Add current user message
+            messages.append({"role": "user", "content": user_message})
+            
+            # Generate streaming response
+            stream = self.client.chat.completions.create(
+                model=self.chat_model,
+                messages=messages,
+                temperature=settings.temperature,
+                top_p=settings.top_p,
+                stream=True
+            )
+            
+            # Stream the response
+            full_response = ""
+            for chunk in stream:
+                if chunk.choices[0].delta.content is not None:
+                    content = chunk.choices[0].delta.content
+                    full_response += content
+                    yield content
+            
+            logger.info(f"Streamed response with {len(full_response)} characters")
+            
+        except Exception as e:
+            logger.error(f"Error generating streaming response: {e}")
+            raise
+    
     def _build_system_prompt(self, context: List[Citation]) -> str:
         """
         Build system prompt with RAG context

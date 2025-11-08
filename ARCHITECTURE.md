@@ -89,17 +89,19 @@ Based on the discovery meeting with Will Casavan:
 **Technology**: Python 3.11+, FastAPI, Azure SDK
 **Key Dependencies**:
 - `fastapi` - Web framework
+- `httpx` - HTTP client for Azure AI Search REST API calls
 - `azure-cosmos` - Cosmos DB integration
-- `azure-search-documents` - Azure AI Search
-- `openai` or `azure-openai` - LLM integration
-- `langchain` or `semantic-kernel` - RAG orchestration (optional)
+- `azure-identity` - Azure authentication (DefaultAzureCredential)
+- `azure-ai-inference` - Azure OpenAI chat completions
 - `pydantic` - Data validation
+
+**Architecture Decision**: Uses **direct REST API calls** to Azure AI Search instead of Python SDK (`azure-search-documents`) due to better support for integrated vectorization features. API version 2024-07-01 is explicitly specified.
 
 **Core Endpoints**:
 ```python
 POST /api/chat
-  Request: { "message": str, "sessionId": str, "filters": {...} }
-  Response: { "response": str, "citations": [...], "sessionId": str }
+  Request: { "message": str, "conversation_id": str, "filters": {...} }
+  Response: { "response": str, "citations": [...], "session_id": str }
 
 GET /api/chat/history/{sessionId}
   Response: { "messages": [...], "sessionId": str }
@@ -113,6 +115,15 @@ GET /api/health
 
 #### 3. Azure AI Search: Vector & Hybrid Search
 **Purpose**: Store and retrieve partner solution data
+**Index Name**: `partner-solutions-integrated` (535 documents)
+**Vector Configuration**:
+- **Integrated Vectorization**: Automatic query vectorization using Azure OpenAI vectorizer
+- **Vectorizer**: `openai-vectorizer`
+  - Deployment: `text-embedding-3-large`
+  - Dimensions: 3072
+  - Resource: Azure OpenAI service with managed identity authentication
+- **Vector Profile**: `integrated-vector-profile`
+
 **Index Schema**:
 ```json
 {
@@ -121,10 +132,10 @@ GET /api/health
     { "name": "solution_name", "type": "Edm.String", "searchable": true },
     { "name": "partner_name", "type": "Edm.String", "searchable": true, "facetable": true },
     { "name": "description", "type": "Edm.String", "searchable": true },
-    { "name": "industries", "type": "Collection(Edm.String)", "facetable": true },
-    { "name": "technologies", "type": "Collection(Edm.String)", "facetable": true },
+    { "name": "industries", "type": "Edm.String", "searchable": true, "filterable": true },
+    { "name": "technologies", "type": "Edm.String", "searchable": true, "filterable": true },
     { "name": "solution_url", "type": "Edm.String" },
-    { "name": "content_vector", "type": "Collection(Edm.Single)", "dimensions": 1536, "vectorSearchProfile": "vector-profile" },
+    { "name": "content_vector", "type": "Collection(Edm.Single)", "dimensions": 3072, "vectorSearchProfile": "integrated-vector-profile" },
     { "name": "chunk_text", "type": "Edm.String" },
     { "name": "metadata", "type": "Edm.String" }
   ]
@@ -133,9 +144,10 @@ GET /api/health
 
 **Search Strategy**:
 - **Hybrid Search**: Combine vector search (semantic) with keyword search (BM25)
-- **Semantic Ranker**: Re-rank results for better relevance
-- **Filters**: Apply industry/technology filters as needed
-- **Top K**: Return top 5-10 results for RAG context
+- **Integrated Vectorization**: User queries are automatically vectorized by Azure Search using the configured vectorizer
+- **REST API Integration**: Direct REST API calls with `vectorQueries[].kind = "text"` for automatic vectorization
+- **Filters**: Apply industry/technology filters using OData syntax (e.g., `search.ismatch('value', 'fieldname')`)
+- **Top K**: Return top 3-5 results for RAG context
 
 #### 4. Azure OpenAI: LLM & Embeddings
 **Models**:
@@ -210,7 +222,41 @@ Instructions:
 
 ## RAG Pattern Implementation
 
-### Classic RAG Flow
+### Modern RAG with Integrated Vectorization (Current Implementation)
+1. **User Input**: User asks "What partners offer healthcare AI solutions?"
+2. **REST API Request**: Backend sends search request to Azure AI Search with:
+   ```json
+   {
+     "search": "healthcare AI solutions",
+     "vectorQueries": [{
+       "kind": "text",
+       "text": "healthcare AI solutions",
+       "fields": "content_vector",
+       "k": 3
+     }]
+   }
+   ```
+3. **Automatic Vectorization**: Azure Search service automatically:
+   - Vectorizes the query text using the configured vectorizer (text-embedding-3-large)
+   - No client-side embedding generation required
+   - Performs hybrid search (vector + keyword)
+4. **Apply Filters**: If specified, apply OData filters (e.g., `search.ismatch('Healthcare', 'industries')`)
+5. **Retrieve Context**: Get top 3-5 relevant solution chunks with relevance scores
+6. **LLM Generation**: Send context + query to GPT-4.1-mini:
+   ```
+   Context: [Retrieved solutions with relevance scores]
+   Question: [User query]
+   Generate a helpful response with partner recommendations
+   ```
+7. **Response**: Return formatted response with citations to user
+
+**Benefits of Integrated Vectorization**:
+- ✅ Reduced latency (no separate embedding API call)
+- ✅ Lower cost (no client-side token usage for embeddings)
+- ✅ Simplified code (no OpenAI embedding service needed for queries)
+- ✅ Better reliability (fewer external API dependencies)
+
+### Classic RAG Flow (Legacy, Not Used)
 1. **User Input**: User asks "What partners offer healthcare AI solutions?"
 2. **Query Embedding**: Convert query to vector using Azure OpenAI embeddings
 3. **Hybrid Search**: Search Azure AI Search using:
@@ -236,17 +282,29 @@ Instructions:
 
 ### Azure Resources
 ```bicep
-- Resource Group
+- Resource Group: indsolse-dev-rg
 - Azure OpenAI Service
-  - gpt-4.1-mini deployment
-  - text-embedding-3-large deployment
+  - gpt-4.1-mini deployment (chat completions)
+  - text-embedding-3-large deployment (3072 dimensions, for indexing)
 - Azure AI Search (Standard tier)
-- Azure Cosmos DB for NoSQL (Serverless or Provisioned)
-- Azure App Service / Container Apps (for API)
-- Azure Key Vault (for secrets)
+  - Index: partner-solutions-integrated (535 documents)
+  - Integrated vectorization enabled
+- Azure Cosmos DB for NoSQL (Serverless)
+  - Database: industry-solutions-db
+  - Container: chat-sessions
+- Azure Container Apps (for API and frontend)
+  - Backend: indsolse-dev-backend-v2-vnet (v2.8)
+  - Frontend: indsolse-dev-frontend-vnet
+  - Container Registry: indsolsedevacr
+- Azure Virtual Network (VNet integration)
 - Azure Application Insights (monitoring)
-- Azure CDN (optional, for chat widget hosting)
 ```
+
+**Current Deployment**:
+- Region: Sweden Central
+- Environment: Development
+- Backend Version: v2.8 (REST API with integrated vectorization)
+- Frontend: Streamlit-based chat interface
 
 ### Deployment Strategy
 - Bicep templates in `/infra` directory
