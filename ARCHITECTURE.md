@@ -27,6 +27,139 @@ Based on the discovery meeting with Will Casavan:
 
 ### High-Level Design
 
+```mermaid
+graph TB
+    subgraph "External Website"
+        A[Industry Solutions Directory<br/>microsoftindustryinsights.com]
+        B[Embedded Chat Widget<br/>JavaScript]
+    end
+    
+    subgraph "Azure - Sweden Central"
+        subgraph "Container Apps"
+            C[FastAPI Backend<br/>Python 3.13]
+            C1[/api/chat/stream]
+            C2[/api/health]
+            C3[/api/history]
+        end
+        
+        subgraph "AI Services"
+            D[Azure OpenAI<br/>GPT-4o-mini]
+            E[Azure OpenAI<br/>text-embedding-3-large]
+        end
+        
+        subgraph "Data Services"
+            F[Azure AI Search<br/>695 Solutions Indexed]
+            G[Azure Cosmos DB<br/>Conversation History]
+        end
+        
+        subgraph "Security"
+            H[VNet Integration]
+            I[Private Endpoints]
+            J[Managed Identity]
+        end
+    end
+    
+    subgraph "Data Source"
+        K[ISD Website API<br/>mssoldir-app-prd.azurewebsites.net]
+        L[Update Monitor<br/>Weekly Checks]
+    end
+    
+    A --> B
+    B -->|HTTPS| C
+    C --> C1
+    C --> C2
+    C --> C3
+    C -->|Chat Completion| D
+    C -->|Embeddings| E
+    C -->|Hybrid Search| F
+    C -->|Session Data| G
+    F -->|Vector Search| E
+    
+    L -->|Fetch Solutions| K
+    L -->|Update Index| F
+    
+    H -.->|Secure| C
+    I -.->|Secure| D
+    I -.->|Secure| E
+    I -.->|Secure| F
+    I -.->|Secure| G
+    J -.->|Authenticate| C
+    
+    style A fill:#0078d4,color:#fff
+    style B fill:#50e6ff,color:#000
+    style C fill:#00bcf2,color:#000
+    style D fill:#8cbd18,color:#000
+    style E fill:#8cbd18,color:#000
+    style F fill:#ffb900,color:#000
+    style G fill:#ff8c00,color:#000
+    style K fill:#e3008c,color:#fff
+```
+
+### RAG Pattern Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant W as Chat Widget
+    participant API as FastAPI Backend
+    participant AI as Azure OpenAI
+    participant Search as Azure AI Search
+    participant DB as Cosmos DB
+    
+    U->>W: Enter question
+    W->>API: POST /api/chat/stream
+    activate API
+    
+    API->>DB: Load conversation history
+    DB-->>API: Previous messages
+    
+    API->>AI: Generate search query
+    AI-->>API: Optimized query
+    
+    API->>Search: Hybrid search<br/>(vector + keyword)
+    activate Search
+    Search->>AI: Vectorize query
+    AI-->>Search: Query embedding
+    Search-->>API: Top 5 relevant solutions
+    deactivate Search
+    
+    API->>AI: Generate response<br/>(with context & history)
+    activate AI
+    AI-->>API: Stream response chunks
+    deactivate AI
+    
+    API->>DB: Save message & response
+    API-->>W: Stream response
+    deactivate API
+    W-->>U: Display response with citations
+```
+
+### Data Ingestion Flow
+
+```mermaid
+flowchart TD
+    A[ISD Website API] -->|getMenu| B[Fetch Industry Hierarchy]
+    B --> C[Extract Theme Slugs]
+    C --> D{For Each Theme}
+    D -->|GetThemeDetalsByViewId| E[Fetch Solutions]
+    E --> F[Parse Partner Names<br/>from Titles]
+    F --> G[Transform to Documents]
+    G --> H[Chunk Text Content]
+    H --> I[Azure AI Search Index]
+    I --> J[Integrated Vectorization]
+    J --> K[695 Solutions Ready]
+    
+    L[Update Monitor] -->|Weekly Check| A
+    L -->|Compare MD5 Hashes| I
+    L -->|New/Modified| D
+    
+    style A fill:#e3008c,color:#fff
+    style I fill:#ffb900,color:#000
+    style K fill:#8cbd18,color:#000
+    style L fill:#00bcf2,color:#000
+```
+
+**Text Representation:**
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Existing Website                              │

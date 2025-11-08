@@ -19,6 +19,41 @@ The Microsoft Industry Solutions Directory (ISD) is a catalog of partner solutio
 
 ### Hierarchical Structure
 
+```mermaid
+graph TD
+    A[Microsoft Industry Solutions Directory] --> B1[Industry: Education]
+    A --> B2[Industry: Healthcare]
+    A --> B3[Industry: Manufacturing]
+    A --> B4[Industry: Financial Services]
+    A --> B5[Other Industries...]
+    
+    B1 --> C1[Theme: Institutional Innovation]
+    B1 --> C2[Theme: Student Success]
+    B1 --> C3[Other Themes...]
+    
+    C1 --> D1[Solution Area: AI Business Solutions]
+    C1 --> D2[Solution Area: Cloud & AI Platforms]
+    C1 --> D3[Solution Area: Security]
+    
+    D1 --> E1[Partner Solution 1]
+    D1 --> E2[Partner Solution 2]
+    D1 --> E3[Partner Solution N...]
+    
+    C1 --> F[Spotlight Solutions]
+    F --> F1[Featured Solution 1]
+    F --> F2[Featured Solution 2]
+    
+    style A fill:#0078d4,color:#fff
+    style B1 fill:#50e6ff,color:#000
+    style B2 fill:#50e6ff,color:#000
+    style B3 fill:#50e6ff,color:#000
+    style C1 fill:#00bcf2,color:#000
+    style D1 fill:#00b7c3,color:#000
+    style E1 fill:#8cbd18,color:#000
+    style F fill:#ffb900,color:#000
+```
+
+**Text Representation:**
 ```
 Industries (e.g., Education, Healthcare, Manufacturing)
 ├── Sub-Industries / Themes (e.g., "Institutional Innovation")
@@ -51,7 +86,62 @@ Industries (e.g., Education, Healthcare, Manufacturing)
 
 ## API Endpoints
 
-### 1. Get Industry Menu
+### API Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant Client as Data Ingestion Script
+    participant Menu as /getMenu API
+    participant Theme as /GetThemeDetalsByViewId API
+    participant Data as Solution Data
+    
+    Client->>Menu: GET /api/Industry/getMenu
+    activate Menu
+    Menu-->>Client: Industry hierarchy with theme slugs
+    deactivate Menu
+    
+    Note over Client: Extract all theme slugs from response
+    
+    loop For each theme slug
+        Client->>Theme: GET /api/Industry/GetThemeDetalsByViewId?slug={slug}
+        activate Theme
+        Theme-->>Client: Theme details with solutions
+        deactivate Theme
+        
+        Note over Client: Extract partner solutions<br/>Parse partner from title<br/>("Solution by Partner")
+        
+        Client->>Data: Store solution data
+    end
+    
+    Note over Client,Data: Result: 695 solutions from 158 partners
+```
+
+### Two-Phase Data Extraction
+
+```mermaid
+flowchart LR
+    A[Start] --> B[Phase 1:<br/>Fetch Menu]
+    B --> C{Parse Industries<br/>& Themes}
+    C --> D[Extract Theme Slugs]
+    D --> E[Phase 2:<br/>Iterate Themes]
+    E --> F{For Each Slug}
+    F --> G[Fetch Theme Details]
+    G --> H[Extract Solutions]
+    H --> I[Parse Partner Name<br/>from Title]
+    I --> J{More Themes?}
+    J -->|Yes| F
+    J -->|No| K[Complete:<br/>695 Solutions]
+    
+    style B fill:#0078d4,color:#fff
+    style E fill:#0078d4,color:#fff
+    style K fill:#8cbd18,color:#000
+```
+
+---
+
+## API Endpoint Details
+
+### Endpoint 1: Get Industry Menu
 **Endpoint:** `/api/Industry/getMenu`  
 **Method:** GET  
 **Purpose:** Retrieve the complete industry hierarchy with themes
@@ -93,7 +183,7 @@ Industries (e.g., Education, Healthcare, Manufacturing)
 
 ---
 
-### 2. Get Theme Details by View ID
+### Endpoint 2: Get Theme Details by View ID
 **Endpoint:** `/api/Industry/GetThemeDetalsByViewId`  
 **Method:** GET  
 **Parameters:** `?slug={industryThemeSlug}`  
