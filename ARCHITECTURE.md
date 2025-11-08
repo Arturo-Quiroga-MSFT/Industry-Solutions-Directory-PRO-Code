@@ -37,9 +37,9 @@ graph TB
     subgraph "Azure - Sweden Central"
         subgraph "Container Apps"
             C[FastAPI Backend<br/>Python 3.13]
-            C1[/api/chat/stream]
-            C2[/api/health]
-            C3[/api/history]
+            C1["API: /api/chat/stream"]
+            C2["API: /api/health"]
+            C3["API: /api/history"]
         end
         
         subgraph "AI Services"
