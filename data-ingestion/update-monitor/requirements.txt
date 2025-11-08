@@ -1,0 +1,10 @@
+# Requirements for ISD Update Monitor Scripts
+# Most dependencies come from parent requirements.txt
+
+# Additional dependencies specific to update monitoring
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# Azure dependencies (shared with parent)
+# azure-search-documents>=11.4.0
+# azure-identity>=1.15.0

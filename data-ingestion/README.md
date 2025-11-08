@@ -24,6 +24,11 @@ data-ingestion/
 │   ├── 03_ingest_data.py
 │   └── 04_test_search.py
 │
+├── update-monitor/                # 🔍 ISD website update checker
+│   ├── README.md
+│   ├── check_for_updates.py       # Check for new/modified solutions
+│   └── fetch_current_solutions.py # Fetch current ISD solutions
+│
 ├── archive/                       # Historical/archived files
 │   ├── README.md
 │   ├── old-manual-ingestion/      # Old client-side vectorization approach
@@ -78,6 +83,29 @@ See [`integrated-vectorization/README.md`](integrated-vectorization/README.md) f
 - **Vectorization:** Azure OpenAI text-embedding-3-large (3072 dimensions)
 
 Run `python verify_index.py` to see current statistics.
+
+---
+
+## 🔍 Monitoring for Updates
+
+The `update-monitor/` directory contains scripts to check if the ISD website has new or updated partner solutions:
+
+```bash
+cd update-monitor
+
+# Check for new or modified solutions
+python check_for_updates.py
+
+# Fetch current solutions from ISD
+python fetch_current_solutions.py --output current_solutions.json
+```
+
+**Recommended schedule:** Weekly checks (e.g., every Monday morning)
+
+See [`update-monitor/README.md`](update-monitor/README.md) for:
+- Automation via cron, Azure Logic Apps, or GitHub Actions
+- Scheduling best practices
+- Output file formats
 
 ---
 

@@ -1,0 +1,26 @@
+# Update monitor output files
+last_check.json
+new_solutions.json
+modified_solutions.json
+removed_solutions.json
+current_solutions.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Environment
+.env
+.venv
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

@@ -1,0 +1,63 @@
+# Example GitHub Actions Workflow for Scheduled Update Checks
+# Place this in .github/workflows/check-isd-updates.yml to enable
+
+name: Check ISD Website Updates
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  check-updates:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          cd data-ingestion/update-monitor
+          pip install -r ../requirements.txt
+          pip install requests python-dotenv
+      
+      - name: Check for updates
+        env:
+          AZURE_SEARCH_SERVICE: ${{ secrets.AZURE_SEARCH_SERVICE }}
+          AZURE_SEARCH_KEY: ${{ secrets.AZURE_SEARCH_KEY }}
+        run: |
+          cd data-ingestion/update-monitor
+          python check_for_updates.py
+      
+      - name: Upload results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: update-check-results
+          path: |
+            data-ingestion/update-monitor/*.json
+      
+      - name: Send notification (optional)
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'ISD Update Check Failed',
+              body: 'The scheduled ISD website update check failed. Please review the workflow logs.'
+            })
+
+# Required secrets to configure in GitHub:
+# - AZURE_SEARCH_SERVICE: Your Azure AI Search service name
+# - AZURE_SEARCH_KEY: Your Azure AI Search admin key
