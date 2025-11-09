@@ -1,0 +1,27 @@
+# Azure Functions
+.python_packages/
+.venv/
+__pycache__/
+*.pyc
+.vscode/
+local.settings.json
+.funcignore
+
+# Python
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Outputs
+*.log
+__azurite_*
+__blobstorage__
+__queuestorage__
+
+# OS
+.DS_Store
+Thumbs.db

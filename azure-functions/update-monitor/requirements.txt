@@ -1,0 +1,10 @@
+# Azure Functions Core
+azure-functions>=1.18.0
+
+# Azure SDKs
+azure-search-documents>=11.4.0
+azure-core>=1.29.0
+azure-identity>=1.15.0
+
+# HTTP and utilities
+requests>=2.31.0
