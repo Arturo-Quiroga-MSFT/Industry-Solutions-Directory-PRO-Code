@@ -8,3 +8,7 @@ azure-identity>=1.15.0
 
 # HTTP and utilities
 requests>=2.31.0
+flask>=3.0.0
+
+# Email notifications
+sendgrid>=6.9.0
