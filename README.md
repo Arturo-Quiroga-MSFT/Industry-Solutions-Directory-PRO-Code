@@ -23,7 +23,7 @@ This solution enables natural language search and partner recommendations throug
 - 🔍 Intelligent search across 50+ industries
 - 📚 Citation cards with solution details and relevance scores
 
-**Live Demo:** [Try it here](https://indsolse-dev-frontend-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io)
+**Live Demo:** [Try it here](https://indsolse-dev-frontend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io)
 **API Endpoint:** https://indsolse-dev-backend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io
 **Current Version:** v2.8 (REST API with integrated vectorization)
 
