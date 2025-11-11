@@ -144,7 +144,7 @@ class SearchService:
     ) -> List[Citation]:
         """
         Perform semantic hybrid search with vector search using REST API
-        (Note: Semantic reranking requires additional Azure AI Search configuration)
+        Includes L2 semantic reranking for improved relevance
         
         Args:
             query: User's search query
@@ -157,13 +157,91 @@ class SearchService:
         top_k = top_k or settings.search_top_k
         
         try:
-            # For now, just use hybrid search (semantic config not set up)
-            # Fall back to regular hybrid search
-            logger.info("Using hybrid search (semantic ranking not configured)")
-            return await self.hybrid_search(query, filters, top_k)
+            # Build filter expression
+            filter_expr = self._build_filter_expression(filters)
+            
+            # Build REST API request body with semantic search + vector search
+            request_body = {
+                "search": query,
+                "vectorQueries": [
+                    {
+                        "kind": "text",
+                        "text": query,
+                        "fields": "content_vector",
+                        "k": top_k * 2
+                    }
+                ],
+                "queryType": "semantic",
+                "semanticConfiguration": "default",
+                "captions": "extractive",
+                "answers": "extractive|count-3",
+                "select": "id,solution_name,partner_name,description,industries,technologies,solution_url,chunk_text",
+                "top": top_k,
+                "count": True
+            }
+            
+            if filter_expr:
+                request_body["filter"] = filter_expr
+            
+            # Call Azure Search REST API
+            url = f"{self.endpoint}/indexes/{self.index_name}/docs/search?api-version={self.api_version}"
+            token = self._get_access_token()
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    url,
+                    json=request_body,
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "Content-Type": "application/json"
+                    },
+                    timeout=30.0
+                )
+                if not response.is_success:
+                    # Fall back to regular hybrid if semantic fails (e.g., not configured)
+                    logger.warning(f"Semantic search failed ({response.status_code}), falling back to hybrid")
+                    return await self.hybrid_search(query, filters, top_k)
+                
+                results = response.json()
+            
+            # Convert results to citations
+            citations = []
+            for result in results.get("value", []):
+                try:
+                    solution_name = result.get("solution_name", "Unknown")
+                    search_url = f"https://solutions.microsoftindustryinsights.com/?search={solution_name.replace(' ', '%20')}"
+                    
+                    # Use semantic caption if available, otherwise fall back to chunk_text/description
+                    description_text = ""
+                    captions = result.get("@search.captions")
+                    if captions and len(captions) > 0:
+                        description_text = captions[0].get("text", "")
+                    
+                    if not description_text:
+                        description_text = result.get("chunk_text") or result.get("description") or ""
+                    
+                    # Use reranker score if available, otherwise fall back to regular score
+                    score = result.get("@search.rerankerScore") or result.get("@search.score", 0.0)
+                    
+                    citation = Citation(
+                        solution_name=solution_name,
+                        partner_name=result.get("partner_name", "Unknown"),
+                        description=description_text,
+                        url=search_url,
+                        relevance_score=score
+                    )
+                    citations.append(citation)
+                except Exception as e:
+                    logger.warning(f"Error parsing search result: {e}")
+                    continue
+            
+            logger.info(f"Semantic hybrid search returned {len(citations)} results for query: {query[:50]}...")
+            return citations
+            
         except Exception as e:
             logger.error(f"Unexpected error during semantic search: {e}")
-            raise
+            # Fall back to regular hybrid search
+            return await self.hybrid_search(query, filters, top_k)
     
     def _build_filter_expression(self, filters: Optional[SearchFilter]) -> Optional[str]:
         """
