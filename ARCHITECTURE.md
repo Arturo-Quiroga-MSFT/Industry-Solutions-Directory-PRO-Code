@@ -43,7 +43,7 @@ graph TB
         end
         
         subgraph "AI Services"
-            D[Azure OpenAI<br/>GPT-4o-mini]
+            D[Azure OpenAI<br/>GPT-4.1-mini]
             E[Azure OpenAI<br/>text-embedding-3-large]
         end
         
