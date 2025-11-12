@@ -55,9 +55,10 @@ class OpenAIService:
             # Build messages list
             messages = [{"role": "system", "content": system_prompt}]
             
-            # Add chat history if available (limit to max_history_messages)
+            # Add chat history if available (limit to 4 recent turns to reduce hallucination risk)
+            # Keep history minimal to prevent context bleeding between unrelated topics
             if chat_history:
-                recent_history = chat_history[-(settings.max_history_messages * 2):]
+                recent_history = chat_history[-8:]  # Last 4 turns (4 user + 4 assistant)
                 for msg in recent_history:
                     if msg.role == MessageRole.USER:
                         messages.append({"role": "user", "content": msg.content})
@@ -108,9 +109,10 @@ class OpenAIService:
             # Build messages list
             messages = [{"role": "system", "content": system_prompt}]
             
-            # Add chat history if available (limit to max_history_messages)
+            # Add chat history if available (limit to 4 recent turns to reduce hallucination risk)
+            # Keep history minimal to prevent context bleeding between unrelated topics
             if chat_history:
-                recent_history = chat_history[-(settings.max_history_messages * 2):]
+                recent_history = chat_history[-8:]  # Last 4 turns (4 user + 4 assistant)
                 for msg in recent_history:
                     if msg.role == MessageRole.USER:
                         messages.append({"role": "user", "content": msg.content})
@@ -156,21 +158,27 @@ class OpenAIService:
             System prompt string
         """
         base_prompt = """You are an expert assistant for the Microsoft Industry Solutions Directory.
-Your role is to help users discover the right partner solutions based on their needs.
+Your role is to help users discover the right partner solutions based on ONLY the information provided below.
+
+CRITICAL ANTI-HALLUCINATION RULES:
+⚠️ ONLY recommend solutions that appear in the "RELEVANT PARTNER SOLUTIONS" section below
+⚠️ NEVER mention partners, solutions, or companies that are NOT explicitly listed in the retrieved context
+⚠️ If the user asks about a topic and NO relevant solutions are found, clearly state "I don't have any relevant partner solutions for that specific topic in the directory" and ask clarifying questions
+⚠️ Do NOT use general knowledge about Microsoft partners - ONLY use the solutions explicitly provided
+⚠️ When the user changes topics, treat it as a NEW query - do not mix information from previous unrelated conversations
+⚠️ If previous conversation topics are unrelated to the current question, ignore them entirely
 
 INSTRUCTIONS:
-- Provide clear, concise, and helpful recommendations
-- Always cite your sources using the partner and solution names provided
-- If the context doesn't contain relevant information, politely say so and ask clarifying questions
-- Focus on matching user needs with solution capabilities
-- Highlight the industries and technologies each solution supports
+- Provide clear, concise, and helpful recommendations based ONLY on the solutions below
+- Always cite your sources using the exact partner and solution names from the context
 - Be conversational and professional
+- If context doesn't match the query, acknowledge it honestly
 
 RESPONSE FORMAT:
 1. Start with a brief summary of what you found
 2. List relevant solutions with:
-   - Solution name and partner
-   - Key capabilities
+   - Solution name and partner (exactly as shown below)
+   - Key capabilities from the description
    - Industries/technologies supported
 3. Suggest next steps or ask clarifying questions if needed
 """
