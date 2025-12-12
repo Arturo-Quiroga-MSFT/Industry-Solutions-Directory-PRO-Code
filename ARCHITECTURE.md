@@ -16,8 +16,11 @@ Based on the discovery meeting with Will Casavan:
 - **Key Capabilities**:
   - Conversational search interface
   - Context-aware recommendations
-  - Multi-industry and technology filtering
+  - **Dual browsing support**: Industry-based AND Technology-based filtering
   - Partner matching based on solution requirements
+  - Support for both browsing patterns:
+    - **By Industry**: Defense, Education, Healthcare, Financial Services, etc.
+    - **By Technology**: AI Business Solutions, Cloud and AI Platforms, Security, etc.
 - **Constraints**:
   - Cost-effective solution
   - External website integration (not Microsoft-hosted)
@@ -279,12 +282,19 @@ GET /api/health
   ]
 }
 ```
-
+**Important Fields for Dual Browsing Support**:
+- **`industries`**: Supports industry-based queries (e.g., "Healthcare", "Education", "Financial Services")
+- **`technologies`**: Supports technology-based queries (e.g., "AI Business Solutions", "Cloud and AI Platforms", "Security")
+- Both fields are searchable and filterable, enabling users to browse by either dimension
 **Search Strategy**:
 - **Hybrid Search**: Combine vector search (semantic) with keyword search (BM25)
 - **Integrated Vectorization**: User queries are automatically vectorized by Azure Search using the configured vectorizer
 - **REST API Integration**: Direct REST API calls with `vectorQueries[].kind = "text"` for automatic vectorization
-- **Filters**: Apply industry/technology filters using OData syntax (e.g., `search.ismatch('value', 'fieldname')`)
+- **Dual Dimension Filtering**: Support both browsing patterns seamlessly
+  - **Industry Filters**: Apply filters like `search.ismatch('Healthcare', 'industries')`
+  - **Technology Filters**: Apply filters like `search.ismatch('AI Business Solutions', 'technologies')`
+  - **Combined Filters**: Users can search by both dimensions (e.g., "AI solutions for Healthcare")
+- **Intelligent Query Routing**: System automatically detects whether user is asking about industries or technologies
 - **Top K**: Return top 3-5 results for RAG context
 
 #### 4. Azure OpenAI: LLM & Embeddings

@@ -246,6 +246,7 @@ class SearchService:
     def _build_filter_expression(self, filters: Optional[SearchFilter]) -> Optional[str]:
         """
         Build OData filter expression from search filters
+        Supports both industry-based and technology-based filtering
         
         Args:
             filters: Search filters
@@ -259,6 +260,7 @@ class SearchService:
         filter_parts = []
         
         # Filter by industries (string field, not collection)
+        # Supports industry-based browsing (e.g., Healthcare, Education, Financial Services)
         if filters.industries:
             industry_filters = " or ".join([
                 f"search.ismatch('{industry}', 'industries')"
@@ -267,6 +269,7 @@ class SearchService:
             filter_parts.append(f"({industry_filters})")
         
         # Filter by technologies (string field, not collection)
+        # Supports technology-based browsing (e.g., AI Business Solutions, Cloud and AI Platforms, Security)
         if filters.technologies:
             tech_filters = " or ".join([
                 f"search.ismatch('{tech}', 'technologies')"

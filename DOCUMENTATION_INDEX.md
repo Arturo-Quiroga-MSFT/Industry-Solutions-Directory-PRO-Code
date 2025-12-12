@@ -91,7 +91,18 @@ The Industry Solutions Directory AI Chat Assistant is a pro-code solution that e
 
 ## Data and Analysis Documentation
 
-### 7. [docs/PARTNER_STATISTICS.md](docs/PARTNER_STATISTICS.md)
+### 7. [docs/DUAL_BROWSING_SUPPORT.md](docs/DUAL_BROWSING_SUPPORT.md)
+**Purpose:** Comprehensive guide on dual browsing support (Industry & Technology)  
+**Audience:** Product managers, developers, ISD team  
+**Key Contents:**
+- Industry-based vs. technology-based browsing patterns
+- Technical implementation details
+- Example user interactions
+- API usage examples
+- Testing scenarios
+- Benefits and key takeaways
+
+### 8. [docs/PARTNER_STATISTICS.md](docs/PARTNER_STATISTICS.md)
 **Purpose:** Statistical analysis of partner solutions in the index  
 **Audience:** Product managers, business analysts  
 **Key Contents:**
@@ -101,7 +112,7 @@ The Industry Solutions Directory AI Chat Assistant is a pro-code solution that e
 - Partner categorization
 - Business insights
 
-### 8. [data-ingestion/full_ingestion_summary.md](data-ingestion/full_ingestion_summary.md)
+### 9. [data-ingestion/full_ingestion_summary.md](data-ingestion/full_ingestion_summary.md)
 **Purpose:** Summary of data ingestion results  
 **Audience:** Data engineers, technical leads  
 **Key Contents:**
@@ -110,7 +121,7 @@ The Industry Solutions Directory AI Chat Assistant is a pro-code solution that e
 - Unique solution counts
 - Search functionality validation
 
-### 9. [data-ingestion/API_INVESTIGATION.md](data-ingestion/API_INVESTIGATION.md)
+### 10. [data-ingestion/API_INVESTIGATION.md](data-ingestion/API_INVESTIGATION.md)
 **Purpose:** Investigation of Industry Solutions Directory API  
 **Audience:** Developers, data engineers  
 **Key Contents:**
@@ -123,7 +134,7 @@ The Industry Solutions Directory AI Chat Assistant is a pro-code solution that e
 
 ## Cost and Business Documentation
 
-### 10. [docs/COST_ESTIMATION.md](docs/COST_ESTIMATION.md)
+### 11. [docs/COST_ESTIMATION.md](docs/COST_ESTIMATION.md)
 **Purpose:** Detailed cost analysis and comparison  
 **Audience:** Financial planners, decision makers  
 **Key Contents:**
@@ -133,7 +144,17 @@ The Industry Solutions Directory AI Chat Assistant is a pro-code solution that e
 - Traffic-based projections
 - ROI considerations
 
-### 11. [docs/WEBSITE_INTEGRATION_GUIDE.md](docs/WEBSITE_INTEGRATION_GUIDE.md)
+### 11. [docs/COST_ESTIMATION.md](docs/COST_ESTIMATION.md)
+**Purpose:** Detailed cost analysis and comparison  
+**Audience:** Financial planners, decision makers  
+**Key Contents:**
+- Pro-code solution monthly costs
+- Low-code alternative comparison
+- Cost optimization strategies
+- Traffic-based projections
+- ROI considerations
+
+### 12. [docs/WEBSITE_INTEGRATION_GUIDE.md](docs/WEBSITE_INTEGRATION_GUIDE.md)
 **Purpose:** Guide for integrating chat widget into existing website  
 **Audience:** Web developers, frontend engineers  
 **Key Contents:**
@@ -147,7 +168,7 @@ The Industry Solutions Directory AI Chat Assistant is a pro-code solution that e
 
 ## Technical Specifications
 
-### 12. [backend/AUTHENTICATION.md](backend/AUTHENTICATION.md)
+### 13. [backend/AUTHENTICATION.md](backend/AUTHENTICATION.md)
 **Purpose:** Authentication and authorization details  
 **Audience:** Security engineers, developers  
 **Key Contents:**
@@ -156,7 +177,7 @@ The Industry Solutions Directory AI Chat Assistant is a pro-code solution that e
 - RBAC permissions required
 - Passwordless authentication patterns
 
-### 13. [infra/README.md](infra/README.md)
+### 14. [infra/README.md](infra/README.md)
 **Purpose:** Infrastructure as Code documentation  
 **Audience:** Infrastructure engineers, DevOps  
 **Key Contents:**
@@ -169,7 +190,7 @@ The Industry Solutions Directory AI Chat Assistant is a pro-code solution that e
 
 ## Data Ingestion Documentation
 
-### 14. [data-ingestion/README.md](data-ingestion/README.md)
+### 15. [data-ingestion/README.md](data-ingestion/README.md)
 **Purpose:** Data ingestion pipeline documentation  
 **Audience:** Data engineers, developers  
 **Key Contents:**
@@ -178,7 +199,7 @@ The Industry Solutions Directory AI Chat Assistant is a pro-code solution that e
 - Index verification
 - Scheduling updates
 
-### 15. [data-ingestion/RELEVANCE_SCORE.md](data-ingestion/RELEVANCE_SCORE.md)
+### 16. [data-ingestion/RELEVANCE_SCORE.md](data-ingestion/RELEVANCE_SCORE.md)
 **Purpose:** Search relevance scoring methodology  
 **Audience:** Search engineers, data scientists  
 **Key Contents:**
@@ -191,7 +212,7 @@ The Industry Solutions Directory AI Chat Assistant is a pro-code solution that e
 
 ## Additional Documentation
 
-### 16. [discovery-meeting/summary-by-copilot.md](discovery-meeting/summary-by-copilot.md)
+### 17. [discovery-meeting/summary-by-copilot.md](discovery-meeting/summary-by-copilot.md)
 **Purpose:** Initial discovery meeting notes  
 **Audience:** Project team, stakeholders  
 **Key Contents:**
@@ -200,7 +221,16 @@ The Industry Solutions Directory AI Chat Assistant is a pro-code solution that e
 - Technical constraints
 - Success criteria
 
-### 17. [AQ_SUMMARY.md](AQ_SUMMARY.md)
+### 17. [discovery-meeting/summary-by-copilot.md](discovery-meeting/summary-by-copilot.md)
+**Purpose:** Initial discovery meeting notes  
+**Audience:** Project team, stakeholders  
+**Key Contents:**
+- Business requirements
+- Initial architecture decisions
+- Technical constraints
+- Success criteria
+
+### 18. [AQ_SUMMARY.md](AQ_SUMMARY.md)
 **Purpose:** Arturo's working notes and summary  
 **Audience:** Project team  
 **Key Contents:**
@@ -209,7 +239,7 @@ The Industry Solutions Directory AI Chat Assistant is a pro-code solution that e
 - Issues and resolutions
 - Next steps
 
-### 18. [SAMPLE_QUESTIONS.md](SAMPLE_QUESTIONS.md)
+### 19. [SAMPLE_QUESTIONS.md](SAMPLE_QUESTIONS.md)
 **Purpose:** Sample queries for testing and demonstration  
 **Audience:** Testers, demo presenters  
 **Key Contents:**
@@ -246,6 +276,7 @@ Start with: [docs/WEBSITE_INTEGRATION_GUIDE.md](docs/WEBSITE_INTEGRATION_GUIDE.m
 
 | Date | Version | Changes | Author |
 |------|---------|---------|--------|
+| Dec 12, 2025 | 1.1 | Added dual browsing support documentation | Arturo Quiroga |
 | Nov 8, 2025 | 1.0 | Initial documentation index created | Arturo Quiroga |
 | Nov 8, 2025 | 1.0 | Added partner statistics documentation | Arturo Quiroga |
 | Nov 5, 2025 | v2.8 | Integrated vectorization deployment | Arturo Quiroga |
@@ -271,5 +302,5 @@ This documentation index should be updated whenever:
 - Major version updates are released
 - New features or components are added
 
-**Last Review:** November 8, 2025  
+**Last Review:** December 12, 2025  
 **Next Review:** As needed based on project updates
