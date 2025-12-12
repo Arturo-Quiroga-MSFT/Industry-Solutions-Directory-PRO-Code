@@ -53,7 +53,7 @@ echo ""
 echo "=========================================="
 echo "Building Frontend Docker Image"
 echo "=========================================="
-cd frontend
+cd ../frontend
 az acr build \
     --registry $ACR_NAME \
     --image "industry-solutions-frontend:$FRONTEND_IMAGE_TAG" \
@@ -67,7 +67,7 @@ else
     exit 1
 fi
 
-cd ..
+cd ../deployment
 
 # Update the container app with new image
 echo ""
