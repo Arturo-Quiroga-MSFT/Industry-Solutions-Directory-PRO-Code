@@ -175,3 +175,170 @@ curl -s "https://mssoldir-app-prd.azurewebsites.net/api/Industry/GetThemeDetalsB
 - ✅ Generated 32 document chunks with embeddings
 - ✅ Indexed into Azure AI Search
 - ⚠️ Solution names showing as "Unknown Solution" - field name verification needed
+
+---
+
+## API Update - December 12, 2025
+
+### Critical Finding: Corrected Field Names & Structure
+
+After deep investigation for MCP server development, discovered the **actual field names** differ from initial investigation:
+
+#### Correct Solution Field Names
+```json
+{
+  "solutionName": "Solution Title",        // NOT partnerSolutionTitle
+  "orgName": "Partner Company Name",       // NOT companyName
+  "solutionDescription": "Description...",  // Correct
+  "url": "https://...",                    // NOT partnerSolutionUrl
+  "logoUrl": "https://...",                // Correct
+  "id": "uuid"                             // NOT partnerSolutionId
+}
+```
+
+#### Complete API Response Structure
+```json
+{
+  "themeSolutionAreas": [
+    {
+      "solutionAreaId": "uuid",
+      "solutionAreaName": "AI Business Solutions",
+      "partnerSolutions": [
+        {
+          "id": "uuid",
+          "solutionName": "Actual solution title",
+          "orgName": "Partner company",
+          "solutionDescription": "Full description text",
+          "url": "https://partner-solution-url",
+          "logoUrl": "https://logo-url",
+          "industries": ["Industry1", "Industry2"],
+          "technologies": ["Tech1", "Tech2"]
+        }
+      ]
+    }
+  ],
+  "spotLightPartnerSolutions": [
+    // Same structure as partnerSolutions
+  ]
+}
+```
+
+### Menu Structure Deep Dive
+
+The menu API returns a nested hierarchy:
+
+```json
+[
+  {
+    "industryId": "uuid",
+    "industryThemeId": "uuid or 00000000-0000-0000-0000-000000000000",
+    "industryName": "Energy & Resources",
+    "industrySlug": "energy--resources",
+    "industryThemeSlug": "theme-slug-for-main-industry",
+    "hasMultipleThme": true,
+    "hasSubMenu": true,
+    "subIndustries": [
+      {
+        "subIndustryId": "uuid",
+        "subIndustryName": "Advance Your Net-Zero Journey",
+        "subIndustrySlug": "advance-your-net-zero-journey",
+        "industryThemeId": "uuid",
+        "industryThemeSlug": "reach-net-zero-commitments-571",
+        "solutionAreas": [
+          {
+            "industryThemeId": "uuid",
+            "solutionAreaId": "uuid",
+            "solutionAreaName": "AI Business Solutions",
+            "industryThemeSlug": "reach-net-zero-commitments-571"
+          }
+        ]
+      }
+    ]
+  }
+]
+```
+
+### Key Insights
+
+1. **Technologies are NOT a separate API dimension**
+   - Technologies appear as `solutionAreas` within industry themes
+   - Same solution can appear under multiple solution areas
+   - Cannot query by technology alone - must query industry theme first
+
+2. **Industry Hierarchy**
+   - Top level: 10 main industries (Education, Financial Services, etc.)
+   - Second level: ~36 sub-industries/use cases (Student Success, Net-Zero Journey, etc.)
+   - Third level: 3 solution areas per theme (AI Business, Cloud & AI, Security)
+
+3. **Query Parameters**
+   - Endpoint uses `slug` parameter, **NOT** `viewId`
+   - Must use `industryThemeSlug` from menu response
+   - Format: `GetThemeDetalsByViewId?slug={industryThemeSlug}`
+
+4. **Solution Distribution**
+   - Solutions organized by solution area (technology)
+   - Each solution includes both `industries[]` and `technologies[]` arrays
+   - Same solution ID can appear under multiple themes (duplicates)
+
+### Verified Working Flow (December 2025)
+
+1. **Get menu structure**
+   ```bash
+   curl "https://mssoldir-app-prd.azurewebsites.net/api/Industry/getMenu"
+   ```
+
+2. **Parse industries and use cases**
+   - Extract all `subIndustries[].industryThemeSlug` values
+   - Also extract `industryThemeSlug` from top-level industries (if not null GUID)
+
+3. **Fetch solutions for each theme**
+   ```bash
+   curl "https://mssoldir-app-prd.azurewebsites.net/api/Industry/GetThemeDetalsByViewId?slug=improve-operational-efficiencies-for-modernized-school-experiences-850"
+   ```
+
+4. **Parse response**
+   - Iterate `themeSolutionAreas[]`
+   - For each area, extract `partnerSolutions[]`
+   - Use correct field names: `solutionName`, `orgName`, `solutionDescription`
+
+### Example: Fetching Education Solutions
+
+```bash
+# Get Education -> Institutional Innovation solutions
+curl -s "https://mssoldir-app-prd.azurewebsites.net/api/Industry/GetThemeDetalsByViewId?slug=improve-operational-efficiencies-for-modernized-school-experiences-850" | python3 -m json.tool
+```
+
+**Response includes:**
+- `themeSolutionAreas[0].solutionAreaName`: "AI Business Solutions"
+- `themeSolutionAreas[0].partnerSolutions[]`: Array of solutions with correct field names
+- `themeSolutionAreas[1].solutionAreaName`: "Cloud and AI Platforms"
+- `themeSolutionAreas[2].solutionAreaName`: "Security"
+
+### Data Refresh Statistics (December 12, 2025)
+- Total menu items: 10 main industries
+- Parsed use cases: 36 sub-industries/themes
+- Technology areas: 3 (AI Business Solutions, Cloud and AI Platforms, Security)
+- Unique solutions indexed: 490 with content (from 539 unique after de-duplication)
+- Total API entries: 700 (before de-duplication)
+
+### MCP Server Implementation Notes
+
+For the Model Context Protocol (MCP) server wrapping this API:
+
+1. **Cache the menu** - Only fetch once per session
+2. **Parse hierarchically** - Industries → Sub-Industries → Solution Areas
+3. **Use slug for queries** - Always use `industryThemeSlug` parameter
+4. **De-duplicate solutions** - Same solution ID appears under multiple themes
+5. **Field name mapping**:
+   - `solutionName` (NOT partnerSolutionTitle)
+   - `orgName` (NOT companyName)
+   - `url` (NOT partnerSolutionUrl)
+   - `id` (NOT partnerSolutionId)
+
+### Performance Considerations
+
+- Menu API: Fast (~200ms)
+- Theme details API: Moderate (~500-800ms per theme)
+- Full scrape: ~36 API calls for all themes (assuming one call per sub-industry)
+- Recommend: Cache aggressively, implement rate limiting for production use
+
