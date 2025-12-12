@@ -16,7 +16,7 @@ import hashlib
 from datetime import datetime
 from typing import Dict, List, Set, Tuple
 import requests
-from azure.core.credentials import AzureKeyCredential
+from azure.identity import DefaultAzureCredential
 from azure.search.documents import SearchClient
 from dotenv import load_dotenv
 
@@ -28,16 +28,21 @@ class ISDUpdateChecker:
     """Check for updates in the ISD website."""
     
     def __init__(self):
-        self.search_endpoint = f"https://{os.getenv('AZURE_SEARCH_SERVICE')}.search.windows.net"
-        self.search_key = os.getenv("AZURE_SEARCH_KEY")
+        # Get search endpoint from environment or construct from service name
+        self.search_endpoint = os.getenv('AZURE_SEARCH_ENDPOINT')
+        if not self.search_endpoint:
+            search_service = os.getenv('AZURE_SEARCH_SERVICE', 'indsolse-dev-search')
+            self.search_endpoint = f"https://{search_service}.search.windows.net"
+        
         self.index_name = "partner-solutions-integrated"
         self.isd_api_base = "https://mssoldir-app-prd.azurewebsites.net/api/Industry"
         
-        # Initialize search client
+        # Initialize search client with Azure CLI authentication
+        credential = DefaultAzureCredential()
         self.search_client = SearchClient(
             endpoint=self.search_endpoint,
             index_name=self.index_name,
-            credential=AzureKeyCredential(self.search_key)
+            credential=credential
         )
     
     def fetch_isd_solutions(self) -> Dict[str, Dict]:
@@ -135,10 +140,10 @@ class ISDUpdateChecker:
         try:
             indexed = {}
             
-            # Search for all documents
+            # Search for all documents with correct field names
             results = self.search_client.search(
                 search_text="*",
-                select=["id", "title", "partner", "source_url", "content"],
+                select=["id", "solution_name", "partner_name", "solution_url", "description"],
                 include_total_count=True,
                 top=1000  # Adjust if you have more than 1000 unique solutions
             )
@@ -147,14 +152,14 @@ class ISDUpdateChecker:
                 solution_id = result.get("id", "")
                 if solution_id:
                     # Create content hash from indexed content
-                    content = result.get("content", "")
-                    content_hash = hashlib.md5(content.encode()).hexdigest()
+                    description = result.get("description", "")
+                    content_hash = hashlib.md5(description.encode()).hexdigest()
                     
                     indexed[solution_id] = {
                         "id": solution_id,
-                        "title": result.get("title", ""),
-                        "partner": result.get("partner", ""),
-                        "url": result.get("source_url", ""),
+                        "title": result.get("solution_name", ""),
+                        "partner": result.get("partner_name", ""),
+                        "url": result.get("solution_url", ""),
                         "content_hash": content_hash
                     }
             

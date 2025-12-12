@@ -10,6 +10,13 @@ A pro-code solution to add intelligent chat capabilities to the Microsoft Indust
 
 This solution enables natural language search and partner recommendations through a conversational AI interface integrated into the existing Industry Solutions Directory website at `https://solutions.microsoftindustryinsights.com/dashboard`.
 
+The AI assistant supports **both browsing patterns** users see on the portal:
+- **Browse by Industry**: Healthcare, Education, Financial Services, Manufacturing, etc.
+- **Browse by Technology**: AI Business Solutions, Cloud and AI Platforms, Security
+- **Combined Queries**: "What AI solutions are available for healthcare?"
+
+See [docs/DUAL_BROWSING_SUPPORT.md](docs/DUAL_BROWSING_SUPPORT.md) for detailed information.
+
 ## Screenshots
 
 ### Enhanced Chat Interface
@@ -30,9 +37,11 @@ This solution enables natural language search and partner recommendations throug
 ### Key Features
 
 - **Natural Language Search**: Users can ask questions in plain English about partner solutions
+- **Dual Browsing Support**: Search by **Industry** (Healthcare, Education, Financial Services) OR by **Technology** (AI Business Solutions, Cloud and AI Platforms, Security) - matches both portal navigation patterns
 - **Contextual Recommendations**: AI-powered matching of user needs with relevant solutions
 - **Multi-Industry Support**: Filter by industry categories (Healthcare, Financial Services, Retail, etc.)
 - **Technology Filtering**: Search by technology stack (AI, Cloud, Security, etc.)
+- **Combined Queries**: Ask for specific technology within an industry (e.g., "AI for healthcare")
 - **Conversation Memory**: Maintains context across multiple turns
 - **Source Citations**: Provides links to actual partner solutions
 
@@ -255,13 +264,34 @@ curl http://localhost:8000/api/health
 # Get available facets (industries, technologies)
 curl http://localhost:8000/api/facets
 
-# Chat request
+# Chat request - Industry-based query
 curl -X POST http://localhost:8000/api/chat \
   -H "Content-Type: application/json" \
   -d '{
-    "message": "What healthcare AI solutions are available?",
+    "message": "What solutions are available for healthcare?",
     "filters": {
       "industries": ["Healthcare & Life Sciences"]
+    }
+  }'
+
+# Chat request - Technology-based query
+curl -X POST http://localhost:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Show me AI Business Solutions",
+    "filters": {
+      "technologies": ["AI Business Solutions"]
+    }
+  }'
+
+# Chat request - Combined query
+curl -X POST http://localhost:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "What AI solutions are available for financial services?",
+    "filters": {
+      "industries": ["Financial Services"],
+      "technologies": ["AI Business Solutions"]
     }
   }'
 ```
@@ -518,6 +548,8 @@ After initial deployment:
 ## References
 
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Detailed architecture documentation
+- [docs/DUAL_BROWSING_SUPPORT.md](./docs/DUAL_BROWSING_SUPPORT.md) - Comprehensive guide on dual browsing support
+- [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md) - Complete documentation index
 - [Azure AI Search Documentation](https://learn.microsoft.com/azure/search/)
 - [Azure OpenAI Service](https://learn.microsoft.com/azure/ai-services/openai/)
 - [RAG Pattern Overview](https://learn.microsoft.com/azure/search/retrieval-augmented-generation-overview)

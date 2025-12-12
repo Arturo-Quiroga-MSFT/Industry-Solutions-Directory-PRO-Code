@@ -47,11 +47,14 @@ def fetch_theme_solutions(theme_slug):
 def prepare_blob_documents(menu_data):
     """
     Convert ISD API data to blob-friendly JSON documents.
-    Each solution becomes a separate document.
+    De-duplicates solutions and aggregates industries/technologies.
+    Each unique solution becomes ONE document with all its industries and technologies.
     """
-    documents = []
+    # Dictionary to collect all appearances of each solution
+    solutions_by_id = {}
     industry_count = 0
     theme_count = 0
+    total_entries = 0
     
     print("\n📥 Fetching solutions from ISD API...")
     
@@ -81,43 +84,89 @@ def prepare_blob_documents(menu_data):
                 partner_solutions = area.get('partnerSolutions', [])
                 
                 for ps in partner_solutions:
-                    # Create a document for each solution
-                    doc = {
-                        "id": ps.get("partnerSolutionId", str(uuid.uuid4())),
-                        "solution_name": ps.get("solutionName", ""),
-                        "partner_name": ps.get("orgName", ""),
-                        "description": ps.get("solutionDescription", ""),
-                        "solution_url": f"https://solutions.microsoftindustryinsights.com/solutiondetails/{ps.get('partnerSolutionSlug', '')}",
-                        "industry": industry_name,
-                        "theme": theme_title,
-                        "industries": [industry_name, theme_title],
-                        "technologies": [area_name] if area_name else [],
-                        # Combined text for chunking and vectorization
-                        "content": f"{ps.get('solutionName', '')}\n\n{ps.get('solutionDescription', '')}",
-                    }
+                    total_entries += 1
+                    solution_id = ps.get("partnerSolutionId", str(uuid.uuid4()))
                     
-                    documents.append(doc)
+                    # If this solution already exists, aggregate data
+                    if solution_id in solutions_by_id:
+                        existing = solutions_by_id[solution_id]
+                        # Add industry if not already present
+                        if industry_name not in existing['industries']:
+                            existing['industries'].append(industry_name)
+                        if theme_title not in existing['industries'] and theme_title != industry_name:
+                            existing['industries'].append(theme_title)
+                        # Add technology if not already present
+                        if area_name and area_name not in existing['technologies']:
+                            existing['technologies'].append(area_name)
+                        # Use longer description if available
+                        new_desc = ps.get("solutionDescription", "")
+                        if len(new_desc) > len(existing['description']):
+                            existing['description'] = new_desc
+                            existing['content'] = f"{existing['solution_name']}\n\n{new_desc}"
+                    else:
+                        # First time seeing this solution
+                        solutions_by_id[solution_id] = {
+                            "id": solution_id,
+                            "solution_name": ps.get("solutionName", ""),
+                            "partner_name": ps.get("orgName", ""),
+                            "description": ps.get("solutionDescription", ""),
+                            "solution_url": f"https://solutions.microsoftindustryinsights.com/solutiondetails/{ps.get('partnerSolutionSlug', '')}",
+                            "industries": [industry_name, theme_title],
+                            "technologies": [area_name] if area_name else [],
+                            # Combined text for chunking and vectorization
+                            "content": f"{ps.get('solutionName', '')}\n\n{ps.get('solutionDescription', '')}",
+                        }
             
             # Also get spotlight solutions
             spotlight_solutions = theme_data.get('spotLightPartnerSolutions', [])
             for ps in spotlight_solutions:
-                doc = {
-                    "id": ps.get("partnerSolutionId", str(uuid.uuid4())),
-                    "solution_name": ps.get("solutionName", ""),
-                    "partner_name": ps.get("orgName", ""),
-                    "description": ps.get("solutionDescription", ""),
-                    "solution_url": f"https://solutions.microsoftindustryinsights.com/solutiondetails/{ps.get('partnerSolutionSlug', '')}",
-                    "industry": industry_name,
-                    "theme": theme_title,
-                    "industries": [industry_name, theme_title],
-                    "technologies": ["Spotlight"],
-                    # Combined text for chunking and vectorization
-                    "content": f"{ps.get('solutionName', '')}\n\n{ps.get('solutionDescription', '')}",
-                }
+                total_entries += 1
+                solution_id = ps.get("partnerSolutionId", str(uuid.uuid4()))
                 
-                documents.append(doc)
+                # If this solution already exists, aggregate data
+                if solution_id in solutions_by_id:
+                    existing = solutions_by_id[solution_id]
+                    if industry_name not in existing['industries']:
+                        existing['industries'].append(industry_name)
+                    if theme_title not in existing['industries'] and theme_title != industry_name:
+                        existing['industries'].append(theme_title)
+                    if "Spotlight" not in existing['technologies']:
+                        existing['technologies'].append("Spotlight")
+                    # Use longer description if available
+                    new_desc = ps.get("solutionDescription", "")
+                    if len(new_desc) > len(existing['description']):
+                        existing['description'] = new_desc
+                        existing['content'] = f"{existing['solution_name']}\n\n{new_desc}"
+                else:
+                    # First time seeing this solution
+                    solutions_by_id[solution_id] = {
+                        "id": solution_id,
+                        "solution_name": ps.get("solutionName", ""),
+                        "partner_name": ps.get("orgName", ""),
+                        "description": ps.get("solutionDescription", ""),
+                        "solution_url": f"https://solutions.microsoftindustryinsights.com/solutiondetails/{ps.get('partnerSolutionSlug', '')}",
+                        "industries": [industry_name, theme_title],
+                        "technologies": ["Spotlight"],
+                        # Combined text for chunking and vectorization
+                        "content": f"{ps.get('solutionName', '')}\n\n{ps.get('solutionDescription', '')}",
+                    }
     
-    print(f"\n✅ Processed {len(documents)} solutions from {industry_count} industries and {theme_count} themes")
+    # Convert dictionary to list
+    documents = list(solutions_by_id.values())
+    
+    # Convert industries and technologies lists to comma-separated strings for search
+    for doc in documents:
+        # Remove duplicates and join
+        doc['industries'] = ', '.join(sorted(set(doc['industries'])))
+        doc['technologies'] = ', '.join(sorted(set(doc['technologies'])))
+    
+    print(f"\n✅ De-duplication complete!")
+    print(f"   Total entries fetched: {total_entries}")
+    print(f"   Unique solutions: {len(documents)}")
+    print(f"   Duplicates removed: {total_entries - len(documents)}")
+    print(f"   Industries processed: {industry_count}")
+    print(f"   Themes processed: {theme_count}")
+    
     return documents
 
 
