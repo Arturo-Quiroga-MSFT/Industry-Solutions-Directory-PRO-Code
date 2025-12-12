@@ -221,12 +221,17 @@ def check_backend_status() -> str:
 
 
 EXAMPLE_QUESTIONS = [
+    # Industry-focused queries
     "What AI solutions are available for healthcare patient engagement?",
     "Show me financial risk management solutions",
-    "What IoT and AI solutions help with manufacturing?",
     "Find retail customer experience solutions",
-    "What are the latest sustainability solutions for energy companies?",
-    "Show me education technology solutions for student engagement",
+    # Technology-focused queries
+    "What Cloud and AI Platform solutions are available?",
+    "Show me Security solutions for data protection",
+    "What AI Business Solutions help with automation?",
+    # Combined queries
+    "What IoT and AI solutions help with manufacturing?",
+    "Find AI security solutions for healthcare",
 ]
 
 
@@ -270,7 +275,7 @@ def build_interface() -> gr.Blocks:
                 <div style="display: flex; align-items: center; justify-content: center; gap: 16px;">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft" style="height: 40px;">
                     <div style="font-size: 30px; font-weight: 600; color: #0078d4;">|</div>
-                    <div style="font-size: 30px; font-weight: 600; color: #262626;">Technology Solutions Directory</div>
+                    <div style="font-size: 30px; font-weight: 600; color: #262626;">Industry Solutions Directory</div>
                 </div>
             </div>
             """
@@ -278,8 +283,14 @@ def build_interface() -> gr.Blocks:
 
         gr.Markdown(
             """
-            ### Discover Microsoft Partner Solutions with AI-powered guidance
-            Ask about industry-specific scenarios and explore relevant partner offerings.
+            ### 🎯 Discover Microsoft Partner Solutions with AI-powered guidance
+            
+            **Browse by Industry** (Healthcare, Education, Financial Services, Manufacturing, Retail, etc.) **OR by Technology** (AI Business Solutions, Cloud & AI Platforms, Security) - or combine both!
+            
+            Ask questions like:
+            - "What AI solutions help with healthcare patient engagement?"
+            - "Show me Cloud and AI Platform solutions"
+            - "Find Security solutions for financial services"
             """
         )
 
@@ -297,7 +308,7 @@ def build_interface() -> gr.Blocks:
 
                 with gr.Row():
                     message_box = gr.Textbox(
-                        placeholder="Ask about industry solutions...",
+                        placeholder="Ask about solutions by industry, technology, or both...",
                         show_label=False,
                         scale=9,
                     )
@@ -328,7 +339,15 @@ def build_interface() -> gr.Blocks:
                 gr.Markdown(
                     """
                     ### ℹ️ About
-                    Discover solutions across industries using Azure OpenAI, Azure AI Search, and Cosmos DB.
+                    
+                    **Search 500+ Microsoft Partner Solutions**
+                    
+                    Browse by:
+                    - 🏢 **Industry**: Healthcare, Education, Financial Services, Manufacturing, Retail, Government, and more
+                    - 💻 **Technology**: AI Business Solutions, Cloud & AI Platforms, Security
+                    - 🔀 **Combined**: Technology + Industry (e.g., "AI for healthcare")
+                    
+                    Powered by Azure OpenAI, Azure AI Search, and Cosmos DB.
                     """
                 )
 

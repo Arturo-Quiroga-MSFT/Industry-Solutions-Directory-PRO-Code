@@ -19,6 +19,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Hero banner images from the portal
+HERO_IMAGES = {
+    "industry": "https://solutions.microsoftindustryinsights.com/assets/images/ISD_Homepage_1005x395.jpg",
+    "technology": "https://solutions.microsoftindustryinsights.com/assets/images/technology_banner.jpg"
+}
+
 # Industry-specific image URLs from Microsoft
 INDUSTRY_IMAGES = {
     "Financial Services": "https://www.microsoft.com/en-us/industry/financial-services/media/financial-services-hero.jpg",
@@ -36,7 +42,10 @@ INDUSTRY_ICONS = {
     "Manufacturing": "🏭",
     "Education": "📚",
     "Retail": "🛍️",
-    "Energy": "⚡"
+    "Energy": "⚡",
+    "AI Business Solutions": "🤖",
+    "Cloud & AI Platforms": "☁️",
+    "Security": "🔒"
 }
 
 # Custom CSS for better styling with Microsoft branding
@@ -389,12 +398,13 @@ def sidebar():
         # Microsoft branding
         st.markdown("""
         <div class="ms-logo">
-            <img src="https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE1Mu3b?ver=5c31" 
+            <img src="https://solutions.microsoftindustryinsights.com/assets/images/Microsoft_Logo_Color@2x.png" 
                  alt="Microsoft Logo" style="width: 150px; margin-bottom: 0.5rem;">
         </div>
         """, unsafe_allow_html=True)
         
-        st.title("🏢 Industry Solutions Directory")
+        st.title("🏢 Partner Solutions Directory")
+        st.caption("Browse by Industry or Technology")
         st.markdown("---")
         
         # Session management
@@ -413,29 +423,29 @@ def sidebar():
         st.subheader("💡 Example Questions")
         
         examples = {
-            "Financial Services": [
-                "What financial services solutions help with risk management?",
-                "Show me anti-money laundering solutions"
-            ],
             "Healthcare": [
                 "Show me AI-powered healthcare solutions",
                 "What solutions improve patient engagement?"
+            ],
+            "Financial Services": [
+                "What financial services solutions help with risk management?",
+                "Show me anti-money laundering solutions"
             ],
             "Manufacturing": [
                 "What manufacturing solutions use IoT and AI?",
                 "Show me predictive maintenance solutions"
             ],
-            "Education": [
-                "What solutions help with student engagement?",
-                "Fundraising solutions for higher education"
+            "AI Business Solutions": [
+                "What AI Business Solutions are available?",
+                "Show me AI solutions for automation"
             ],
-            "Retail": [
-                "Customer experience solutions for retail",
-                "Inventory management solutions"
+            "Cloud & AI Platforms": [
+                "What Cloud and AI Platform solutions exist?",
+                "Find Azure-based platform solutions"
             ],
-            "Energy": [
-                "Sustainability solutions for energy companies",
-                "Smart grid solutions"
+            "Security": [
+                "What Security solutions protect data?",
+                "Show me cybersecurity solutions"
             ]
         }
         
@@ -464,9 +474,14 @@ def sidebar():
         # Info
         st.subheader("ℹ️ About")
         st.caption("""
-        This chat interface helps you discover Microsoft partner solutions 
-        across various industries including Financial Services, Healthcare, 
-        Manufacturing, Education, Retail, and more.
+        This chat interface helps you discover 500+ Microsoft partner solutions.
+        
+        **Browse by:**
+        - 🏢 **Industry**: Healthcare, Education, Financial Services, Manufacturing, Retail, Government, and more
+        - 💻 **Technology**: AI Business Solutions, Cloud & AI Platforms, Security
+        - 🔀 **Combined**: Technology + Industry (e.g., "AI for healthcare")
+        
+        Powered by Azure OpenAI, Azure AI Search, and Cosmos DB.
         """)
 
 
@@ -489,11 +504,34 @@ def main():
     # Render sidebar
     sidebar()
     
-    # Main content with header banner
+    # Hero Banner Section
+    st.markdown(f"""
+    <div style="
+        background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), 
+                    url('{HERO_IMAGES["industry"]}');
+        background-size: cover;
+        background-position: center;
+        padding: 60px 40px;
+        border-radius: 10px;
+        color: white;
+        text-align: left;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h1 style="color: white; margin: 0; font-size: 2.5rem; font-weight: 600;">
+            Welcome to the Microsoft Solutions Directory
+        </h1>
+        <p style="font-size: 1.1rem; margin-top: 15px; line-height: 1.6; max-width: 800px;">
+            Easily find proven Microsoft Partner solutions aligned to your industry and organizational needs with this easy-to-use, easy-to-navigate Industry Solutions Directory. Drive innovation, growth, and resilience with vetted technologies.
+        </p>
+        <p style="font-size: 0.95rem; margin-top: 10px; color: #f0f0f0;">
+            <strong>Browse by Industry</strong> (Healthcare, Education, Financial Services, etc.) <strong>OR by Technology</strong> (AI Business Solutions, Cloud & AI Platforms, Security)
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     st.markdown("""
     <div class="app-header">
-        <h1>💬 Industry Solutions Chat</h1>
-        <p>Discover Microsoft partner solutions powered by AI • Serving 50+ industries worldwide</p>
+        <h1>💬 Microsoft Partner Solutions Chat</h1>
+        <p>Discover Microsoft partner solutions powered by AI • Browse by <strong>Industry</strong> OR <strong>Technology</strong> • Serving 50+ industries worldwide</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -508,7 +546,7 @@ def main():
                 <div style="text-align: center; padding: 2rem; background: white; border-radius: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     <img src="https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RWfkqT?ver=2740" 
                          alt="Solutions" style="width: 200px; margin-bottom: 1rem; border-radius: 0.5rem;">
-                    <h3 style="color: #0078d4;">👋 Welcome to Industry Solutions Directory!</h3>
+                    <h3 style="color: #0078d4;">👋 Welcome to the Microsoft Partner Solutions Directory</h3>
                     <p style="color: #666;">Ask me about Microsoft partner solutions or select an example question from the sidebar.</p>
                     <p style="color: #999; font-size: 0.9rem;">Powered by Azure OpenAI & Cognitive Search</p>
                 </div>
