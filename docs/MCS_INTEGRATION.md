@@ -75,22 +75,127 @@ FALLBACK_INDEX = "partner-solutions-index"      # Original
 
 ## Future Ingestion
 
-For future data updates, you have two options:
+**Current Status (v2.8):** You're already using **integrated vectorization** for both indexing and queries! ✅
 
-### Option A: Keep Using Manual Vectorization (Current)
-Continue using `ingest_data.py` but point it to the new index. The integrated vectorizer will be ignored since you're providing vectors directly.
+Your production setup:
+- Index: `partner-solutions-integrated` (integrated vectorization enabled)
+- Ingestion: REST API approach (manual vectorization during bulk load)
+- Queries: Automatic vectorization via `VectorizableTextQuery`
 
-### Option B: Simplify to Integrated Vectorization
-Modify your ingestion script to NOT call the embedding API - just upload documents with text fields, and let the integrated vectorizer handle it:
+### Comparison: Manual vs Integrated Vectorization
+
+| Aspect | Manual Vectorization | Integrated Vectorization (Current ✅) |
+|--------|---------------------|-------------------------------------|
+| **MCS Compatible** | ❌ No | ✅ Yes |
+| **Query Code** | 15+ lines (manual embed call) | 5 lines (automatic) |
+| **Ingestion Setup** | Simple (1 script) | Complex (indexer + skillset) |
+| **Incremental Updates** | Re-run entire script | Automatic detection |
+| **Maintenance** | Higher (manage retries, quotas) | Lower (Azure handles it) |
+| **Data Source** | Any API/source | Blob, Cosmos, SQL required |
+| **Cost** | $35/month | $36/month (~same) |
+| **Performance** | Same latency | Same latency |
+
+### For Ongoing Data Updates: Two Approaches
+
+#### Option A: Hybrid (Recommended for ISD) ⭐
+**What you're doing now!** Best of both worlds:
+
+1. **Bulk Load**: Use manual approach (`ingest_data.py`)
+   - Faster initial setup
+   - Works directly with ISD API
+   - Full control over transformations
+
+2. **Incremental Updates**: Set up automated indexer
+   - Export changed data to Blob Storage
+   - Indexer auto-detects changes
+   - Scheduled refresh (daily/weekly)
+
+3. **Queries**: Use integrated vectorizer
+   - Simpler code (already implemented)
+   - Automatic query vectorization
+   - MCS compatible
 
 ```python
-# Simplified ingestion - no embedding calls needed!
-doc = {
-    "id": solution_id,
-    "solution_name": solution_name,
-    "content": content,  # Just text - vectorization happens automatically
-    # No content_vector field needed
-}
+# Current query approach (integrated vectorizer)
+results = search_client.search(
+    vector_queries=[VectorizableTextQuery(
+        text=user_query,  # Automatic vectorization!
+        k_nearest_neighbors=5
+    )]
+)
+```
+
+#### Option B: Fully Manual (Not Recommended)
+Continue using only `ingest_data.py` for all updates:
+- ❌ More code to maintain
+- ❌ Manual scheduling required
+- ❌ Must handle all retries/throttling
+- ✅ Simpler architecture (fewer components)
+
+**Why NOT recommended:** You lose MCS compatibility and query simplification benefits.
+
+#### Option C: Fully Integrated (Future Option)
+Completely automate the pipeline:
+
+```python
+# 1. Export ISD API data to Blob Storage (scheduled)
+python export_to_blob.py  # Runs daily via Azure Function
+
+# 2. Indexer automatically:
+#    - Detects new/changed files
+#    - Chunks documents
+#    - Calls embedding API
+#    - Updates index
+```
+
+**Pros:**
+- Zero manual intervention after setup
+- Automatic scheduled updates
+- Built-in retry and monitoring
+- MCS compatible
+
+**Cons:**
+- Requires Blob Storage setup
+- More complex initial configuration
+- Debugging harder (multiple components)
+
+### Decision Matrix
+
+**Stay with Hybrid if:**
+- ✅ Updates are infrequent (weekly/monthly)
+- ✅ You want maximum flexibility
+- ✅ Current approach works well
+- ✅ Prefer simpler troubleshooting
+
+**Move to Fully Integrated if:**
+- ✅ Need daily automatic updates
+- ✅ Want zero-touch maintenance
+- ✅ Have DevOps resources for setup
+- ✅ Need enterprise-grade monitoring
+
+### Recommended Path Forward
+
+**For Industry Solutions Directory:** ✅ **Keep Hybrid Approach**
+
+**Why:**
+1. ISD API updates are infrequent (weekly/monthly)
+2. Data source is REST API (not Blob/Cosmos)
+3. Current manual bulk + integrated queries works well
+4. Simpler to maintain and troubleshoot
+5. Already MCS compatible via integrated vectorizer
+
+**Action Items:**
+1. ✅ Done: Using integrated vectorization for queries
+2. ✅ Done: Index is MCS-compatible
+3. 🔄 Optional: Set up blob export for automated incremental updates
+4. 🔄 Optional: Schedule indexer to run weekly
+
+**If you want automated updates later:**
+```bash
+# Add scheduled export to blob
+cd data-ingestion/integrated-vectorization
+python 01_export_to_blob.py  # Export latest from ISD API
+python 04_create_indexer.py  # Set schedule: weekly
 ```
 
 ## Benefits of Integrated Vectorization
