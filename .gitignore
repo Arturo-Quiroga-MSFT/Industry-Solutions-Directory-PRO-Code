@@ -84,11 +84,3 @@ deployment-outputs.json
 *.pem
 *.pfx
 appsettings.json
-
-# LibreChat data and runtime files
-librechat/data-node/
-librechat/meili_data_v1.12/
-librechat/images/
-librechat/uploads/
-librechat/logs/
-librechat/.env
