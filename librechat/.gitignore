@@ -1,0 +1,13 @@
+# LibreChat runtime data - DO NOT COMMIT
+data-node/
+meili_data_v1.12/
+images/
+uploads/
+logs/
+.env
+
+# Keep configuration files
+!docker-compose.yml
+!docker-compose.override.yaml
+!librechat.yaml
+!README.md
