@@ -8,6 +8,8 @@ services:
       - "3000:8080"
     volumes:
       - open-webui-data:/app/backend/data
+      - /Users/arturoquiroga/Industry-Solutions-Directory-PRO-Code/mcp-isd-server:/app/mcp-isd-server:ro
+      - /Users/arturoquiroga/Industry-Solutions-Directory-PRO-Code/.venv:/app/venv:ro
     env_file:
       - .env
     restart: unless-stopped
