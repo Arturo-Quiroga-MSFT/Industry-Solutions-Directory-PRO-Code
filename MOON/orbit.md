@@ -517,3 +517,56 @@ The use of a **free-return trajectory** provided a safety net, while **mid-cours
 ---
 
 *For further questions about specific maneuvers, the mathematics of orbital mechanics, or how integral calculus applies to trajectory calculations, feel free to ask!*
+
+---
+
+## Modern Context: Can We Do It Today?
+
+> **Question:** Can this be done with today's technology, rockets, and engineers (millennials)?
+
+Yes, returning to the Moon is not only possible but is currently underway through the **Artemis Program**. However, the approach, technology, and workforce have evolved significantly since 1969.
+
+### 1. Technology: Then vs. Now
+
+| Feature | Apollo (1969) | Artemis (Today) |
+| :--- | :--- | :--- |
+| **Computing** | **Apollo Guidance Computer (AGC):** <br>• 2KB RAM, 36KB ROM<br>• 1 MHz speed<br>• Manual inputs required | **Modern Avionics:**<br>• Multi-core processors, GBs of RAM<br>• Autonomous docking & landing<br>• Touchscreens & glass cockpits |
+| **Navigation** | Ground tracking + Sextant star sightings | GPS (near Earth), Deep Space Network, Optical Navigation |
+| **Materials** | Aluminum alloys, honeycomb structures | Carbon fiber composites, 3D-printed parts, lighter alloys |
+| **Safety** | Single points of failure, limited redundancy | "Man-rating" standards, multiple redundant systems, launch abort systems |
+
+**Key Difference:** Today's technology allows for **automation**. Where Neil Armstrong had to manually fly the LM to avoid boulders, modern landers (like SpaceX's Starship HLS) use terrain-relative navigation to land autonomously with centimeter precision.
+
+### 2. Rockets: Saturn V vs. SLS & Starship
+
+We are no longer relying on the retired Saturn V. Two major launch systems are leading the return:
+
+*   **NASA's Space Launch System (SLS):**
+    *   **Role:** Launches the crew in the Orion capsule.
+    *   **Status:** Operational (Artemis I successful in 2022).
+    *   **Comparison:** More powerful thrust at liftoff than Saturn V (8.8M lbs vs 7.6M lbs), but similar payload capacity to TLI.
+
+*   **SpaceX Starship:**
+    *   **Role:** Selected as the **Human Landing System (HLS)**.
+    *   **Status:** In active flight testing.
+    *   **Innovation:** Fully reusable, methane-fueled (Raptor engines), and capable of refuelling in orbit—a capability Apollo never had.
+
+### 3. The Mission Profile: A New Orbit
+
+We are not simply repeating the Apollo trajectory. The Artemis architecture uses a different orbital approach:
+
+*   **Apollo:** Direct flight to Low Lunar Orbit (LLO), land, and return. Short duration (days).
+*   **Artemis:** Uses a **Near-Rectilinear Halo Orbit (NRHO)**.
+    *   **Why?** It is a stable "parking spot" for the **Lunar Gateway** (a small space station).
+    *   **Benefit:** Constant communication with Earth, access to the Lunar South Pole (where water ice exists), and lower fuel requirements for station-keeping.
+
+### 4. The Engineers: The "Millennial" Workforce
+
+The Apollo workforce was famously young—the average age of mission controllers during Apollo 11 was **28**. Today's aerospace workforce is a mix of deep experience and new energy:
+
+*   **NASA:** The workforce has an average age of ~46, providing institutional memory and safety culture.
+*   **NewSpace (SpaceX, Blue Origin, etc.):** These companies are driven largely by **Millennials and Gen Z**.
+    *   The average age at SpaceX is often cited in the **early 30s**.
+    *   This generation has pioneered **reusable rockets** (landing boosters), rapid prototyping, and software-centric design.
+
+**Verdict:** The "Millennial" engineers have already proven they can revolutionize spaceflight by landing orbital class rockets—something the Apollo generation dreamed of but couldn't achieve with 1960s analog technology. The challenge today is not *physics*, but **budget, sustainability, and complexity**.

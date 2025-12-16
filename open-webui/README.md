@@ -37,6 +37,35 @@ Pre-configured in `.env`:
 - Model: `gpt-4.1-mini`
 - API Version: `2024-08-01-preview`
 
+## Add more Azure OpenAI models (deployments)
+
+In Open WebUI, **Azure OpenAI “models” map to your Azure OpenAI deployment names**. To make more models appear in the model selector, add more deployment endpoints.
+
+### Option A (recommended for this repo): add deployments via `.env`
+
+Open WebUI supports multiple OpenAI-compatible endpoints by separating them with semicolons (`;`). Keys must be in the same order as URLs.
+
+Edit `.env`:
+
+- Set `OPENAI_API_BASE_URLS` to a `;`-separated list of Azure deployment endpoints:
+  - `https://<resource>.openai.azure.com/openai/deployments/<deploymentName>`
+- Set `OPENAI_API_KEYS` to a `;`-separated list of keys (same count/order as URLs).
+
+Then restart:
+
+```bash
+docker compose restart
+```
+
+### Option B: add connections in the UI (no restart)
+
+1. Go to **Admin Settings** → **Connections** → **OpenAI** → **Manage**
+2. Click **Add New Connection**
+3. For Azure OpenAI, use:
+   - **API URL**: `https://<resource>.openai.azure.com/openai/deployments/<deploymentName>`
+   - **API Key**: your Azure OpenAI key
+4. Save, then refresh the chat page and select the new deployment from the model picker.
+
 ## MCP Server Integration (Experimental)
 
 Open WebUI has experimental MCP support. To enable:
