@@ -48,7 +48,7 @@ INDUSTRY_ICONS = {
     "Security": "🔒"
 }
 
-# Custom CSS for better styling with Microsoft branding
+# Custom CSS for better styling with Microsoft branding - dark mode optimized
 st.markdown("""
 <style>
     /* Remove max-width constraint to use full available space */
@@ -56,7 +56,28 @@ st.markdown("""
         max-width: 100%;
         padding-left: 2rem;
         padding-right: 2rem;
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    
+    /* Dark mode detection */
+    @media (prefers-color-scheme: dark) {
+        .main .block-container {
+            background: transparent;
+        }
+        
+        /* Main content area background in dark mode */
+        .main {
+            background-color: transparent !important;
+        }
+        
+        /* Streamlit default containers */
+        [data-testid="stVerticalBlock"] {
+            background-color: transparent !important;
+        }
+        
+        /* Chat container background */
+        .element-container {
+            background-color: transparent !important;
+        }
     }
     
     /* Header styling */
@@ -67,7 +88,7 @@ st.markdown("""
         margin-bottom: 2rem;
         text-align: center;
         color: white;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
     
     .app-header h1 {
@@ -87,38 +108,131 @@ st.markdown("""
         padding: 1.5rem;
         border-radius: 0.5rem;
         margin-bottom: 1rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
     .user-message {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border-left: 4px solid #4c51bf;
     }
+    
+    /* Dark mode optimized assistant message */
     .assistant-message {
-        background-color: #ffffff;
-        border-left: 4px solid #0078d4;
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-left: 4px solid #0078d4 !important;
+        color: rgba(255, 255, 255, 0.95) !important;
     }
-    .citation-card {
-        background-color: #fff;
-        border: 1px solid #ddd;
+    
+    .assistant-message * {
+        color: rgba(255, 255, 255, 0.95) !important;
+    }
+    
+    /* Light mode override for assistant message */
+    @media (prefers-color-scheme: light) {
+        .assistant-message {
+            background-color: #ffffff !important;
+            border: 1px solid #e0e0e0 !important;
+            color: #333 !important;
+        }
+        
+        .assistant-message * {
+            color: #333 !important;
+        }
+    }
+    
+    /* Expander content styling for dark mode */
+    [data-testid="stExpander"] {
+        background-color: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.5rem;
+    }
+    
+    /* Expander header/summary text in dark mode */
+    [data-testid="stExpander"] summary {
+        color: white !important;
+    }
+    
+    [data-testid="stExpander"] summary:hover {
+        color: #50e6ff !important;
+    }
+    
+    /* Expander arrow icon */
+    [data-testid="stExpander"] summary svg {
+        color: white !important;
+    }
+    
+    @media (prefers-color-scheme: light) {
+        [data-testid="stExpander"] {
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+        }
+        
+        [data-testid="stExpander"] summary {
+            color: #333 !important;
+        }
+        
+        [data-testid="stExpander"] summary:hover {
+            color: #0078d4 !important;
+        }5) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 0.5rem;
         padding: 1rem;
         margin-bottom: 0.5rem;
         transition: transform 0.2s;
     }
+    
+    .citation-card * {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+    
+    @media (prefers-color-scheme: light) {
+        .citation-card {
+            background-color: #fff !important;
+            border: 1px solid #ddd !important;
+        }
+        
+        .citation-card * {
+            color: inherit !important
+        margin-bottom: 0.5rem;
+        transition: transform 0.2s;
+    }
+    
+    @media (prefers-color-scheme: light) {
+        .citation-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+        }
+    }
+    
     .citation-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 8px rgba(0,120,212,0.3);
     }
+    
     .citation-title {
         font-weight: bold;
-        color: #0078d4;
+        color: #50e6ff;
         font-size: 1.1rem;
     }
+    
+    @media (prefers-color-scheme: light) {
+        .citation-title {
+            color: #0078d4;
+        }
+    }
+    
     .citation-partner {
-        color: #666;
+        color: #b0b0b0;
         font-size: 0.9rem;
     }
+    
+    @media (prefers-color-scheme: light) {
+        .citation-partner {
+            color: #666;
+        }
+    }
+    
     .relevance-score {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -133,21 +247,97 @@ st.markdown("""
         padding: 0.5rem;
         margin: 0.5rem 0;
         border-radius: 0.3rem;
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background: rgba(255, 255, 255, 0.05);
     }
     
-    /* Sidebar enhancements */
-    .sidebar .sidebar-content {
-        background-color: #f8f9fa;
+    @media (prefers-color-scheme: light) {
+        .industry-category {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
     }
     
     /* Microsoft logo placeholder */
     .ms-logo {
         text-align: center;
         padding: 1rem;
-        background: white;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 0.5rem;
         margin-bottom: 1rem;
+    }
+    
+    @media (prefers-color-scheme: light) {
+        .ms-logo {
+            background: white;
+            border: 1px solid #e0e0e0;
+        }
+    }
+    
+    /* Welcome card dark mode */
+    .welcome-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    @media (prefers-color-scheme: light) {
+        .welcome-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+        }
+    }
+    
+    /* Improve link visibility in dark mode */
+    a {
+        color: #50e6ff !important;
+    }
+    
+    @media (prefers-color-scheme: light) {
+        a {
+            color: #0078d4 !important;
+        }
+    }
+    
+    /* Fix example question buttons in dark mode */
+    [data-testid="stButton"] button {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+    }
+    
+    [data-testid="stButton"] button:hover {
+        background-color: rgba(0, 120, 212, 0.3) !important;
+        border-color: #0078d4 !important;
+    }
+    
+    @media (prefers-color-scheme: light) {
+        [data-testid="stButton"] button {
+            background-color: #f0f0f0 !important;
+            border: 1px solid #ccc !important;
+            color: #333 !important;
+        }
+        
+        [data-testid="stButton"] button:hover {
+            background-color: #e0e0e0 !important;
+        }
+    }
+    
+    /* Welcome card text visibility */
+    .welcome-card h3 {
+        color: #50e6ff !important;
+    }
+    
+    .welcome-card p {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+    
+    @media (prefers-color-scheme: light) {
+        .welcome-card h3 {
+            color: #0078d4 !important;
+        }
+        
+        .welcome-card p {
+            color: #666 !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -539,16 +729,16 @@ def main():
     chat_container = st.container()
     with chat_container:
         if not st.session_state.messages:
-            # Welcome message with visual elements
-            col1, col2, col3 = st.columns([1, 2, 1])
+            # Welcome message with visual elements - more compact
+            col1, col2, col3 = st.columns([1, 3, 1])
             with col2:
                 st.markdown("""
-                <div style="text-align: center; padding: 2rem; background: white; border-radius: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div class="welcome-card" style="text-align: center; padding: 1.5rem; border-radius: 0.8rem; box-shadow: 0 4px 6px rgba(0,0,0,0.2); max-width: 600px; margin: 0 auto;">
                     <img src="https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RWfkqT?ver=2740" 
-                         alt="Solutions" style="width: 200px; margin-bottom: 1rem; border-radius: 0.5rem;">
-                    <h3 style="color: #0078d4;">👋 Welcome to the Microsoft Partner Solutions Directory</h3>
-                    <p style="color: #666;">Ask me about Microsoft partner solutions or select an example question from the sidebar.</p>
-                    <p style="color: #999; font-size: 0.9rem;">Powered by Azure OpenAI & Cognitive Search</p>
+                         alt="Solutions" style="width: 120px; margin-bottom: 0.8rem; border-radius: 0.5rem; opacity: 0.85;">
+                    <h3>👋 Welcome to the Microsoft Partner Solutions Directory</h3>
+                    <p>Ask me about Microsoft partner solutions or select an example question from the sidebar.</p>
+                    <p style="opacity: 0.7; font-size: 0.85rem;">Powered by Azure OpenAI & Cognitive Search</p>
                 </div>
                 """, unsafe_allow_html=True)
         else:
