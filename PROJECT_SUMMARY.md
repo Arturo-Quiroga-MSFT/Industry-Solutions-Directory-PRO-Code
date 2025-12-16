@@ -356,12 +356,20 @@ Industry-Solutions-Directory-PRO-Code/
 
 ---
 
-## Status: ✅ READY FOR REVIEW
+## Status: ✅ IN PRODUCTION (Traditional ACA Deployment)
 
-The pro-code solution architecture and implementation are complete. Ready for:
-1. Team review and feedback
-2. Comparison with Thomas's Copilot Studio evaluation
-3. Decision on MVP approach (low-code vs. pro-code)
-4. Next steps planning
+**Current Production Deployment** (as of December 16, 2025):
+- **Architecture**: Traditional Azure Container Apps (Non-MCP)
+- **Frontend**: https://indsolse-dev-frontend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io
+- **Backend**: https://indsolse-dev-backend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io
+- **Version**: v2.8 (REST API with integrated vectorization)
+- **Deployment Type**: VNet-integrated Container Apps with Private Endpoints
+- **Status**: Fully operational
 
-**Recommended Next Action**: Schedule meeting to review both approaches and decide on pilot strategy.
+**MCP Server** (Separate Component):
+- **Purpose**: Model Context Protocol server for IDE/tool integration
+- **Location**: `mcp-isd-server/` directory
+- **Status**: Separate deployment, NOT used by the production web app
+- **Use Case**: VS Code extensions, Claude Desktop, other MCP-compatible tools
+
+**Note**: The production web application uses the **traditional architecture** with direct backend-to-frontend communication. The MCP server is a parallel component designed for different integration scenarios (IDE extensions, AI assistants), not a replacement for the web app architecture.

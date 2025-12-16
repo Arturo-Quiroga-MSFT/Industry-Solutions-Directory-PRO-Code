@@ -220,7 +220,90 @@ async def search_solutions_endpoint(request: Request):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# MCP Protocol Endpoints (for MCP-compliant clients like Azure AI Foundry)
+# MCP Protocol Endpoints (for MCP-compliant clients)
+# Note: Standard MCP uses SSE transport for remote servers
+# The /mcp POST endpoint below is a custom HTTP adapter for compatibility
+
+# Azure AI Foundry requires a specific /runtime/webhooks/mcp/sse endpoint
+# This is an Azure Functions-specific convention that we need to support
+@app.get("/runtime/webhooks/mcp/sse")
+async def foundry_mcp_sse_endpoint():
+    """
+    Azure AI Foundry expects MCP servers at this specific path
+    This is for Azure Functions compatibility
+    Returns tool metadata for Foundry to enumerate available tools
+    """
+    tools = await list_tools()
+    return {
+        "protocolVersion": "2024-11-05",
+        "serverInfo": {
+            "name": "ISD MCP Server",
+            "version": "1.0.0"
+        },
+        "capabilities": {
+            "tools": {}
+        },
+        "tools": tools["tools"]
+    }
+
+
+@app.post("/runtime/webhooks/mcp/sse")
+async def foundry_mcp_sse_post_endpoint(request: Request):
+    """
+    Azure AI Foundry MCP tool execution endpoint
+    Handles tool calls from Foundry agents
+    """
+    try:
+        body = await request.json()
+        method = body.get("method")
+        params = body.get("params", {})
+        
+        if method == "tools/list":
+            tools = await list_tools()
+            return {"result": tools["tools"]}
+        
+        elif method == "tools/call":
+            tool_name = params.get("name")
+            tool_args = params.get("arguments", {})
+            
+            if tool_name == "list_industries":
+                industries = await isd_client.get_all_industries()
+                result = [ind["name"] for ind in industries]
+            elif tool_name == "list_technologies":
+                technologies = await isd_client.get_all_technologies()
+                result = [tech["name"] for tech in technologies]
+            elif tool_name == "get_solutions_by_industry":
+                result = await isd_client.get_solutions_by_industry(tool_args.get("industry"))
+            elif tool_name == "get_solutions_by_technology":
+                result = await isd_client.get_solutions_by_technology(tool_args.get("technology"))
+            elif tool_name == "search_solutions":
+                result = await isd_client.search_all_solutions(
+                    query=tool_args.get("query"),
+                    industry_filter=tool_args.get("industry"),
+                    technology_filter=tool_args.get("technology"),
+                    limit=tool_args.get("limit", 10)
+                )
+            else:
+                raise HTTPException(status_code=404, detail=f"Tool not found: {tool_name}")
+            
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": json.dumps(result, indent=2)
+                    }
+                ]
+            }
+        
+        else:
+            raise HTTPException(status_code=400, detail=f"Unknown MCP method: {method}")
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/mcp")
 async def mcp_endpoint(request: Request):
     """

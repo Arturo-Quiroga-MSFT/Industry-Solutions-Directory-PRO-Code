@@ -11,7 +11,24 @@
 The Industry Solutions Directory AI Chat Assistant is a pro-code solution that enables natural language search and intelligent partner recommendations for the Microsoft Industry Solutions Directory website. Built with Azure AI services using the RAG (Retrieval-Augmented Generation) pattern, this solution helps users discover relevant partner solutions through conversational queries.
 
 **Live Demo:** https://indsolse-dev-frontend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io  
+**Backend API:** https://indsolse-dev-backend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io  
 **Current Version:** v2.8 (REST API with integrated vectorization)
+
+### Deployment Architectures
+
+This project includes **two distinct architectures**:
+
+1. **Traditional ACA Deployment** ✅ Currently in Production
+   - Web-based chat interface for end users
+   - Direct backend-to-frontend communication
+   - URLs above point to this deployment
+   - Documentation: [ARCHITECTURE.md](ARCHITECTURE.md), [deployment/VNET_DEPLOYMENT.md](deployment/VNET_DEPLOYMENT.md)
+
+2. **MCP Server** (Separate Component)
+   - Model Context Protocol server for IDE/tool integration
+   - Use cases: VS Code extensions, Claude Desktop, AI development tools
+   - NOT used by the production web app
+   - Documentation: [deployment/MCP_DEPLOYMENT.md](deployment/MCP_DEPLOYMENT.md)
 
 ---
 

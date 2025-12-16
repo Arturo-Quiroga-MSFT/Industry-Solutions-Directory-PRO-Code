@@ -1,9 +1,23 @@
 # VNet-Integrated Deployment with Private Endpoint
 
+## ✅ PRODUCTION STATUS
+
+**This is the CURRENT PRODUCTION DEPLOYMENT** of the Industry Solutions Directory chat application.
+
+- **Architecture**: Traditional Azure Container Apps (Non-MCP)
+- **Last Updated**: December 16, 2025
+- **Frontend**: https://indsolse-dev-frontend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io
+- **Backend**: https://indsolse-dev-backend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io
+- **Version**: v2.8 (REST API with integrated vectorization)
+
+**Note**: This deployment does NOT use the MCP (Model Context Protocol) server. The MCP server (`mcp-isd-server/`) is a separate component for IDE/tool integration.
+
+---
+
 ## Overview
 This document describes the VNet-integrated deployment of the Industry Solutions Directory application with Azure Cosmos DB Private Endpoint connectivity. This eliminates the need for firewall IP management and provides secure, private connectivity.
 
-## Deployment Date
+## Original Deployment Date
 November 7, 2025
 
 ## Architecture

@@ -9,6 +9,28 @@
 
 This document outlines the pro-code architecture for adding intelligent chat capabilities to the Microsoft Industry Solutions Directory website (https://solutions.microsoftindustryinsights.com/dashboard). The solution enables natural language search and partner recommendations using Azure AI services.
 
+### Current Production Architecture
+
+**This document describes the Traditional ACA (Azure Container Apps) deployment**, which is currently in production:
+- **Production URL**: https://indsolse-dev-frontend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io
+- **Architecture Pattern**: Direct Backend ↔ Frontend communication
+- **Use Case**: Web-based chat interface for end users
+- **Status**: ✅ In production (v2.8)
+
+### MCP Server (Separate Component)
+
+The project also includes a **Model Context Protocol (MCP) server** as a separate component:
+- **Location**: `mcp-isd-server/` directory
+- **Purpose**: Provides Industry Solutions Directory data to MCP-compatible clients
+- **Use Cases**: VS Code extensions, Claude Desktop, AI development tools
+- **Architecture**: MCP protocol for IDE/tool integration
+- **Status**: Separate deployment, NOT used by the production web app
+- **Documentation**: See `deployment/MCP_DEPLOYMENT.md`
+
+**Important**: These are two distinct architectures serving different purposes:
+- **Traditional ACA** (this document): For web-based user interface
+- **MCP Server**: For developer tools and IDE integration
+
 ## Business Requirements
 
 Based on the discovery meeting with Will Casavan:
