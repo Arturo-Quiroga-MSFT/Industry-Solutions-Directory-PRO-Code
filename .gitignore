@@ -85,3 +85,5 @@ deployment-outputs.json
 *.pfx
 appsettings.json
 donotupload/
+meetings/
+discovery-meeting/
