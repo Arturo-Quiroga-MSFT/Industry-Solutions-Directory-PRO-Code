@@ -84,3 +84,4 @@ deployment-outputs.json
 *.pem
 *.pfx
 appsettings.json
+donotupload/
