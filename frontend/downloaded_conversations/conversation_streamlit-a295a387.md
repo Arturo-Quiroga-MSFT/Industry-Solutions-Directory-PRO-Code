@@ -8,7 +8,7 @@
 
 ## Summary
 
-```markdown
+
 # Conversation Summary: Finding Microsoft Partner Solutions
 
 ---
@@ -55,7 +55,7 @@
 - **Decision Support**: User consistently requested deeper details and clarifications to inform solution selection, showing a focus on practical implementation and fit.
 
 ---
-```
+
 
 ---
 
