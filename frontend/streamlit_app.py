@@ -609,43 +609,89 @@ def sidebar():
         
         st.markdown("---")
         
-        # Example queries
+        # Example queries with tabs
         st.subheader("💡 Example Questions")
         
-        examples = {
-            "Healthcare": [
-                "Show me AI-powered healthcare solutions",
-                "What solutions improve patient engagement?"
-            ],
-            "Financial Services": [
-                "What financial services solutions help with risk management?",
-                "Show me anti-money laundering solutions"
-            ],
-            "Manufacturing": [
-                "What manufacturing solutions use IoT and AI?",
-                "Show me predictive maintenance solutions"
-            ],
-            "AI Business Solutions": [
-                "What AI Business Solutions are available?",
-                "Show me AI solutions for automation"
-            ],
-            "Cloud & AI Platforms": [
-                "What Cloud and AI Platform solutions exist?",
-                "Find Azure-based platform solutions"
-            ],
-            "Security": [
-                "What Security solutions protect data?",
-                "Show me cybersecurity solutions"
-            ]
-        }
+        tab1, tab2 = st.tabs(["🏢 Industry & Tech", "🤖 Agentic AI"])
         
-        for category, questions in examples.items():
-            icon = INDUSTRY_ICONS.get(category, "📁")
-            with st.expander(f"{icon} {category}"):
-                for question in questions:
-                    if st.button(question, key=question, use_container_width=True):
-                        st.session_state.selected_question = question
-                        st.rerun()
+        with tab1:
+            st.caption("Browse by Industry or Technology")
+            examples = {
+                "Healthcare": [
+                    "Show me AI-powered healthcare solutions",
+                    "What solutions improve patient engagement?"
+                ],
+                "Financial Services": [
+                    "What financial services solutions help with risk management?",
+                    "Show me anti-money laundering solutions"
+                ],
+                "Manufacturing": [
+                    "What manufacturing solutions use IoT and AI?",
+                    "Show me predictive maintenance solutions"
+                ],
+                "AI Business Solutions": [
+                    "What AI Business Solutions are available?",
+                    "Show me AI solutions for automation"
+                ],
+                "Cloud & AI Platforms": [
+                    "What Cloud and AI Platform solutions exist?",
+                    "Find Azure-based platform solutions"
+                ],
+                "Security": [
+                    "What Security solutions protect data?",
+                    "Show me cybersecurity solutions"
+                ]
+            }
+            
+            for category, questions in examples.items():
+                icon = INDUSTRY_ICONS.get(category, "📁")
+                with st.expander(f"{icon} {category}"):
+                    for question in questions:
+                        if st.button(question, key=f"tab1_{question}", use_container_width=True):
+                            st.session_state.selected_question = question
+                            st.rerun()
+        
+        with tab2:
+            st.caption("Focus on AI Agents & Agentic Solutions")
+            agent_examples = {
+                "🤖 Direct Agent Queries": [
+                    "What AI agents are available?",
+                    "Show me all agentic solutions",
+                    "Find intelligent agents for automation"
+                ],
+                "🏥 Healthcare Agents": [
+                    "What AI agents can help in healthcare?",
+                    "AI copilots for patient care",
+                    "Autonomous systems for medical diagnosis"
+                ],
+                "💰 Financial Agents": [
+                    "Show me agentic solutions for financial services",
+                    "AI agents for fraud detection",
+                    "Intelligent agents for compliance monitoring"
+                ],
+                "🏭 Manufacturing Agents": [
+                    "Find autonomous systems for manufacturing",
+                    "AI agents for quality control",
+                    "Intelligent automation for supply chain"
+                ],
+                "💼 Business Process Agents": [
+                    "AI agents for customer support automation",
+                    "Agentic solutions for document processing",
+                    "What AI copilots help with sales?"
+                ],
+                "🔒 Security Agents": [
+                    "Autonomous solutions for cybersecurity",
+                    "AI agents for threat detection",
+                    "Intelligent agents for security monitoring"
+                ]
+            }
+            
+            for category, questions in agent_examples.items():
+                with st.expander(category):
+                    for question in questions:
+                        if st.button(question, key=f"tab2_{question}", use_container_width=True):
+                            st.session_state.selected_question = question
+                            st.rerun()
         
         st.markdown("---")
         
@@ -669,7 +715,8 @@ def sidebar():
         **Browse by:**
         - 🏢 **Industry**: Healthcare, Education, Financial Services, Manufacturing, Retail, Government, and more
         - 💻 **Technology**: AI Business Solutions, Cloud & AI Platforms, Security
-        - 🔀 **Combined**: Technology + Industry (e.g., "AI for healthcare")
+        - 🤖 **Agentic AI**: AI agents, copilots, autonomous systems, intelligent automation
+        - 🔀 **Combined**: Technology + Industry (e.g., "AI agents for healthcare")
         
         Powered by Azure OpenAI, Azure AI Search, and Cosmos DB.
         """)
