@@ -1,0 +1,51 @@
+python -c "from nl2sql_pipeline import NL2SQLPipeline; p
+ = NL2SQLPipeline(); p.run_query('Show me the top 5 healthcare AI solutions')"
+
+================================================================================
+Question: Show me the top 5 healthcare AI solutions
+================================================================================
+
+🤖 Generating SQL from natural language...
+
+✓ SQL generated successfully
+Confidence: high
+
+Generated SQL:
+SELECT TOP 5
+    ps.partnerSolutionId,
+    ps.solutionName,
+    o.orgName AS partnerName,
+    i.industryName,
+    sa.solutionAreaName
+FROM dbo.partnerSolution ps
+JOIN dbo.organization o ON ps.OrganizationId = o.orgId
+JOIN dbo.Industry i ON ps.IndustryId = i.industryId
+JOIN dbo.partnerSolutionByArea psba ON ps.partnerSolutionId = psba.partnerSolutionId
+JOIN dbo.solutionArea sa ON psba.solutionAreaId = sa.solutionAreaId
+WHERE ps.IsPublished = 1
+  AND i.industryName = 'Healthcare & Life Sciences'
+  AND sa.solutionAreaName = 'AI Business Solutions'
+ORDER BY ps.rowChangedDate DESC;
+
+Explanation:
+This query returns the top 5 most recently updated published solutions in the Healthcare & Life Sciences industry that are tagged with the AI Business Solutions area. It joins partnerSolution with organization, industry, and solution area junction tables to filter for healthcare AI solutions.
+
+✓ SQL validated (read-only SELECT query)
+
+📊 Executing SQL query...
+
+✓ Query executed successfully (5 rows)
+
+Results:
+
+partnerSolutionId              | solutionName                   | partnerName                    | industryName                   | solutionAreaName              
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+FA3597B3-1501-43CF-A7D6-A2F9D9 | Icertis Contract Intelligence  | Icertis Inc                    | Healthcare & Life Sciences     | AI Business Solutions         
+A8EA3E81-C1A3-40D8-AB1E-1D9E0E | Clinical Document Automation S | WinWire                        | Healthcare & Life Sciences     | AI Business Solutions         
+9144A9E5-24ED-471F-B5CC-D64BB4 | Docusign Intelligent Agreement | Docusign                       | Healthcare & Life Sciences     | AI Business Solutions         
+42265DA0-4CCE-461F-BA24-A1035F | Life Science Essentials        | RSM US LLP                     | Healthcare & Life Sciences     | AI Business Solutions         
+815431C9-D57A-4C40-8B4F-6D35F5 | Life Sciences Catalyst: 1-Day  | RSM US LLP                     | Healthcare & Life Sciences     | AI Business Solutions         
+
+Total: 5 rows
+
+(base) arturoquiroga@ARTUROs-MacBook-Pro sql-direct % 

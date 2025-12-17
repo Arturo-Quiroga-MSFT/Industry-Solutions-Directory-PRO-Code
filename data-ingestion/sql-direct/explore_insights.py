@@ -35,6 +35,7 @@ def get_connection():
         f"PWD={password};"
         f"Encrypt=yes;"
         f"TrustServerCertificate=no;"
+        f"ApplicationIntent=ReadOnly;"  # PRODUCTION SAFETY: Read-only mode
     )
     
     return pyodbc.connect(conn_str)
