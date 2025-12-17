@@ -85,5 +85,6 @@ deployment-outputs.json
 *.pfx
 appsettings.json
 donotupload/
-meetings/
+meetings_and_internal_only/
 discovery-meeting/
+SQL_DATABASE_DISCOVERY.md
