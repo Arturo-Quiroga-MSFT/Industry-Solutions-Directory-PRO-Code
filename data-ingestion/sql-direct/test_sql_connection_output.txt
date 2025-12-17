@@ -1,0 +1,83 @@
+python test_sql_connection.py
+
+Step 1: Checking ODBC drivers...
+
+Available ODBC Drivers:
+  ✓ ODBC Driver 18 for SQL Server
+  ✓ ODBC Driver 17 for SQL Server
+
+✓ SQL Server ODBC driver found
+
+Step 2: Testing SQL Server connection...
+
+
+============================================================
+ISD SQL Server Connection Test
+============================================================
+
+Using SQL Server authentication
+Connecting to: mssoldir-prd-sql.database.windows.net
+Database: mssoldir-prd
+
+✓ Successfully connected to SQL Server
+
+Server Version:
+  Microsoft SQL Azure (RTM) - 12.0.2000.8 
+        Oct  2 2025 00:38:42 
+        Copyright (C) 2025 Microsoft Corpor
+
+✓ Connected to database: mssoldir-prd
+
+Available Tables:
+  📋 dbo.ArchiveIndustryTheme (BASE TABLE)
+  📋 dbo.ArchiveSubIndustry (BASE TABLE)
+  📋 dbo.geo (BASE TABLE)
+  📋 dbo.Industry (BASE TABLE)
+  📋 dbo.IndustryResourceLink (BASE TABLE)
+  📋 dbo.IndustryShowcasePartnerSolution (BASE TABLE)
+  📋 dbo.IndustryTargetCustomerProspect (BASE TABLE)
+  📋 dbo.IndustryTheme (BASE TABLE)
+  📋 dbo.IndustryThemeBySolutionArea (BASE TABLE)
+  📋 dbo.organization (BASE TABLE)
+  📋 dbo.partnerSolution (BASE TABLE)
+  📋 dbo.PartnerSolutionAvailableGeo (BASE TABLE)
+  📋 dbo.partnerSolutionByArea (BASE TABLE)
+  📋 dbo.partnerSolutionPlay (BASE TABLE)
+  📋 dbo.PartnerSolutionPlayAvailableGeo (BASE TABLE)
+  📋 dbo.partnerSolutionPlayByPlay (BASE TABLE)
+  📋 dbo.partnerSolutionPlayResourceLink (BASE TABLE)
+  📋 dbo.partnerSolutionResourceLink (BASE TABLE)
+  📋 dbo.partnerUser (BASE TABLE)
+  📋 dbo.partneruser_bkup05202204 (BASE TABLE)
+  📋 dbo.partneruser_bkup05312204 (BASE TABLE)
+  📋 dbo.resourceLink (BASE TABLE)
+  📋 dbo.solution_Del (BASE TABLE)
+  📋 dbo.solutionArea (BASE TABLE)
+  📋 dbo.solutionPlay (BASE TABLE)
+  📋 dbo.SolutionStatus (BASE TABLE)
+  📋 dbo.Spotlight (BASE TABLE)
+  📋 dbo.SubIndustry (BASE TABLE)
+  📋 dbo.usecaseOrganization (BASE TABLE)
+  📋 dbo.user (BASE TABLE)
+  📋 dbo.UserInvite (BASE TABLE)
+  📋 dbo.userOtp (BASE TABLE)
+  📋 stage.indusrytheme (BASE TABLE)
+  📋 stage.industry (BASE TABLE)
+  📋 stage.IndustryShowcasePartnerSolution (BASE TABLE)
+  📋 stage.organization (BASE TABLE)
+  📋 stage.partnerSolution (BASE TABLE)
+  📋 stage.PartnerSolutionAvailableGeo (BASE TABLE)
+  📋 stage.partnerSolutionByArea (BASE TABLE)
+  📋 stage.partnerSolutionResourceLink (BASE TABLE)
+  📋 stage.partneruser (BASE TABLE)
+  📋 stage.solutionarea (BASE TABLE)
+  📋 stage.solutionstatus (BASE TABLE)
+  📋 stage.subindustry (BASE TABLE)
+  👁 sys.database_firewall_rules (VIEW)
+
+✓ Found 45 tables/views
+
+Table Row Counts:
+
+✓ Connection test completed successfully
+============================================================

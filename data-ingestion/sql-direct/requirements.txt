@@ -1,0 +1,20 @@
+# SQL Direct Access - Python Dependencies
+# For direct database access to ISD SQL Server
+
+# SQL Server connectivity
+pyodbc              # ODBC driver for SQL Server
+pymssql             # Alternative pure-Python SQL Server driver
+
+# Azure authentication
+azure-identity    # Azure AD authentication
+azure-keyvault-secrets # For credential management
+
+# Data processing
+pandas           # Data manipulation
+python-dotenv     # Environment variable management
+
+# Existing dependencies (from main requirements.txt)
+requests
+azure-search-documents
+azure-ai-inference
+azure-core

@@ -342,3 +342,40 @@ For the Model Context Protocol (MCP) server wrapping this API:
 - Full scrape: ~36 API calls for all themes (assuming one call per sub-industry)
 - Recommend: Cache aggressively, implement rate limiting for production use
 
+
+
+---
+
+## API Discovery Update - December 16, 2025
+
+### Comprehensive Endpoint Discovery Results
+
+**Discovery Method**: Systematic testing of potential API endpoints and parameters using automated script.
+
+#### ✅ **Confirmed Working Endpoints**
+
+1. **GET /api/Industry** - Returns root Industry data (200)
+2. **GET /api/Industry/getMenu** - Complete navigation hierarchy (200)
+3. **GET /api/Industry/GetThemeDetalsByViewId?slug={slug}** - Theme details (200 with valid slug)
+4. **GET /api/Industry/GetPartnerSolutions** 🆕
+   - Accepts: `partnerId` or `solutionId` parameters
+   - Returns: Solution array (empty without valid ID)
+
+#### ❌ **Not Available** (404)
+- /api/Technology, /api/Partner, /api/Solution, /api/Search
+- Industry methods: GetAll, GetById, Search, Filter, Query
+
+### Discovery Script Created
+- **Location**: `data-ingestion/api_endpoint_discovery.py`
+- **Run**: `python3 api_endpoint_discovery.py`
+- **Results**: `api_discovery_results.json`
+
+### Questions for ISD Team (Meeting Follow-up)
+1. Master data views from Santhanaraj?
+2. GetPartnerSolutions valid ID formats?
+3. Search/filter endpoints planned?
+4. Complete API documentation/Swagger?
+5. Internal data endpoints (consumption credit, incentive status)?
+
+**Last Updated**: December 16, 2025
+
