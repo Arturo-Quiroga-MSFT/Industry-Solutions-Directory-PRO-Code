@@ -38,67 +38,105 @@ class NL2SQLPipeline:
         return """
 # ISD Database Schema Context
 
-## Main Tables
+## Primary View: dbo.vw_ISDSolution_All (5,118 rows)
 
-### dbo.partnerSolution (540 rows)
-Partner solution information.
-Columns:
-- partnerSolutionId (uniqueidentifier, PK)
-- solutionName (varchar)
-- solutionDescription (varchar) - HTML formatted
-- OrganizationId (uniqueidentifier, FK to organization.orgId)
-- IndustryId (uniqueidentifier, FK to Industry.industryId)
-- SubIndustryId (uniqueidentifier, FK to SubIndustry.subIndustryId)
-- solutionOrgWebsite (nvarchar)
-- marketplaceLink (varchar)
-- specialOfferLink (varchar)
-- IsPublished (int) - 1=published, 0=draft
-- rowChangedDate (datetime)
-- rowCreatedDate (datetime)
+**IMPORTANT**: Use this VIEW for all queries. It contains denormalized, pre-joined data - NO JOINS NEEDED!
 
-### dbo.organization (336 rows)
-Partner/organization information.
-Columns:
-- orgId (uniqueidentifier, PK)
-- orgName (varchar) - Partner name
-- orgDescription (varchar)
-- orgWebsite (varchar)
-- status (varchar)
+This view contains all solution data with related information already joined. Each row represents a solution with all its associated data.
 
-### dbo.Industry (10 rows)
-Top-level industries.
-Columns:
-- industryId (uniqueidentifier, PK)
-- industryName (varchar) - e.g., "Financial Services", "Healthcare & Life Sciences"
+### Key Columns:
 
-### dbo.SubIndustry (40 rows)
-Sub-industries within each industry.
-Columns:
-- subIndustryId (uniqueidentifier, PK)
-- subIndustryName (varchar)
-- industryId (uniqueidentifier, FK)
+**Solution Information:**
+- SolutionType (varchar) - Type of solution (e.g., "Industry")
+- solutionName (varchar) - Name of the solution
+- solutionDescription (varchar) - HTML-formatted description
+- solutionOrgWebsite (nvarchar) - Partner's website URL
+- marketPlaceLink (varchar) - Azure Marketplace link
+- specialOfferLink (varchar) - Special offer URL (if available)
+- logoFileLink (varchar) - Solution logo URL
 
-### dbo.solutionArea (3 rows)
-Technology/solution areas.
-Columns:
-- solutionAreaId (uniqueidentifier, PK)
-- solutionAreaName (varchar) - "AI Business Solutions", "Cloud and AI Platforms", "Security"
+**Industry Classification:**
+- industryName (varchar) - Industry category (e.g., "Healthcare & Life Sciences", "Financial Services", "State & Local Government")
+- industryDescription (varchar) - HTML-formatted industry description
+- subIndustryName (varchar) - Sub-industry category
+- SubIndustryDescription (varchar) - Sub-industry description
+- theme (varchar) - Industry theme/focus area
+- industryThemeDesc (varchar) - Theme description
 
-### dbo.partnerSolutionByArea
-Junction table linking solutions to solution areas (M:N).
-Columns:
-- partnerSolutionId (uniqueidentifier, FK)
-- solutionAreaId (uniqueidentifier, FK)
+**Technology/Solution Area:**
+- solutionAreaName (varchar) - Technology area: "AI Business Solutions", "Cloud and AI Platforms", or "Security"
+- solAreaDescription (varchar) - Solution area description
+- areaSolutionDescription (varchar) - Additional area description
 
-## Common Query Patterns
+**Solution Plays (Microsoft terminology):**
+- solutionPlayName (varchar) - Solution play name (may be NULL)
+- solutionPlayDesc (varchar) - Solution play description
+- solutionPlayLabel (varchar) - Solution play label
 
-1. Solutions by industry:
-   JOIN partnerSolution ps ON Industry.industryId = ps.IndustryId
+**Partner Information:**
+- orgName (varchar) - Partner/organization name
+- orgDescription (varchar) - Partner description
+- userType (varchar) - Usually "Partner"
 
-2. Solutions with partner names:
-   JOIN organization o ON ps.OrganizationId = o.orgId
+**Status & Publishing:**
+- solutionStatus (nvarchar) - Status (e.g., "Approved")
+- displayLabel (nvarchar) - Display label for status
 
-3. Solutions with technology areas:
+**Geographic Information:**
+- geoName (varchar) - Geographic region (e.g., "United States", "Canada")
+
+**Resources & Links:**
+- resourceLinkTitle (varchar) - Resource link title
+- resourceLinkUrl (varchar) - Resource URL
+- resourceLinkName (varchar) - Resource name/type (e.g., "Blog")
+- resourceLinkDescription (varchar) - Resource description
+
+**Images:**
+- image_thumb (varchar) - Thumbnail image URL
+- image_main (varchar) - Main image URL
+- image_mobile (varchar) - Mobile-optimized image URL
+
+### Important Notes:
+
+1. **No JOINs Required**: This view already contains all related data
+2. **Denormalized**: Each solution may appear multiple times if it has:
+   - Multiple solution areas
+   - Multiple resources
+   - Multiple geographic regions
+3. **NULL Values**: Some fields like solutionPlayName may be NULL
+4. **Filtering**: Most queries will want to filter on:
+   - solutionStatus = 'Approved' (published solutions only)
+   - industryName (to focus on specific industries)
+   - solutionAreaName (to focus on AI, Cloud, or Security)
+   - orgName (for partner-specific queries)
+
+## Sample Query Patterns:
+
+### Count solutions by industry:
+SELECT industryName, COUNT(DISTINCT solutionName) as solution_count
+FROM dbo.vw_ISDSolution_All
+WHERE solutionStatus = 'Approved'
+GROUP BY industryName
+
+### Find healthcare AI solutions:
+SELECT DISTINCT solutionName, orgName, industryName, solutionAreaName
+FROM dbo.vw_ISDSolution_All
+WHERE industryName = 'Healthcare & Life Sciences'
+  AND solutionAreaName = 'AI Business Solutions'
+  AND solutionStatus = 'Approved'
+
+### Top partners by solution count:
+SELECT orgName, COUNT(DISTINCT solutionName) as solution_count
+FROM dbo.vw_ISDSolution_All
+WHERE solutionStatus = 'Approved'
+GROUP BY orgName
+ORDER BY solution_count DESC
+
+### Solutions with marketplace links:
+SELECT DISTINCT solutionName, orgName, marketPlaceLink
+FROM dbo.vw_ISDSolution_All
+WHERE marketPlaceLink IS NOT NULL
+  AND solutionStatus = 'Approved'
    JOIN partnerSolutionByArea psba ON ps.partnerSolutionId = psba.partnerSolutionId
    JOIN solutionArea sa ON psba.solutionAreaId = sa.solutionAreaId
 
