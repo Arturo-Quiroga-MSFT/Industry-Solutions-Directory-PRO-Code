@@ -1,0 +1,9 @@
+# NL2SQL Streamlit App Requirements
+
+streamlit>=1.28.0
+pandas>=2.0.0
+pyodbc>=5.0.0
+python-dotenv>=1.0.0
+openai>=1.0.0
+openpyxl>=3.1.0  # For Excel export
+plotly>=5.18.0  # For interactive visualizations

@@ -197,18 +197,24 @@ WHERE marketPlaceLink IS NOT NULL
 
 Generate a SQL query to answer the user's question. Follow these rules:
 1. Return ONLY valid T-SQL for SQL Server
-2. Use appropriate JOINs based on the schema
-3. Always filter by IsPublished = 1 unless specifically asked for drafts
+2. Use the vw_ISDSolution_All view - NO JOINS needed (data is pre-joined)
+3. Always filter by solutionStatus = 'Approved' unless specifically asked for all
 4. Use clear aliases and column names
-5. Include TOP clause if listing many results (default TOP 10)
-6. Handle NULL values appropriately
-7. Format dates properly
-8. Use aggregate functions when appropriate
+5. **IMPORTANT**: For TOP with DISTINCT, syntax is: SELECT DISTINCT TOP 10 ... (DISTINCT before TOP)
+6. For limiting results, use TOP 10, TOP 50, etc. as appropriate
+7. Handle NULL values appropriately
+8. Use aggregate functions when appropriate (COUNT, SUM, AVG, etc.)
+9. When counting solutions, use COUNT(DISTINCT solutionName) to avoid duplicates from denormalized view
+10. **CRITICAL**: When returning solution data (not aggregates), ALWAYS include these core columns:
+    - solutionName (required - should be first column)
+    - orgName (required - the partner/vendor)
+    - Other relevant columns based on the query
+    - solutionDescription (required - MUST BE THE LAST COLUMN for better readability)
 
 Return your response in JSON format:
 {{
     "sql": "SELECT ...",
-    "explanation": "This query does X by joining Y...",
+    "explanation": "This query does X...",
     "confidence": "high|medium|low"
 }}
 """
