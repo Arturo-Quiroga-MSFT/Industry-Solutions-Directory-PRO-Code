@@ -24,8 +24,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Copy nl2sql_pipeline from data-ingestion
-COPY ../../data-ingestion/sql-direct/nl2sql_pipeline.py .
+# Note: nl2sql_pipeline.py should be copied to this directory before building
+# The multi_agent_pipeline.py imports it from the same directory
 
 # Expose port
 EXPOSE 8000
