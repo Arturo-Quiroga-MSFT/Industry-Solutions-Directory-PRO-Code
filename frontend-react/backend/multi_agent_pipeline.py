@@ -6,6 +6,7 @@ Four-agent architecture: Query Planner → SQL Executor → Insight Analyzer →
 
 import os
 import json
+import time
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from dotenv import load_dotenv
@@ -368,7 +369,8 @@ Generate 3-4 follow-up questions that are capability-focused:
 
 DO NOT generate questions that name specific partners or vendors.
 
-**Output Format:**
+**Response Format:**
+Respond with a JSON object using this exact structure:
 {{
     "insights": {{
         "overview": "neutral capability summary",
@@ -428,7 +430,8 @@ Generate 3-4 follow-up questions that are SPECIFIC to these findings:
 
 DO NOT include generic questions - ALL questions must be data-driven and specific to these results.
 
-**Output Format:**
+**Response Format:**
+Respond with a JSON object using this exact structure:
 {{
     "insights": {{
         "overview": "compelling summary with partner names",
@@ -635,7 +638,18 @@ Create an engaging response. The detailed data table will be shown separately in
                 # Temperature removed - model doesn't support custom values
             )
             
-            return response.choices[0].message.content
+            content = response.choices[0].message.content
+            
+            # Track token usage
+            tokens = None
+            if hasattr(response, 'usage') and response.usage:
+                tokens = {
+                    'prompt_tokens': response.usage.prompt_tokens,
+                    'completion_tokens': response.usage.completion_tokens,
+                    'total_tokens': response.usage.total_tokens
+                }
+            
+            return content, tokens
         
         except Exception as e:
             # Fallback formatting
@@ -653,7 +667,7 @@ Create an engaging response. The detailed data table will be shown separately in
                 for key, value in statistics.items():
                     fallback += f"- **{key}**: {value}\n"
             
-            return fallback
+            return fallback, None
 
 
 class MultiAgentPipeline:
@@ -702,15 +716,34 @@ class MultiAgentPipeline:
                     "columns": [...],
                     "rows": [...]
                 },
+                "usage_stats": {
+                    "prompt_tokens": int,
+                    "completion_tokens": int,
+                    "total_tokens": int
+                },
+                "elapsed_time": float (seconds),
                 "timestamp": ISO timestamp
             }
         """
+        start_time = time.time()
         timestamp = datetime.now().isoformat()
+        
+        # Initialize token tracking
+        total_prompt_tokens = 0
+        total_completion_tokens = 0
+        total_tokens = 0
         
         try:
             # AGENT 1: Query Planner - Analyze intent
             print("🧠 Agent 1: Query Planner analyzing intent...")
             intent_info = self.query_planner.analyze_intent(question, self.conversation_history)
+            
+            # Track tokens from Agent 1
+            if '_tokens' in intent_info:
+                tokens = intent_info.pop('_tokens')
+                total_prompt_tokens += tokens['prompt_tokens']
+                total_completion_tokens += tokens['completion_tokens']
+                total_tokens += tokens['total_tokens']
             print(f"   Intent: {intent_info['intent']}, New Query: {intent_info['needs_new_query']}")
             
             # AGENT 2: SQL Executor - Execute query if needed
@@ -815,9 +848,25 @@ class MultiAgentPipeline:
             insights = self.insight_analyzer.analyze_results(question, query_results, intent_info)
             print(f"   Confidence: {insights.get('confidence', 'unknown')}")
             
+            # Track tokens from Agent 3
+            if '_tokens' in insights:
+                tokens = insights.pop('_tokens')
+                total_prompt_tokens += tokens['prompt_tokens']
+                total_completion_tokens += tokens['completion_tokens']
+                total_tokens += tokens['total_tokens']
+            
             # AGENT 4: Response Formatter - Create narrative
             print("✍️  Agent 4: Response Formatter creating narrative...")
-            narrative = self.response_formatter.format_response(question, insights, query_results, intent_info)
+            narrative, formatter_tokens = self.response_formatter.format_response(question, insights, query_results, intent_info)
+            
+            # Track tokens from Agent 4
+            if formatter_tokens:
+                total_prompt_tokens += formatter_tokens['prompt_tokens']
+                total_completion_tokens += formatter_tokens['completion_tokens']
+                total_tokens += formatter_tokens['total_tokens']
+            
+            # Calculate elapsed time
+            elapsed_time = time.time() - start_time
             
             # Build response
             response = {
@@ -833,8 +882,18 @@ class MultiAgentPipeline:
                     "columns": query_results.get('columns', []),
                     "rows": query_results.get('rows', [])
                 },
+                "usage_stats": {
+                    "prompt_tokens": total_prompt_tokens,
+                    "completion_tokens": total_completion_tokens,
+                    "total_tokens": total_tokens
+                },
+                "elapsed_time": round(elapsed_time, 2),
                 "timestamp": timestamp
             }
+            
+            # Print usage summary
+            print(f"📊 Token Usage: {total_tokens} total ({total_prompt_tokens} input, {total_completion_tokens} output)")
+            print(f"⏱️  Elapsed Time: {elapsed_time:.2f}s")
             
             # Store in conversation history
             self.conversation_history.append({

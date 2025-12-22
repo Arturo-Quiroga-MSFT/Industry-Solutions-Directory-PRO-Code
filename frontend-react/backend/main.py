@@ -68,6 +68,8 @@ class QueryResponse(BaseModel):
     rows: Optional[List[Dict[str, Any]]] = None
     row_count: int = 0
     error: Optional[str] = None
+    usage_stats: Optional[Dict[str, int]] = None  # Token usage statistics
+    elapsed_time: Optional[float] = None  # Time elapsed in seconds
     timestamp: str
 
 class ConversationExportRequest(BaseModel):
@@ -173,6 +175,8 @@ async def execute_query(request: QueryRequest):
             columns=result['data']['columns'],
             rows=rows_data,
             row_count=len(rows_data),
+            usage_stats=result.get('usage_stats'),
+            elapsed_time=result.get('elapsed_time'),
             timestamp=result['timestamp']
         )
         

@@ -87,4 +87,4 @@ appsettings.json
 donotupload/
 meetings_and_internal_only/
 discovery-meeting/
-SQL_DATABASE_DISCOVERY.md
+SQL_DATABASE_DISCOVERY.md*.env.bak

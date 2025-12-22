@@ -34,6 +34,12 @@ export interface QueryResult {
   rows?: Record<string, any>[];
   row_count: number;
   error?: string;
+  usage_stats?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+  elapsed_time?: number;  // Time in seconds
   timestamp: string;
 }
 

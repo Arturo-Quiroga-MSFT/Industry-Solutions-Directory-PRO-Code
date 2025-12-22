@@ -214,9 +214,19 @@ export default function Message({ message, onFollowUpClick }: MessageProps) {
             </>
           )}
         </div>
-        <p className="text-xs text-gray-500 mt-1">
-          {new Date(message.timestamp).toLocaleTimeString()}
-        </p>
+        <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
+          <span>{new Date(message.timestamp).toLocaleTimeString()}</span>
+          {data?.usage_stats && (
+            <span className="flex items-center gap-3 text-gray-400">
+              <span>📊 {data.usage_stats.prompt_tokens.toLocaleString()} in</span>
+              <span>📤 {data.usage_stats.completion_tokens.toLocaleString()} out</span>
+              <span>∑ {data.usage_stats.total_tokens.toLocaleString()} tokens</span>
+            </span>
+          )}
+          {data?.elapsed_time && (
+            <span className="text-gray-400">⏱️ {data.elapsed_time}s</span>
+          )}
+        </div>
       </div>
     </div>
   );
