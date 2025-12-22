@@ -148,13 +148,13 @@ function App() {
           
           // Add priority columns that exist
           priorityColumns.forEach(col => {
-            if (msg.data.columns.includes(col)) {
+            if (msg.data?.columns?.includes(col)) {
               selectedColumns.push(col);
             }
           });
           
           // Add other columns (excluding description) until we have space
-          msg.data.columns.forEach((col: string) => {
+          msg.data?.columns?.forEach((col: string) => {
             if (!selectedColumns.includes(col) && 
                 col !== 'solutionDescription' && 
                 selectedColumns.length < 10) {
@@ -287,13 +287,13 @@ function App() {
           
           // Add priority columns that exist
           priorityColumns.forEach(col => {
-            if (msg.data.columns.includes(col)) {
+            if (msg.data?.columns?.includes(col)) {
               selectedColumns.push(col);
             }
           });
           
           // Add other columns (excluding description) until we have space
-          msg.data.columns.forEach((col: string) => {
+          msg.data?.columns?.forEach((col: string) => {
             if (!selectedColumns.includes(col) && 
                 col !== 'solutionDescription' && 
                 selectedColumns.length < 10) {
