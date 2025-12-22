@@ -5,12 +5,12 @@
 ### Step 1: Access the Application
 
 **Customer Mode** (External-facing):
-- Open: http://localhost:5174
-- Or deployed URL: `[ADD DEPLOYED URL]`
+- **Deployed URL**: https://isd-chat-customer-frontend.redplant-675b33da.swedencentral.azurecontainerapps.io
+- Local: http://localhost:5174
 
 **Seller Mode** (Internal Microsoft use):
-- Open: http://localhost:5173
-- Or deployed URL: `[ADD DEPLOYED URL]`
+- **Deployed URL**: https://isd-chat-seller-frontend.redplant-675b33da.swedencentral.azurecontainerapps.io
+- Local: http://localhost:5173
 
 ### Step 2: Verify the Mode
 

@@ -39,7 +39,17 @@ The app runs in **two modes** for different audiences:
 
 ## 🚀 How to Access
 
-### Option 1: Local Testing (If Running Locally)
+### ⭐ Deployed Testing URLs (Recommended)
+
+**Customer Mode (External-facing):**
+- **Frontend**: https://isd-chat-customer-frontend.redplant-675b33da.swedencentral.azurecontainerapps.io
+- Backend API: https://isd-chat-customer-backend.redplant-675b33da.swedencentral.azurecontainerapps.io
+
+**Seller Mode (Internal Microsoft use):**
+- **Frontend**: https://isd-chat-seller-frontend.redplant-675b33da.swedencentral.azurecontainerapps.io
+- Backend API: https://isd-chat-seller-backend.redplant-675b33da.swedencentral.azurecontainerapps.io
+
+### Option 2: Local Testing (If Running Locally)
 
 **Customer Mode:**
 - URL: http://localhost:5174
