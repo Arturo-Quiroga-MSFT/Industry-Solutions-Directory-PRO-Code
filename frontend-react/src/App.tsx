@@ -43,7 +43,9 @@ function App() {
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: result.success
+        content: result.needs_clarification
+          ? 'I need clarification to provide the best results'
+          : result.success
           ? `Found ${result.row_count} results`
           : `Error: ${result.error}`,
         timestamp: new Date().toISOString(),
@@ -101,6 +103,77 @@ function App() {
         markdown += `**Question**: ${msg.content}\n\n`;
       } else {
         markdown += `**Result**: ${msg.content}\n\n`;
+        
+        // Add Insights section
+        if (msg.data?.narrative) {
+          markdown += `### 💡 Insights\n\n`;
+          markdown += `${msg.data.narrative}\n\n`;
+        }
+        
+        // Add Follow-up Questions
+        if (msg.data?.insights?.follow_up_questions && msg.data.insights.follow_up_questions.length > 0) {
+          markdown += `**Suggested Follow-up Questions:**\n\n`;
+          msg.data.insights.follow_up_questions.forEach((q) => {
+            markdown += `- ${q}\n`;
+          });
+          markdown += `\n`;
+        }
+        
+        // Add Table Data
+        if (msg.data?.rows && msg.data?.columns && msg.data.rows.length > 0) {
+          markdown += `### 📊 Results Table\n\n`;
+          markdown += `**Total Results**: ${msg.data.rows.length}\n\n`;
+          
+          // Prioritize important columns and always include solutionDescription
+          const priorityColumns = ['solutionName', 'orgName', 'industryName', 'solutionAreaName'];
+          const selectedColumns: string[] = [];
+          
+          // Add priority columns that exist
+          priorityColumns.forEach(col => {
+            if (msg.data.columns.includes(col)) {
+              selectedColumns.push(col);
+            }
+          });
+          
+          // Add other columns until we have 4
+          msg.data.columns.forEach((col: string) => {
+            if (!selectedColumns.includes(col) && 
+                col !== 'solutionDescription' && 
+                selectedColumns.length < 4) {
+              selectedColumns.push(col);
+            }
+          });
+          
+          // Always add solutionDescription last if it exists
+          if (msg.data.columns.includes('solutionDescription')) {
+            selectedColumns.push('solutionDescription');
+          }
+          
+          // Limit to 5 columns max
+          const cols = selectedColumns.slice(0, 5);
+          
+          markdown += `| ${cols.join(' | ')} |\n`;
+          markdown += `| ${cols.map(() => '---').join(' | ')} |\n`;
+          
+          // Add rows (limit to first 20 for export)
+          const rowsToExport = msg.data.rows.slice(0, 20);
+          rowsToExport.forEach((row: any) => {
+            const rowData = cols.map(col => {
+              const value = row[col];
+              if (value === null || value === undefined) return '';
+              // Strip HTML and truncate
+              const strValue = String(value).replace(/<[^>]*>/g, '').substring(0, 100);
+              return strValue.replace(/\|/g, '\\|').replace(/\n/g, ' ');
+            });
+            markdown += `| ${rowData.join(' | ')} |\n`;
+          });
+          
+          if (msg.data.rows.length > 20) {
+            markdown += `\n*... and ${msg.data.rows.length - 20} more results*\n`;
+          }
+          markdown += `\n`;
+        }
+        
         if (msg.data?.sql) {
           markdown += `**SQL**:\n\`\`\`sql\n${msg.data.sql}\n\`\`\`\n\n`;
         }
@@ -152,6 +225,93 @@ function App() {
       } else {
         html += `<div class="message assistant">
           <strong>Assistant:</strong> ${msg.content}<br>`;
+        
+        // Add Insights section
+        if (msg.data?.narrative) {
+          html += `<div style="margin-top: 15px; padding: 15px; background: #0f172a; border-left: 4px solid #3b82f6; border-radius: 4px;">
+            <h3 style="color: #3b82f6; margin-top: 0;">💡 Insights</h3>
+            <div style="color: #e2e8f0;">${msg.data.narrative.replace(/\n/g, '<br>')}</div>
+          </div>`;
+        }
+        
+        // Add Follow-up Questions
+        if (msg.data?.insights?.follow_up_questions && msg.data.insights.follow_up_questions.length > 0) {
+          html += `<div style="margin-top: 15px;">
+            <p style="color: #94a3b8; font-size: 0.9em;"><strong>Suggested Follow-up Questions:</strong></p>
+            <ul style="color: #cbd5e1;">`;
+          msg.data.insights.follow_up_questions.forEach((q) => {
+            html += `<li>${q}</li>`;
+          });
+          html += `</ul></div>`;
+        }
+        
+        // Add Table Data
+        if (msg.data?.rows && msg.data?.columns && msg.data.rows.length > 0) {
+          html += `<div style="margin-top: 15px;">
+            <h3 style="color: #3b82f6;">📊 Results Table</h3>
+            <p style="color: #94a3b8; font-size: 0.9em;">Total Results: ${msg.data.rows.length}</p>
+            <table>
+              <thead>
+                <tr>`;
+          
+          // Prioritize important columns and always include solutionDescription
+          const priorityColumns = ['solutionName', 'orgName', 'industryName', 'solutionAreaName'];
+          const selectedColumns: string[] = [];
+          
+          // Add priority columns that exist
+          priorityColumns.forEach(col => {
+            if (msg.data.columns.includes(col)) {
+              selectedColumns.push(col);
+            }
+          });
+          
+          // Add other columns until we have 4
+          msg.data.columns.forEach((col: string) => {
+            if (!selectedColumns.includes(col) && 
+                col !== 'solutionDescription' && 
+                selectedColumns.length < 4) {
+              selectedColumns.push(col);
+            }
+          });
+          
+          // Always add solutionDescription last if it exists
+          if (msg.data.columns.includes('solutionDescription')) {
+            selectedColumns.push('solutionDescription');
+          }
+          
+          // Limit to 5 columns max
+          const cols = selectedColumns.slice(0, 5);
+          
+          cols.forEach((col: string) => {
+            html += `<th>${col}</th>`;
+          });
+          html += `</tr></thead><tbody>`;
+          
+          // Add rows (limit to first 20)
+          const rowsToExport = msg.data.rows.slice(0, 20);
+          rowsToExport.forEach((row: any) => {
+            html += `<tr>`;
+            cols.forEach((col: string) => {
+              const value = row[col];
+              if (value === null || value === undefined) {
+                html += `<td></td>`;
+              } else {
+                // Strip HTML and truncate
+                const strValue = String(value).replace(/<[^>]*>/g, '').substring(0, 100);
+                html += `<td>${strValue}</td>`;
+              }
+            });
+            html += `</tr>`;
+          });
+          
+          html += `</tbody></table>`;
+          
+          if (msg.data.rows.length > 20) {
+            html += `<p style="color: #94a3b8; font-size: 0.9em; font-style: italic;">... and ${msg.data.rows.length - 20} more results</p>`;
+          }
+          html += `</div>`;
+        }
+        
         if (msg.data?.sql) {
           html += `<div class="sql"><pre>${msg.data.sql}</pre></div>`;
         }

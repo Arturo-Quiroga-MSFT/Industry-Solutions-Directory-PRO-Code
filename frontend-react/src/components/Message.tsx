@@ -53,6 +53,43 @@ export default function Message({ message, onFollowUpClick }: MessageProps) {
                 <p className="text-sm mt-1">{data.error}</p>
               </div>
             </div>
+          ) : data?.needs_clarification ? (
+            <div className="flex items-start gap-2 text-yellow-400">
+              <Lightbulb size={20} className="flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium mb-2">Could you be more specific?</p>
+                <p className="text-gray-300 text-sm mb-4">{data.clarification_question}</p>
+                
+                {data.suggested_refinements && data.suggested_refinements.length > 0 && (
+                  <div>
+                    <p className="text-sm text-gray-400 mb-2">Try asking:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {data.suggested_refinements.map((refinement, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            if (onFollowUpClick) {
+                              onFollowUpClick(refinement);
+                            }
+                          }}
+                          className="px-3 py-2 bg-yellow-900/30 hover:bg-yellow-800/50 text-yellow-300 rounded-lg text-sm border border-yellow-700/50 hover:border-yellow-500 transition-all"
+                        >
+                          {refinement}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {data.explanation && (
+                  <div className="mt-4 pt-4 border-t border-slate-700">
+                    <p className="text-xs text-gray-400">
+                      <strong>Note:</strong> {data.explanation}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           ) : (
             <>
               <div className="flex items-center gap-2 text-green-400 mb-3">

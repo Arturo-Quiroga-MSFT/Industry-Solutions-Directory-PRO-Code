@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ISD Conversation Export</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #0f172a; color: #e2e8f0; }
+    h1 { color: #3b82f6; }
+    .message { margin: 20px 0; padding: 15px; border-radius: 8px; }
+    .user { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .assistant { background: #1e293b; border-left: 4px solid #3b82f6; }
+    .sql { background: #1e1e1e; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    .meta { font-size: 0.9em; color: #94a3b8; margin-top: 10px; }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+    th, td { border: 1px solid #475569; padding: 8px; text-align: left; }
+    th { background: #334155; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Industry Solutions Directory - Conversation</h1>
+  <p><strong>Date:</strong> 2025-12-19, 1:27:51 p.m.</p>
+  <p><strong>Total Queries:</strong> 2</p>
+  <hr>
+<div class="message user"><strong>You:</strong> Core banking modernization solutions</div>
+<div class="message assistant">
+          <strong>Assistant:</strong> Found 10 results<br><div class="sql"><pre>SELECT DISTINCT solutionName, orgName, industryName, solutionAreaName, solutionDescription
+FROM dbo.vw_ISDSolution_All
+WHERE solutionStatus = 'Approved'
+  AND industryName = 'Financial Services'
+  AND (
+        solutionName LIKE '%core bank%'
+        OR solutionDescription LIKE '%core bank%'
+        OR solutionName LIKE '%bank modern%'
+        OR solutionDescription LIKE '%bank modern%'
+      )
+ORDER BY solutionName;</pre></div><p><strong>Explanation:</strong> This query returns all approved Financial Services solutions that appear to be related to core banking modernization by searching for relevant keywords in the solution name or description. Because the view is denormalized and may contain duplicates, DISTINCT is used. Required core columns are included with solutionDescription placed last.</p><div class="meta">2025-12-19, 1:25:54 p.m.</div>
+        </div>
+<div class="message user"><strong>You:</strong> Show me all solutions from HCL Technologies</div>
+<div class="message assistant">
+          <strong>Assistant:</strong> Found 8 results<br><div class="sql"><pre>SELECT DISTINCT 
+    solutionName,
+    orgName,
+    industryName,
+    solutionAreaName,
+    solutionDescription
+FROM dbo.vw_ISDSolution_All
+WHERE orgName = 'HCL Technologies'
+  AND solutionStatus = 'Approved'
+ORDER BY solutionName;</pre></div><p><strong>Explanation:</strong> Returns all approved ISD solutions provided by HCL Technologies. DISTINCT is used to avoid duplicates caused by the denormalized view. Core fields are included with solutionDescription as the final column.</p><div class="meta">2025-12-19, 1:27:18 p.m.</div>
+        </div>
+</body></html>

@@ -49,29 +49,46 @@ class QueryPlanner:
         
         system_prompt = """You are a query intent analyzer for an Industry Solutions Directory chatbot.
 
-Analyze the user's question and determine:
-1. Intent type:
-   - "query": User wants to retrieve/search for solutions (e.g., "show me healthcare AI solutions")
-   - "analyze": User wants insights from existing results (e.g., "what are the trends?", "which partners?")
-   - "summarize": User wants a summary of previous results (e.g., "summarize these", "give me key takeaways")
-   - "compare": User wants to compare solutions or categories
+**Task**: Determine if user wants NEW data or to analyze EXISTING results from conversation.
 
-2. Whether a new SQL query is needed:
-   - True: User is asking for new/different data
-   - False: User wants to analyze/summarize existing results from conversation
+**Intent Classification:**
 
-3. Query type (if new query needed):
-   - "specific": Looking for specific solutions (returns table of solutions)
-   - "aggregate": Asking for counts, statistics, distributions (returns aggregated data)
-   - "exploratory": Broad exploration (e.g., "what solutions do you have?")
+1. **query** - User requesting new/different data
+   - Indicators: Asking about solutions, partners, industries, counts
+   - Keywords: "show", "find", "what", "which", "how many"
+   
+2. **analyze** - User wants insights from current results  
+   - Indicators: Asking about patterns, trends in shown data
+   - Keywords: "analyze these", "what patterns", "summarize this"
+   - Requires: Non-empty previous results
 
-Return JSON format:
-{
+3. **summarize** - User wants summary of previous results
+   - Indicators: Explicit summarization request
+   - Keywords: "summary", "key takeaways", "overview"
+   - Requires: Non-empty previous results
+
+4. **compare** - User wants comparison
+   - Indicators: Explicit comparison request
+   - Keywords: "compare", "difference between", "versus"
+
+**Decision Logic:**
+
+- needs_new_query = true IF:
+  - Intent is "query" OR
+  - No conversation history OR
+  - Previous results were empty (0 rows)
+
+- needs_new_query = false IF:
+  - Intent is "analyze" or "summarize" AND
+  - Previous results exist AND have data
+
+**Output Format:**
+{{
     "intent": "query|analyze|summarize|compare",
     "needs_new_query": true/false,
     "query_type": "specific|aggregate|exploratory",
-    "reasoning": "brief explanation"
-}
+    "reasoning": "1-sentence explanation"
+}}
 """
         
         user_prompt = f"""Question: "{question}"
@@ -233,69 +250,60 @@ class InsightAnalyzer:
                 all_rows[-5:]
             )
         
-        system_prompt = """You are an expert business analyst for the Industry Solutions Directory specializing in Microsoft partner ecosystem insights.
+        system_prompt = """You are an expert business analyst for the Industry Solutions Directory.
 
-Your job is to analyze solution data and provide ACTIONABLE, DETAILED insights that help users make informed decisions.
+**Objective**: Extract actionable insights from solution data to help decision-makers.
 
-CRITICAL REQUIREMENTS:
-1. Overview: Compelling 2-3 sentence summary that highlights the MOST INTERESTING finding
-2. Key Findings: 4-6 SPECIFIC, DATA-DRIVEN discoveries (NOT generic statements like "query returned X results")
-   - Focus on WHO (top partners), WHAT (solution types), WHY (business value)
-   - Include percentages, distributions, notable patterns
-   - Highlight surprises or unexpected insights
-3. Patterns: 3-4 meaningful trends or commonalities across solutions
-   - Technology stacks, deployment models, target industries
-   - Integration approaches, use cases, differentiators
-4. Statistics: Rich metrics beyond just counts
-   - Partner distribution (top 3-5 partners with counts)
-   - Solution area breakdown (percentages)
-   - Industry coverage
-   - Technology categories
-5. Recommendations: 3-4 SPECIFIC next actions
-   - Suggest filtering/refining strategies
-   - Recommend comparisons worth exploring
-   - Point to notable solutions to investigate
+**Analysis Framework:**
 
-AVOID:
-- Generic statements like "Query returned X solutions"
-- Just listing data without interpretation
-- Vague recommendations like "explore more"
+1. **Overview** (2-3 sentences)
+   - Lead with the most interesting/surprising finding
+   - Establish context (market size, key players)
+   - Highlight what makes this data set notable
 
-FOCUS ON:
-- Business value and use cases
-- Competitive landscape (which partners lead in what areas)
-- Technology trends and modern approaches
-Dataset Overview:
-- Total Results: {row_count}
-- Columns Available: {', '.join(columns)}
+2. **Key Findings** (4-6 data-driven points)
+   - Focus on WHO (partners), WHAT (offerings), WHY (value)
+   - Use specific numbers, percentages, distributions
+   - Identify market leaders, gaps, concentrations
+   - Note unexpected patterns or outliers
 
-Pre-Computed Statistics:
-{json.dumps(computed_stats, indent=2, default=str)}
+3. **Patterns** (3-4 observations)
+   - Technology trends and modern approaches
+   - Solution clustering and categorization
+   - Integration patterns and ecosystems
+   - Deployment models and architectures
 
-Representative Sample ({len(sample_rows)} solutions from across the dataset):
-{json.dumps(sample_rows, indent=2, default=str)}
+4. **Statistics** (quantitative metrics)
+   - Partner distribution (top contributors with counts)
+   - Solution area breakdown (categories with percentages)
+   - Industry coverage and focus areas
+   - Geographic or technology distributions
 
-INSTRUCTIONS:
-Analyze this data deeply. Look beyond just the count. Identify:
-- Which partners dominate this space and why
-- What solution approaches are most common
-- Technology patterns and modern trends
-- Business value propositions
-- Gaps or opportunities
-- Specific solutions worth highlighting
+5. **Recommendations** (3-4 actionable next steps)
+   - Specific filters or refinements to explore
+   - Comparisons worth investigating
+   - Notable individual solutions to review
+   - Strategic insights for decision-making
 
-Provide insights that would help a business decision-maker choose the right solutionpattern observed", "Common business use case", ...],
-        "statistics": {
-            "total_solutions": 77,
-            "top_partners": {"Partner A": 15, "Partner B": 12, ...},
-            "solution_areas": {"AI": "45%", "Security": "30%", ...},
-            "industries_served": ["Finance", "Healthcare", ...],
-            ...
-        },
-        "recommendations": ["Specific actionable suggestion", "Another targeted next step", ...]
-    },
+**Quality Standards:**
+- Avoid generic statements like "query returned X results"
+- Use specific data points and percentages
+- Identify business value and strategic implications
+- Connect findings to real-world use cases
+- Suggest follow-up questions that add value
+
+**Output Format:**
+{{
+    "insights": {{
+        "overview": "compelling summary",
+        "key_findings": ["data-backed point", ...],
+        "patterns": ["observed trend", ...],
+        "statistics": {{"metric": value, ...}},
+        "recommendations": ["actionable suggestion", ...],
+        "follow_up_questions": ["relevant next query", ...]
+    }},
     "confidence": "high|medium|low"
-}
+}}
 """
         
         user_prompt = f"""Question: "{question}"
@@ -547,6 +555,24 @@ class MultiAgentPipeline:
                 print("🔍 Agent 2: SQL Executor generating query...")
                 sql_result = self.sql_executor.generate_sql(question)
                 
+                # Check if query needs clarification
+                if sql_result.get('needs_clarification'):
+                    print(f"❓ Query needs clarification")
+                    return {
+                        "success": True,
+                        "question": question,
+                        "needs_clarification": True,
+                        "clarification_question": sql_result.get('clarification_question'),
+                        "suggested_refinements": sql_result.get('suggested_refinements', []),
+                        "sql": sql_result.get('sql'),  # Still provide the broad query SQL
+                        "explanation": sql_result.get('explanation'),
+                        "confidence": sql_result.get('confidence', 'low'),
+                        "row_count": 0,  # Add row_count for frontend compatibility
+                        "columns": [],  # Add empty columns array
+                        "rows": [],  # Add empty rows array
+                        "timestamp": timestamp
+                    }
+                
                 if sql_result.get('sql'):
                     print("⚙️  Agent 2: Executing SQL query...")
                     query_results = self.sql_executor.execute_sql(sql_result['sql'])
@@ -562,7 +588,26 @@ class MultiAgentPipeline:
                 if self.conversation_history:
                     last_exchange = self.conversation_history[-1]
                     query_results = last_exchange.get('raw_results', {})
-                    sql_result = {"sql": "-- Using cached results", "explanation": "Analyzing previous results"}
+                    
+                    # Check if previous results actually have data
+                    previous_row_count = query_results.get('row_count', 0)
+                    if previous_row_count == 0:
+                        print("⚠️  Previous query had 0 results - running new query instead")
+                        # Force new query since there's nothing to analyze
+                        sql_result = self.sql_executor.generate_sql(question)
+                        
+                        if sql_result.get('sql'):
+                            print("⚙️  Agent 2: Executing SQL query...")
+                            query_results = self.sql_executor.execute_sql(sql_result['sql'])
+                        else:
+                            return {
+                                "success": False,
+                                "question": question,
+                                "error": "Failed to generate SQL query",
+                                "timestamp": timestamp
+                            }
+                    else:
+                        sql_result = {"sql": "-- Using cached results", "explanation": "Analyzing previous results"}
                 else:
                     return {
                         "success": False,

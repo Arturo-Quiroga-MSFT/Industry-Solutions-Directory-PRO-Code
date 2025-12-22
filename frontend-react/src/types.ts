@@ -15,6 +15,9 @@ export interface QueryResult {
     query_type: string;
     reasoning: string;
   };
+  needs_clarification?: boolean;  // New: indicates query is ambiguous
+  clarification_question?: string;  // New: question to ask user
+  suggested_refinements?: string[];  // New: suggested more specific queries
   narrative?: string;  // New: formatted insights text
   insights?: {
     overview: string;

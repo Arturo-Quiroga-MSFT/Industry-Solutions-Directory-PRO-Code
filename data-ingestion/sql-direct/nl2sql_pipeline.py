@@ -196,16 +196,42 @@ WHERE marketPlaceLink IS NOT NULL
 {self.schema_context}
 
 Generate a SQL query to answer the user's question. Follow these rules:
-1. Return ONLY valid T-SQL for SQL Server
-2. Use the vw_ISDSolution_All view - NO JOINS needed (data is pre-joined)
-3. Always filter by solutionStatus = 'Approved' unless specifically asked for all
-4. Use clear aliases and column names
-5. **IMPORTANT**: For TOP with DISTINCT, syntax is: SELECT DISTINCT TOP 10 ... (DISTINCT before TOP)
-6. For limiting results, use TOP 10, TOP 50, etc. as appropriate
-7. Handle NULL values appropriately
-8. Use aggregate functions when appropriate (COUNT, SUM, AVG, etc.)
-9. When counting solutions, use COUNT(DISTINCT solutionName) to avoid duplicates from denormalized view
-10. **CRITICAL**: When returning solution data (not aggregates), ALWAYS include these core columns:
+
+**SEARCH PRECISION RULES:**
+
+1. **Core Terms** - Always search for fundamental business concepts/technologies:
+   - Pattern: Extract core 1-2 word concepts (e.g., "supply chain" from "supply chain visibility")
+   - Implementation: Use LIKE '%core term%' for broader matching
+   - Example: "point of sale systems" → search "%point of sale%"
+   - Example: "supply chain visibility" → search "%supply chain%"
+   - Rationale: Descriptive modifiers often don't match database terminology exactly
+
+2. **Exact Phrases** - Use only when specific multi-word terms are well-defined:
+   - Use for: Established phrases ("smart city", "fraud detection", "risk management")
+   - Implementation: LIKE '%complete phrase%' 
+   - Test: Would removing one word completely change the meaning?
+
+3. **Industry/Technology Filters** - Add explicit filters when mentioned:
+   - Pattern: "X for Y" or "Y solutions"
+   - Implementation: AND industryName = 'Y' or filter by solutionAreaName
+   - Example: "retail solutions" → AND industryName = 'Retail & Consumer Goods'
+
+4. **Ambiguity Detection** - Trigger clarification when:
+   - Query is 1-2 generic words (e.g., "AI", "smart", "cloud") without context
+   - Term has multiple distinct solution categories
+   - When ambiguous: suggest 3-4 specific refinements with real-world use cases
+
+**SQL GENERATION RULES:**
+5. Return ONLY valid T-SQL for SQL Server
+6. Use the vw_ISDSolution_All view - NO JOINS needed (data is pre-joined)
+7. Always filter by solutionStatus = 'Approved' unless specifically asked for all
+8. Use clear aliases and column names
+9. **IMPORTANT**: For TOP with DISTINCT, syntax is: SELECT DISTINCT TOP 50 ... (DISTINCT before TOP)
+10. For limiting results, use TOP 50 as default for solution listings
+11. Handle NULL values appropriately
+12. Use aggregate functions when appropriate (COUNT, SUM, AVG, etc.)
+13. When counting solutions, use COUNT(DISTINCT solutionName) to avoid duplicates from denormalized view
+14. **CRITICAL**: When returning solution data (not aggregates), ALWAYS include these core columns:
     - solutionName (required - should be first column)
     - orgName (required - the partner/vendor)
     - Other relevant columns based on the query
@@ -215,8 +241,16 @@ Return your response in JSON format:
 {{
     "sql": "SELECT ...",
     "explanation": "This query does X...",
-    "confidence": "high|medium|low"
+    "confidence": "high|medium|low",
+    "needs_clarification": false,
+    "clarification_question": "Optional: Only if ambiguous",
+    "suggested_refinements": ["Optional: Only if ambiguous"]
 }}
+
+**Response Confidence Levels:**
+- high: Clear intent, specific domain terms, unambiguous
+- medium: Broad but actionable, may return many results
+- low: Very vague or likely to return no results
 """
         
         try:
