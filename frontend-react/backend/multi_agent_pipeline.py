@@ -201,6 +201,27 @@ class InsightAnalyzer:
         
         print(f"   Computed stats: {len(stats.get('top_partners', {}))} unique partners, {len(stats.get('solution_areas', {}))} solution areas")
         return stats
+
+    def _row_to_dict(self, row: Any, columns: List[str]) -> Dict[str, Any]:
+        """Convert pyodbc.Row or dict-like row into a standard dict using provided columns"""
+        row_dict: Dict[str, Any] = {}
+
+        if isinstance(row, dict):
+            for col in columns:
+                if col in row:
+                    row_dict[col] = row[col]
+            return row_dict
+
+        for col in columns:
+            try:
+                row_dict[col] = row[col]
+            except (KeyError, IndexError, TypeError):
+                try:
+                    row_dict[col] = getattr(row, col)
+                except AttributeError:
+                    continue
+
+        return row_dict
     
     def analyze_results(self, question: str, results: Dict[str, Any], intent_info: Dict) -> Dict[str, Any]:
         """
@@ -230,6 +251,12 @@ class InsightAnalyzer:
                 "confidence": "low"
             }
         
+        # Check APP_MODE to determine insight style
+        app_mode = os.getenv('APP_MODE', 'seller').lower()
+        is_customer_mode = app_mode == 'customer'
+        
+        print(f"🎯 Generating insights in {'CUSTOMER' if is_customer_mode else 'SELLER'} mode")
+        
         # Prepare enhanced data summary for LLM with actual analysis
         row_count = len(results['rows'])
         columns = results['columns']
@@ -237,6 +264,18 @@ class InsightAnalyzer:
         
         # Pre-compute statistics to give LLM better context
         computed_stats = self._compute_statistics(all_rows, columns)
+        
+        # FOR CUSTOMER MODE: Remove partner-specific data from statistics
+        if is_customer_mode:
+            # Remove partner names and rankings
+            computed_stats.pop('top_partners', None)
+            computed_stats.pop('unique_partners', None)
+            print("   🛡️ Filtered out partner rankings for customer mode")
+            
+            # Also remove orgName from sample rows
+            filtered_columns = [col for col in columns if col != 'orgName']
+        else:
+            filtered_columns = columns
         
         # Sample rows for detailed analysis (include first, middle, last for variety)
         sample_size = min(15, row_count)
@@ -250,9 +289,103 @@ class InsightAnalyzer:
                 all_rows[-5:]
             )
         
-        system_prompt = """You are an expert business analyst for the Industry Solutions Directory.
+        # FOR CUSTOMER MODE: Filter orgName from sample rows
+        if is_customer_mode:
+            filtered_sample_rows = []
+            for row in sample_rows:
+                row_dict = self._row_to_dict(row, columns)
+                if not row_dict:
+                    continue
+                filtered_row = {k: v for k, v in row_dict.items() if k != 'orgName'}
+                filtered_sample_rows.append(filtered_row)
+            sample_rows = filtered_sample_rows
+            print(f"   🛡️ Removed orgName column from {len(sample_rows)} sample rows")
+        
+        # Different system prompts based on mode
+        if is_customer_mode:
+            # Customer Mode: Unbiased, no partner rankings or endorsements
+            system_prompt = """You are an expert business analyst for the Industry Solutions Directory.
 
-**Objective**: Extract actionable insights from solution data to help decision-makers.
+**CRITICAL - YOU ARE IN CUSTOMER MODE - EXTERNAL AUDIENCE**
+
+This analysis is for EXTERNAL CUSTOMERS browsing for solutions. This is NOT for internal seller use.
+
+**LEGAL COMPLIANCE REQUIREMENTS - ABSOLUTE RULES:**
+❌ NEVER mention "for seller use" or "for internal use"
+❌ NEVER rank partners by name or say "top partners" 
+❌ NEVER use phrases like "Partner X leads with Y solutions"
+❌ NEVER compare vendors directly (e.g., "Partner A vs Partner B")
+❌ NEVER say phrases like "dominates", "stands out", "market leader"
+❌ NEVER create partner leaderboards or rankings
+
+✅ DO focus on solution CAPABILITIES and what they can do
+✅ DO describe technology approaches available
+✅ DO provide aggregate statistics (total counts, category distributions)
+✅ DO remain completely neutral about all vendors
+
+**Your Audience**: External customers evaluating solution options
+**Your Goal**: Help them understand WHAT capabilities exist, not WHO provides them
+
+**Analysis Framework:**
+
+1. **Overview** (2-3 sentences)
+   - Lead with solution capabilities and categories available
+   - Establish market landscape without vendor bias
+   - Focus on what solutions can do, not who provides them
+
+2. **Key Findings** (4-6 capability-driven points)
+   - Focus on WHAT capabilities exist (not WHO provides them)
+   - Solution category distributions (e.g., "15 solutions in Cloud/AI, 8 in Security")
+   - Industry coverage and applicability
+   - Technology approaches available (AI, cloud, hybrid, etc.)
+   - DO NOT mention specific partner names or counts
+
+3. **Patterns** (3-4 observations)
+   - Technology trends (AI adoption, cloud-native, etc.)
+   - Solution clustering by capability
+   - Integration approaches available
+   - Deployment model variety
+
+4. **Statistics** (aggregate metrics only)
+   - Total solutions found
+   - Solution area breakdown (categories with counts)
+   - Industry distribution
+   - Technology distribution (if applicable)
+   - DO NOT include "top partners" or partner-specific stats
+
+5. **Recommendations** (3-4 neutral next steps)
+   - Explore specific solution categories or capabilities
+   - Filter by industry or solution area
+   - Investigate specific use cases or technologies
+   - NO partner-specific recommendations
+
+**Follow-Up Questions (CRITICAL):**
+Generate 3-4 follow-up questions that are capability-focused:
+- Based on solution areas found (e.g., "Compare Cloud and AI Platforms vs Security solutions")
+- Based on industries or capabilities (e.g., "What solutions support [specific capability]?")
+- Based on technology approaches (e.g., "Show me AI-powered solutions for [use case]")
+- Based on sub-industries or themes (e.g., "What solutions focus on [theme] in [industry]?")
+
+DO NOT generate questions that name specific partners or vendors.
+
+**Output Format:**
+{{
+    "insights": {{
+        "overview": "neutral capability summary",
+        "key_findings": ["capability-focused point", ...],
+        "patterns": ["technology trend", ...],
+        "statistics": {{"aggregate_metric": value, ...}},
+        "recommendations": ["neutral exploration suggestion", ...],
+        "follow_up_questions": ["capability-focused question", "category-based question", "industry-focused question"]
+    }},
+    "confidence": "high|medium|low"
+}}
+"""
+        else:
+            # Seller Mode: Internal use, can include partner insights and rankings
+            system_prompt = """You are an expert business analyst for the Industry Solutions Directory.
+
+**Objective**: Extract actionable insights from solution data to help Microsoft sellers identify the best partners and solutions for customers.
 
 **Analysis Framework:**
 
@@ -266,6 +399,7 @@ class InsightAnalyzer:
    - Use specific numbers, percentages, distributions
    - Identify market leaders, gaps, concentrations
    - Note unexpected patterns or outliers
+   - Name specific partners and their solution counts
 
 3. **Patterns** (3-4 observations)
    - Technology trends and modern approaches
@@ -280,42 +414,46 @@ class InsightAnalyzer:
    - Geographic or technology distributions
 
 5. **Recommendations** (3-4 actionable next steps)
-   - Specific filters or refinements to explore
+   - Specific partner portfolios to explore
    - Comparisons worth investigating
    - Notable individual solutions to review
-   - Strategic insights for decision-making
+   - Strategic insights for customer engagement
 
-**Quality Standards:**
-- Avoid generic statements like "query returned X results"
-- Use specific data points and percentages
-- Identify business value and strategic implications
-- Connect findings to real-world use cases
-- Suggest follow-up questions that add value
+**Follow-Up Questions (CRITICAL):**
+Generate 3-4 follow-up questions that are SPECIFIC to these findings:
+- Based on top partners identified (e.g., "Show me all solutions from [PartnerName]")
+- Based on solution areas or industries (e.g., "Compare [Area1] vs [Area2] solutions")
+- Based on specific capabilities or themes (e.g., "What solutions focus on [capability]?")
+- Based on geographic or sub-industry patterns (e.g., "Show me [SubIndustry] solutions in [Region]")
+
+DO NOT include generic questions - ALL questions must be data-driven and specific to these results.
 
 **Output Format:**
 {{
     "insights": {{
-        "overview": "compelling summary",
-        "key_findings": ["data-backed point", ...],
+        "overview": "compelling summary with partner names",
+        "key_findings": ["data-backed point with partner names", ...],
         "patterns": ["observed trend", ...],
-        "statistics": {{"metric": value, ...}},
-        "recommendations": ["actionable suggestion", ...],
-        "follow_up_questions": ["relevant next query", ...]
+        "statistics": {{"metric": value, "top_partners": ["Partner1 (count)", ...], ...}},
+        "recommendations": ["partner-specific suggestion", ...],
+        "follow_up_questions": ["specific partner-driven question", "relevant comparison", "contextual exploration"]
     }},
     "confidence": "high|medium|low"
 }}
 """
         
+        visible_columns = filtered_columns
+
         user_prompt = f"""Question: "{question}"
 
-Results Summary:
-- Total Results: {row_count}
-- Columns: {', '.join(columns)}
+    Results Summary:
+    - Total Results: {row_count}
+    - Columns: {', '.join(visible_columns)}
 
-Sample Data (first 10 rows):
-{json.dumps(sample_rows, indent=2, default=str)}
+    Sample Data (first 10 rows):
+    {json.dumps(sample_rows[:10], indent=2, default=str)}
 
-Analyze these results and provide insights."""
+    Analyze these results and provide insights."""
 
         try:
             response = self.llm_client.chat.completions.create(
@@ -344,18 +482,34 @@ Analyze these results and provide insights."""
                         f"Primary solution areas: {', '.join(list(computed_stats.get('solution_areas', {}).keys())[:2])}"
                     ]
             
-            # Ensure follow_up_questions exists
+            # Ensure follow_up_questions exists and are data-driven
             if 'follow_up_questions' not in result.get('insights', {}):
-                # Generate default follow-ups based on data
-                top_partners = list(computed_stats.get('top_partners', {}).keys())[:2]
-                areas = list(computed_stats.get('solution_areas', {}).keys())[:2]
+                # Generate context-specific follow-ups based on actual data
+                top_partners = list(computed_stats.get('top_partners', {}).keys())
+                areas = list(computed_stats.get('solution_areas', {}).keys())
+                industries = list(computed_stats.get('industries', {}).keys())
                 
                 result['insights']['follow_up_questions'] = []
-                if top_partners:
+                
+                # Add partner-specific questions
+                if len(top_partners) >= 2:
                     result['insights']['follow_up_questions'].append(f"Show me all solutions from {top_partners[0]}")
-                if len(areas) > 1:
+                    result['insights']['follow_up_questions'].append(f"Compare solutions from {top_partners[0]} and {top_partners[1]}")
+                elif len(top_partners) == 1:
+                    result['insights']['follow_up_questions'].append(f"Show me all solutions from {top_partners[0]}")
+                    result['insights']['follow_up_questions'].append(f"What other partners offer similar solutions?")
+                
+                # Add solution area comparison if multiple areas exist
+                if len(areas) >= 2:
                     result['insights']['follow_up_questions'].append(f"Compare {areas[0]} vs {areas[1]} solutions")
-                result['insights']['follow_up_questions'].append("What are the latest solutions added?")
+                
+                # Add industry-specific question if industry data exists
+                if len(industries) >= 1:
+                    result['insights']['follow_up_questions'].append(f"What are the top solutions specifically for {industries[0]}?")
+                
+                # If we still have fewer than 3 questions, add more context-based ones
+                if len(result['insights']['follow_up_questions']) < 3 and len(top_partners) >= 1 and len(areas) >= 1:
+                    result['insights']['follow_up_questions'].append(f"Show me {areas[0]} solutions from {top_partners[0]}")
             
             return result
         
@@ -364,13 +518,25 @@ Analyze these results and provide insights."""
             # Use computed stats for fallback
             top_partners = list(computed_stats.get('top_partners', {}).keys())
             areas = list(computed_stats.get('solution_areas', {}).keys())
+            industries = list(computed_stats.get('industries', {}).keys())
             
+            # Generate context-specific follow-ups
             follow_ups = []
-            if len(top_partners) > 0:
+            if len(top_partners) >= 2:
                 follow_ups.append(f"Show me all solutions from {top_partners[0]}")
-            if len(areas) > 1:
+                follow_ups.append(f"Compare solutions from {top_partners[0]} and {top_partners[1]}")
+            elif len(top_partners) == 1:
+                follow_ups.append(f"Show me all solutions from {top_partners[0]}")
+            
+            if len(areas) >= 2:
                 follow_ups.append(f"Compare {areas[0]} vs {areas[1]} solutions")
-            follow_ups.append("What are the latest solutions available?")
+            
+            if len(industries) >= 1 and len(follow_ups) < 3:
+                follow_ups.append(f"What are the top solutions for {industries[0]}?")
+            
+            # Add one more context-specific question if we have data
+            if len(follow_ups) < 3 and len(top_partners) >= 1 and len(areas) >= 1:
+                follow_ups.append(f"Show me {areas[0]} solutions from leading providers")
             
             return {
                 "insights": {
@@ -574,6 +740,24 @@ class MultiAgentPipeline:
                     }
                 
                 if sql_result.get('sql'):
+                    # Validate that sql is a string, not a dict (compound queries not supported)
+                    if isinstance(sql_result['sql'], dict):
+                        # LLM tried to generate multiple queries - ask for clarification
+                        return {
+                            "success": True,
+                            "question": question,
+                            "needs_clarification": True,
+                            "clarification_question": "Your question requires multiple separate queries. Could you please ask them one at a time?",
+                            "suggested_refinements": [
+                                "What agent-based solutions do we have?",
+                                "How many solutions are focused on healthcare?"
+                            ],
+                            "row_count": 0,
+                            "columns": [],
+                            "rows": [],
+                            "timestamp": timestamp
+                        }
+                    
                     print("⚙️  Agent 2: Executing SQL query...")
                     query_results = self.sql_executor.execute_sql(sql_result['sql'])
                 else:

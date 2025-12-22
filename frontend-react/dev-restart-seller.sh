@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Quick Start/Restart Script for React App (Frontend + Backend)
-# Usage: ./dev-restart.sh [frontend|backend|all]
+# Quick Start/Restart Script for React App (Frontend + Backend) - SELLER MODE
+# Usage: ./dev-restart-seller.sh [frontend|backend|all]
+# This script starts the application in SELLER MODE (partner insights with rankings)
 
 set -e
 
@@ -21,6 +22,9 @@ BACKEND_DIR="$SCRIPT_DIR/backend"
 BACKEND_PROCESS="uvicorn"
 FRONTEND_PROCESS="vite"
 
+# APP_MODE for this script
+APP_MODE="seller"
+
 print_header() {
     echo -e "${BLUE}========================================${NC}"
     echo -e "${BLUE}$1${NC}"
@@ -37,6 +41,10 @@ print_error() {
 
 print_info() {
     echo -e "${YELLOW}ℹ $1${NC}"
+}
+
+print_mode() {
+    echo -e "${BLUE}💾 SELLER MODE: Partner insights with rankings and comparisons${NC}"
 }
 
 # Kill process by port
@@ -82,7 +90,8 @@ stop_frontend() {
 }
 
 start_backend() {
-    print_header "Starting Backend"
+    print_header "Starting Backend (SELLER MODE)"
+    print_mode
     
     # Check if virtual environment exists
     if [ ! -d "$SCRIPT_DIR/../.venv" ]; then
@@ -101,9 +110,9 @@ start_backend() {
     
     print_info "Starting FastAPI backend on http://localhost:8000"
     
-    # Activate virtual environment and start backend in background
+    # Activate virtual environment and start backend in background with APP_MODE env var
     source "$SCRIPT_DIR/../.venv/bin/activate"
-    nohup uvicorn main:app --reload --host 0.0.0.0 --port 8000 > "$BACKEND_DIR/backend.log" 2>&1 &
+    APP_MODE=seller nohup uvicorn main:app --reload --host 0.0.0.0 --port 8000 > "$BACKEND_DIR/backend.log" 2>&1 &
     
     BACKEND_PID=$!
     echo $BACKEND_PID > "$BACKEND_DIR/.backend.pid"
@@ -113,7 +122,7 @@ start_backend() {
     
     # Check if backend is running
     if kill -0 $BACKEND_PID 2>/dev/null; then
-        print_success "Backend started (PID: $BACKEND_PID)"
+        print_success "Backend started in SELLER MODE (PID: $BACKEND_PID)"
         print_info "Backend logs: $BACKEND_DIR/backend.log"
         print_success "Backend API: http://localhost:8000"
         print_success "API docs: http://localhost:8000/docs"
@@ -135,9 +144,10 @@ start_frontend() {
     fi
     
     print_info "Starting Vite dev server on http://localhost:5173"
+    print_info "API URL: http://localhost:8000"
     
-    # Start frontend in background
-    nohup npm run dev > "$FRONTEND_DIR/frontend.log" 2>&1 &
+    # Start frontend in background with explicit API URL and port
+    VITE_API_URL="http://localhost:8000" nohup npm run dev -- --port 5173 > "$FRONTEND_DIR/frontend.log" 2>&1 &
     
     FRONTEND_PID=$!
     echo $FRONTEND_PID > "$FRONTEND_DIR/.frontend.pid"
@@ -150,6 +160,7 @@ start_frontend() {
         print_success "Frontend started (PID: $FRONTEND_PID)"
         print_info "Frontend logs: $FRONTEND_DIR/frontend.log"
         print_success "Frontend: http://localhost:5173"
+        print_mode
     else
         print_error "Frontend failed to start. Check $FRONTEND_DIR/frontend.log"
         exit 1
@@ -157,7 +168,8 @@ start_frontend() {
 }
 
 show_status() {
-    print_header "Status"
+    print_header "Status (SELLER MODE)"
+    print_mode
     
     echo -e "\n${YELLOW}Backend:${NC}"
     if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
@@ -166,6 +178,7 @@ show_status() {
             PID=$(cat "$BACKEND_DIR/.backend.pid")
             echo -e "  PID: $PID"
         fi
+        echo -e "  ${BLUE}Mode: SELLER${NC}"
     else
         print_error "Not running"
     fi
@@ -245,6 +258,8 @@ case $COMMAND in
     *)
         echo "Usage: $0 [backend|frontend|all|restart|stop|status|logs]"
         echo ""
+        echo "💾 SELLER MODE - Partner insights with rankings and comparisons"
+        echo ""
         echo "Commands:"
         echo "  backend   - Restart only the backend (FastAPI)"
         echo "  frontend  - Restart only the frontend (Vite/React)"
@@ -255,8 +270,8 @@ case $COMMAND in
         echo "  logs      - Show logs (requires: backend or frontend)"
         echo ""
         echo "Examples:"
-        echo "  $0              # Restart everything"
-        echo "  $0 backend      # Restart only backend"
+        echo "  $0              # Restart everything in SELLER mode"
+        echo "  $0 backend      # Restart only backend in SELLER mode"
         echo "  $0 status       # Check status"
         echo "  $0 logs backend # Tail backend logs"
         exit 1

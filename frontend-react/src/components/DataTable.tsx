@@ -22,6 +22,12 @@ export default function DataTable({ data, columns }: DataTableProps) {
     return colLower.includes('description') || colLower.includes('desc');
   };
 
+  // Identify link columns that should be rendered as clickable links
+  const isLinkColumn = (col: string) => {
+    const colLower = col.toLowerCase();
+    return colLower.includes('link') || colLower.includes('url') || colLower.includes('website');
+  };
+
   const toggleExpand = (rowIdx: number, col: string) => {
     const key = `${rowIdx}-${col}`;
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
@@ -33,6 +39,26 @@ export default function DataTable({ data, columns }: DataTableProps) {
     }
 
     const stringValue = String(value);
+    
+    // Render links as clickable elements
+    if (isLinkColumn(col) && stringValue.startsWith('http')) {
+      const displayText = col.includes('marketplace') ? '🔗 Marketplace' :
+                         col.includes('website') ? '🌐 Website' :
+                         col.includes('offer') ? '💰 Special Offer' :
+                         col.includes('resource') ? '📄 Resource' :
+                         '🔗 Link';
+      return (
+        <a
+          href={stringValue}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-400 hover:text-blue-300 underline flex items-center gap-1"
+        >
+          {displayText}
+        </a>
+      );
+    }
+
     const isDesc = isDescriptionColumn(col);
     const truncateLength = 200;
     const key = `${rowIdx}-${col}`;

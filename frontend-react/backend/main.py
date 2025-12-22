@@ -38,9 +38,10 @@ app = FastAPI(
 )
 
 # Configure CORS for React frontend
+allowed_origins = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:5173').split(',')
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],  # React dev servers
+    allow_origins=allowed_origins,  # Read from environment variable
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -90,10 +91,12 @@ async def root():
 @app.get("/api/health")
 async def health_check():
     """Detailed health check"""
+    app_mode = os.getenv('APP_MODE', 'seller').lower()
     return {
         "status": "healthy",
         "database": "connected",
         "pipeline": "ready",
+        "mode": app_mode,  # customer or seller
         "timestamp": datetime.now().isoformat()
     }
 
@@ -212,66 +215,66 @@ async def get_example_questions():
     examples = {
         "Financial Services": [
             "What financial services solutions help with risk management?",
-            "Show me anti-money laundering solutions",
-            "What solutions help with regulatory compliance?",
-            "Banking solutions for customer engagement",
-            "Fraud detection solutions",
-            "Core banking modernization solutions"
+            "Show me solutions for anti-money laundering and financial crime prevention",
+            "What solutions help with regulatory compliance in financial services?",
+            "What are the best banking solutions for improving customer engagement and retention?",
+            "Show me fraud detection and prevention solutions for financial institutions",
+            "What solutions support core banking modernization and digital transformation?"
         ],
         "Healthcare": [
-            "Show me AI-powered healthcare solutions",
-            "What solutions improve patient engagement?",
-            "Electronic health record solutions",
-            "Remote patient monitoring solutions",
-            "Clinical workflow optimization",
-            "Population health management solutions"
+            "Show me AI-powered solutions for healthcare and life sciences",
+            "What solutions help improve patient engagement and care coordination?",
+            "Show me electronic health record and clinical data management solutions",
+            "What solutions enable remote patient monitoring and telehealth?",
+            "Show me solutions for clinical workflow optimization and automation",
+            "What population health management and analytics solutions are available?"
         ],
         "Manufacturing": [
-            "What manufacturing solutions use IoT and AI?",
-            "Show me predictive maintenance solutions",
-            "Supply chain optimization for manufacturing",
-            "Smart factory solutions",
-            "Quality control and defect detection",
-            "Asset performance management"
+            "What manufacturing solutions leverage IoT and AI for smart factories?",
+            "Show me predictive maintenance solutions for manufacturing equipment",
+            "What solutions optimize supply chain management for manufacturers?",
+            "Show me smart factory and Industry 4.0 solutions",
+            "What solutions help with quality control and automated defect detection?",
+            "Show me asset performance management solutions for manufacturing"
         ],
         "Education": [
-            "What solutions help with student engagement?",
-            "Campus management solutions",
-            "Fundraising solutions for higher education",
-            "Student lifecycle management",
-            "Learning analytics platforms",
-            "Alumni relationship management"
+            "What solutions help improve student engagement and learning outcomes?",
+            "Show me campus management and administrative solutions for education",
+            "What fundraising and donor management solutions are available for higher education?",
+            "Show me student lifecycle management platforms",
+            "What learning analytics and educational data platforms are available?",
+            "Show me alumni relationship management and engagement solutions"
         ],
         "Retail & Consumer Goods": [
-            "Customer experience solutions for retail",
-            "Inventory management solutions",
-            "Point of sale systems",
-            "Personalized shopping experiences",
-            "Omnichannel retail solutions",
-            "Supply chain visibility for retail"
+            "What solutions enhance customer experience in retail and consumer goods?",
+            "Show me inventory management and stock optimization solutions for retail",
+            "What modern point of sale and retail transaction solutions are available?",
+            "Show me solutions for creating personalized shopping experiences",
+            "What omnichannel retail and unified commerce solutions are available?",
+            "Show me supply chain visibility and logistics solutions for retail"
         ],
         "Energy & Resources": [
-            "Sustainability solutions for energy companies",
-            "Asset management for oil and gas",
-            "Smart grid solutions",
-            "Predictive maintenance for energy infrastructure",
-            "Emissions management solutions",
-            "Renewable energy optimization"
+            "What sustainability and carbon management solutions are available for energy companies?",
+            "Show me asset management solutions for oil and gas operations",
+            "What smart grid and energy distribution solutions are available?",
+            "Show me predictive maintenance solutions for energy infrastructure",
+            "What emissions tracking and management solutions help with environmental compliance?",
+            "Show me renewable energy optimization and management solutions"
         ],
         "Government": [
-            "Citizen engagement solutions",
-            "Case management for government agencies",
-            "Public safety solutions",
-            "Smart city solutions",
-            "Grant management systems"
+            "What solutions improve citizen engagement and digital government services?",
+            "Show me case management solutions for government agencies",
+            "What public safety and emergency response solutions are available?",
+            "Show me smart city and urban management solutions",
+            "What grant management and funding distribution systems are available?"
         ],
         "Cross-Industry": [
-            "Show me all cybersecurity solutions",
-            "What AI and machine learning solutions are available?",
-            "Cloud migration solutions",
-            "Data analytics platforms",
-            "Customer relationship management solutions",
-            "Sustainability and ESG solutions"
+            "Show me comprehensive cybersecurity and threat protection solutions",
+            "What AI and machine learning solutions are available across industries?",
+            "Show me cloud migration and modernization solutions",
+            "What data analytics and business intelligence platforms are available?",
+            "Show me customer relationship management and CRM solutions",
+            "What sustainability and ESG reporting solutions are available?"
         ]
     }
     

@@ -231,11 +231,23 @@ Generate a SQL query to answer the user's question. Follow these rules:
 11. Handle NULL values appropriately
 12. Use aggregate functions when appropriate (COUNT, SUM, AVG, etc.)
 13. When counting solutions, use COUNT(DISTINCT solutionName) to avoid duplicates from denormalized view
-14. **CRITICAL**: When returning solution data (not aggregates), ALWAYS include these core columns:
+14. **CRITICAL**: When returning solution data (not aggregates), ALWAYS include these columns for Microsoft sellers:
     - solutionName (required - should be first column)
-    - orgName (required - the partner/vendor)
-    - Other relevant columns based on the query
+    - orgName (required - the partner/vendor name)
+    - industryName (recommended - helps sellers understand target market)
+    - solutionAreaName (recommended - solution category)
+    - marketPlaceLink (recommended - direct link to Azure Marketplace listing)
+    - solutionOrgWebsite (recommended - partner website for more info)
+    - geoName (recommended - regional availability)
+    - solutionPlayName (recommended - solution play alignment)
     - solutionDescription (required - MUST BE THE LAST COLUMN for better readability)
+    
+    Note: Include all recommended fields unless the query is specifically asking for fewer columns
+15. **COMPOUND QUESTIONS**: If the question asks multiple things ("what X and how many Y"), 
+    - Generate ONE primary query that best answers the main question
+    - Explain in the explanation field what the query shows
+    - DO NOT return multiple queries or a dictionary of queries
+    - The "sql" field must ALWAYS be a single SQL string, never a dict or array
 
 Return your response in JSON format:
 {{

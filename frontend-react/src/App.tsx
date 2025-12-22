@@ -5,17 +5,26 @@ import type { ChatMessage, ExampleCategory } from './types';
 import { executeQuery, getExampleQuestions, exportConversation } from './api';
 import './App.css';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [examples, setExamples] = useState<ExampleCategory>({});
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [appMode, setAppMode] = useState<string>('seller');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Load example questions
     getExampleQuestions().then(setExamples).catch(console.error);
+    
+    // Check app mode - use the same API base URL as the rest of the app
+    fetch(`${API_BASE_URL}/api/health`)
+      .then(res => res.json())
+      .then(data => setAppMode(data.mode || 'seller'))
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -93,7 +102,7 @@ function App() {
   };
 
   const handleExportMarkdown = () => {
-    let markdown = `# Industry Solutions Directory - Conversation\n\n`;
+    let markdown = `# Technology and Industry (Partner) Solutions Directory - Conversation\n\n`;
     markdown += `**Date**: ${new Date().toLocaleString()}\n`;
     markdown += `**Total Queries**: ${messages.filter(m => m.role === 'user').length}\n\n---\n\n`;
 
@@ -124,8 +133,17 @@ function App() {
           markdown += `### 📊 Results Table\n\n`;
           markdown += `**Total Results**: ${msg.data.rows.length}\n\n`;
           
-          // Prioritize important columns and always include solutionDescription
-          const priorityColumns = ['solutionName', 'orgName', 'industryName', 'solutionAreaName'];
+          // Prioritize important columns including seller-focused fields
+          const priorityColumns = [
+            'solutionName', 
+            'orgName', 
+            'industryName', 
+            'solutionAreaName',
+            'marketPlaceLink',
+            'solutionOrgWebsite',
+            'geoName',
+            'solutionPlayName'
+          ];
           const selectedColumns: string[] = [];
           
           // Add priority columns that exist
@@ -135,11 +153,11 @@ function App() {
             }
           });
           
-          // Add other columns until we have 4
+          // Add other columns (excluding description) until we have space
           msg.data.columns.forEach((col: string) => {
             if (!selectedColumns.includes(col) && 
                 col !== 'solutionDescription' && 
-                selectedColumns.length < 4) {
+                selectedColumns.length < 10) {
               selectedColumns.push(col);
             }
           });
@@ -149,8 +167,8 @@ function App() {
             selectedColumns.push('solutionDescription');
           }
           
-          // Limit to 5 columns max
-          const cols = selectedColumns.slice(0, 5);
+          // Use all selected columns (increased from 5 to accommodate seller fields)
+          const cols = selectedColumns;
           
           markdown += `| ${cols.join(' | ')} |\n`;
           markdown += `| ${cols.map(() => '---').join(' | ')} |\n`;
@@ -213,7 +231,7 @@ function App() {
   </style>
 </head>
 <body>
-  <h1>🔍 Industry Solutions Directory - Conversation</h1>
+  <h1>🔍 Technology and Industry (Partner) Solutions Directory - Conversation</h1>
   <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
   <p><strong>Total Queries:</strong> ${messages.filter(m => m.role === 'user').length}</p>
   <hr>
@@ -254,8 +272,17 @@ function App() {
               <thead>
                 <tr>`;
           
-          // Prioritize important columns and always include solutionDescription
-          const priorityColumns = ['solutionName', 'orgName', 'industryName', 'solutionAreaName'];
+          // Prioritize important columns including seller-focused fields
+          const priorityColumns = [
+            'solutionName', 
+            'orgName', 
+            'industryName', 
+            'solutionAreaName',
+            'marketPlaceLink',
+            'solutionOrgWebsite',
+            'geoName',
+            'solutionPlayName'
+          ];
           const selectedColumns: string[] = [];
           
           // Add priority columns that exist
@@ -265,11 +292,11 @@ function App() {
             }
           });
           
-          // Add other columns until we have 4
+          // Add other columns (excluding description) until we have space
           msg.data.columns.forEach((col: string) => {
             if (!selectedColumns.includes(col) && 
                 col !== 'solutionDescription' && 
-                selectedColumns.length < 4) {
+                selectedColumns.length < 10) {
               selectedColumns.push(col);
             }
           });
@@ -279,8 +306,8 @@ function App() {
             selectedColumns.push('solutionDescription');
           }
           
-          // Limit to 5 columns max
-          const cols = selectedColumns.slice(0, 5);
+          // Use all selected columns (increased to accommodate seller fields)
+          const cols = selectedColumns;
           
           cols.forEach((col: string) => {
             html += `<th>${col}</th>`;
@@ -296,9 +323,18 @@ function App() {
               if (value === null || value === undefined) {
                 html += `<td></td>`;
               } else {
-                // Strip HTML and truncate
-                const strValue = String(value).replace(/<[^>]*>/g, '').substring(0, 100);
-                html += `<td>${strValue}</td>`;
+                // For link columns, create clickable links
+                const isLink = col.toLowerCase().includes('link') || col.toLowerCase().includes('website');
+                if (isLink && String(value).startsWith('http')) {
+                  const linkText = col.includes('marketplace') ? '🔗 View' :
+                                  col.includes('website') ? '🌐 Visit' :
+                                  col.includes('offer') ? '💰 Offer' : '🔗 Link';
+                  html += `<td><a href="${value}" target="_blank" style="color: #3b82f6;">${linkText}</a></td>`;
+                } else {
+                  // Strip HTML and truncate
+                  const strValue = String(value).replace(/<[^>]*>/g, '').substring(0, 100);
+                  html += `<td>${strValue}</td>`;
+                }
               }
             });
             html += `</tr>`;
@@ -343,9 +379,30 @@ function App() {
   return (
     <div className="h-screen flex flex-col bg-slate-900">
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-6 shadow-lg">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2">🔍 Industry Solutions Directory</h1>
+      <header className="relative bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg overflow-hidden">
+        {/* Background Images */}
+        <div className="absolute inset-0 opacity-20 flex">
+          <div className="w-1/2 bg-cover bg-center" style={{backgroundImage: 'url(https://solutions.microsoftindustryinsights.com/assets/images/ISD_Homepage_1005x395.jpg)'}}></div>
+          <div className="w-1/2 bg-cover bg-center" style={{backgroundImage: 'url(https://solutions.microsoftindustryinsights.com/assets/images/technology_banner.jpg)'}}></div>
+        </div>
+        
+        {/* Content */}
+        <div className="relative z-10 max-w-7xl mx-auto p-6">
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-3xl font-bold">🔍 Technology and Industry (Partner) Solutions Directory</h1>
+            {appMode === 'customer' && (
+              <div className="bg-green-500/20 text-green-200 px-4 py-2 rounded-lg flex items-center gap-2 border border-green-500/30">
+                <Shield size={16} />
+                <span className="font-semibold">CUSTOMER MODE</span>
+              </div>
+            )}
+            {appMode === 'seller' && (
+              <div className="bg-blue-500/20 text-blue-200 px-4 py-2 rounded-lg flex items-center gap-2 border border-blue-500/30">
+                <Database size={16} />
+                <span className="font-semibold">SELLER MODE</span>
+              </div>
+            )}
+          </div>
           <p className="text-blue-100">Natural Language to SQL Explorer | Direct Database Access</p>
           <div className="flex gap-4 mt-4 text-sm">
             <div className="flex items-center gap-2">
