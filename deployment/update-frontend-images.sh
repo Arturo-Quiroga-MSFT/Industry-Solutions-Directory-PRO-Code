@@ -10,9 +10,15 @@ set -e
 RESOURCE_GROUP="indsolse-dev-rg"
 ACR_NAME="indsolsedevacr"
 
-# Backend URLs from deployed container apps
-CUSTOMER_BACKEND_URL="https://isd-chat-customer-backend.redplant-675b33da.swedencentral.azurecontainerapps.io"
-SELLER_BACKEND_URL="https://isd-chat-seller-backend.redplant-675b33da.swedencentral.azurecontainerapps.io"
+# Backend URLs - Using Dev Tunnel to local backend (laptop is whitelisted)
+# TODO: Replace with your actual Dev Tunnel URL from VS Code (Ports view)
+DEV_TUNNEL_URL="YOUR_TUNNEL_URL_HERE"  # e.g., https://xyz123-8000.devtunnels.ms
+CUSTOMER_BACKEND_URL="${DEV_TUNNEL_URL}"
+SELLER_BACKEND_URL="${DEV_TUNNEL_URL}"
+
+# Uncomment below to use deployed backends (after IP whitelisting)
+# CUSTOMER_BACKEND_URL="https://isd-chat-customer-backend.redplant-675b33da.swedencentral.azurecontainerapps.io"
+# SELLER_BACKEND_URL="https://isd-chat-seller-backend.redplant-675b33da.swedencentral.azurecontainerapps.io"
 
 echo "=========================================="
 echo "Rebuilding Frontend Images"

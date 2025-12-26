@@ -1,9 +1,31 @@
 import type { ChatMessage } from '../types';
-import { User, Bot, Database, CheckCircle, XCircle, BarChart3, Table2, Lightbulb } from 'lucide-react';
+import { User, Bot, Database, CheckCircle, XCircle, BarChart3, Table2, Lightbulb, BookOpen, ExternalLink } from 'lucide-react';
 import DataTable from './DataTable';
 import ChartViewer from './ChartViewer';
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+
+// SQL formatter for better readability
+function formatSQL(sql: string): string {
+  if (!sql) return '';
+  
+  let formatted = sql;
+  
+  // Add line breaks before major keywords (order matters - do longer phrases first)
+  formatted = formatted.replace(/\s+(ORDER BY)\s+/gi, '\n$1 ');
+  formatted = formatted.replace(/\s+(GROUP BY)\s+/gi, '\n$1 ');
+  formatted = formatted.replace(/\s+(LEFT JOIN)\s+/gi, '\n$1 ');
+  formatted = formatted.replace(/\s+(INNER JOIN)\s+/gi, '\n$1 ');
+  formatted = formatted.replace(/\s+(FROM)\s+/gi, '\n$1 ');
+  formatted = formatted.replace(/\s+(WHERE)\s+/gi, '\n$1 ');
+  formatted = formatted.replace(/\s+(HAVING)\s+/gi, '\n$1 ');
+  
+  // Add indentation for AND/OR
+  formatted = formatted.replace(/\s+(AND)\s+/gi, '\n  $1 ');
+  formatted = formatted.replace(/\s+(OR)\s+/gi, '\n  $1 ');
+  
+  return formatted.trim();
+}
 
 interface MessageProps {
   message: ChatMessage;
@@ -191,6 +213,58 @@ export default function Message({ message, onFollowUpClick }: MessageProps) {
                           </div>
                         </div>
                       )}
+
+                      {/* Citations - Copilot Style */}
+                      {data.insights?.citations && data.insights.citations.length > 0 && (
+                        <div className="mt-6 pt-4 border-t border-slate-700">
+                          <p className="text-sm text-gray-400 mb-3 font-medium flex items-center gap-2">
+                            <BookOpen size={16} />
+                            📚 Sources & References
+                          </p>
+                          <div className="space-y-2">
+                            {data.insights.citations.map((citation, idx) => (
+                              <div 
+                                key={idx}
+                                className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/50 hover:border-slate-600 transition-colors"
+                              >
+                                <div className="flex items-start gap-2">
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-900/30 border border-blue-700/50 rounded text-xs text-blue-300 font-mono flex-shrink-0">
+                                    [{citation.id}]
+                                  </span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-gray-300 text-sm">
+                                      {citation.solution_name && (
+                                        <strong className="text-blue-300">{citation.solution_name}</strong>
+                                      )}
+                                      {citation.partner_name && (
+                                        <span className="text-gray-400"> by {citation.partner_name}</span>
+                                      )}
+                                    </p>
+                                    {citation.supports && (
+                                      <p className="text-xs text-gray-500 mt-1">
+                                        Supports: "{citation.supports}"
+                                      </p>
+                                    )}
+                                    <button
+                                      onClick={() => {
+                                        setActiveTab('table');
+                                        // Optionally: implement scrolling to specific row
+                                      }}
+                                      className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 mt-2 hover:underline"
+                                    >
+                                      <ExternalLink size={12} />
+                                      View in table (Row {citation.source_row_index + 1})
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-3 italic">
+                            💡 Click citation numbers or solution names to see source data in the table
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -204,8 +278,8 @@ export default function Message({ message, onFollowUpClick }: MessageProps) {
 
                   {activeTab === 'sql' && data.sql && (
                     <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
-                      <pre className="text-sm text-gray-300 overflow-x-auto">
-                        <code>{data.sql}</code>
+                      <pre className="text-sm text-gray-300 overflow-x-auto whitespace-pre-wrap break-words">
+                        <code>{formatSQL(data.sql)}</code>
                       </pre>
                     </div>
                   )}

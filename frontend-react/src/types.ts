@@ -6,6 +6,15 @@ export interface ChatMessage {
   data?: QueryResult;
 }
 
+export interface Citation {
+  id: number;
+  solution_name?: string;
+  partner_name?: string;
+  source_row_index: number;
+  supports: string;
+  row_data?: Record<string, any>;
+}
+
 export interface QueryResult {
   success: boolean;
   question: string;
@@ -26,6 +35,7 @@ export interface QueryResult {
     statistics: Record<string, any>;
     recommendations: string[];
     follow_up_questions?: string[];  // New: clickable follow-up questions
+    citations?: Citation[];  // New: source citations for insights
   };
   sql?: string;
   explanation?: string;

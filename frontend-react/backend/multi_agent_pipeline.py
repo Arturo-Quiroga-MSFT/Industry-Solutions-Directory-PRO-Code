@@ -369,6 +369,14 @@ Generate 3-4 follow-up questions that are capability-focused:
 
 DO NOT generate questions that name specific partners or vendors.
 
+**Citations (CRITICAL):**
+For each key finding, provide source citations linking back to specific solutions in the data:
+- id: sequential number (1, 2, 3...)
+- solution_name: name of the solution (if available in data)
+- partner_name: partner name (if available - only for seller mode)
+- source_row_index: index of the row in the data (0-based)
+- supports: which key finding this citation supports
+
 **Response Format:**
 Respond with a JSON object using this exact structure:
 {{
@@ -378,7 +386,16 @@ Respond with a JSON object using this exact structure:
         "patterns": ["technology trend", ...],
         "statistics": {{"aggregate_metric": value, ...}},
         "recommendations": ["neutral exploration suggestion", ...],
-        "follow_up_questions": ["capability-focused question", "category-based question", "industry-focused question"]
+        "follow_up_questions": ["capability-focused question", "category-based question", "industry-focused question"],
+        "citations": [
+            {{
+                "id": 1,
+                "solution_name": "Solution Name",
+                "partner_name": "Partner Name",
+                "source_row_index": 0,
+                "supports": "brief description of what this citation supports"
+            }}
+        ]
     }},
     "confidence": "high|medium|low"
 }}
@@ -430,6 +447,17 @@ Generate 3-4 follow-up questions that are SPECIFIC to these findings:
 
 DO NOT include generic questions - ALL questions must be data-driven and specific to these results.
 
+**Citations (CRITICAL):**
+For each key finding, provide source citations linking back to specific solutions in the data:
+- id: sequential number (1, 2, 3...)
+- solution_name: name of the solution (if available in data)
+- partner_name: partner name (REQUIRED for seller mode)
+- source_row_index: index of the row in the data (0-based)
+- supports: which key finding or statement this citation supports
+
+Example: If you mention "Elastic has 15 observability solutions", provide citations:
+[{{"id": 1, "solution_name": "Elastic Observability Platform", "partner_name": "Elastic", "source_row_index": 0, "supports": "Elastic observability solutions count"}}]
+
 **Response Format:**
 Respond with a JSON object using this exact structure:
 {{
@@ -439,7 +467,16 @@ Respond with a JSON object using this exact structure:
         "patterns": ["observed trend", ...],
         "statistics": {{"metric": value, "top_partners": ["Partner1 (count)", ...], ...}},
         "recommendations": ["partner-specific suggestion", ...],
-        "follow_up_questions": ["specific partner-driven question", "relevant comparison", "contextual exploration"]
+        "follow_up_questions": ["specific partner-driven question", "relevant comparison", "contextual exploration"],
+        "citations": [
+            {{
+                "id": 1,
+                "solution_name": "Solution Name",
+                "partner_name": "Partner Name",
+                "source_row_index": 0,
+                "supports": "brief description of what this citation supports"
+            }}
+        ]
     }},
     "confidence": "high|medium|low"
 }}
