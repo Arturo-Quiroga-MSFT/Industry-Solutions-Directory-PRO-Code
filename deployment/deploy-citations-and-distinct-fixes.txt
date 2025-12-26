@@ -1,0 +1,58 @@
+
+==========================================
+🎉 Deployment Complete!
+==========================================
+
+Frontend URL: https://indsolse-dev-frontend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io
+Backend URL: https://indsolse-dev-backend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io
+
+Latest Revisions:
+  Frontend: indsolse-dev-frontend-v2-vnet--0000008
+  Backend: indsolse-dev-backend-v2-vnet--0000013
+
+✨ New Features Deployed:
+
+1. SQL Formatting
+   - Queries now display with proper line breaks and indentation
+   - Much easier to read and debug
+
+2. Copilot-Style Citations
+   - AI insights now include [1], [2], [3] citation badges
+   - Click citations to jump to source data in table
+   - Shows which solutions support each key finding
+
+3. DISTINCT Enforcement (MAJOR FIX!)
+   - Fixed: 'Adastra agentic AI' query returned 328 duplicates ❌
+   - Now: Returns ~88 legitimate unique solutions ✅
+   - All SQL queries now properly deduplicate results
+
+4. Enhanced SQL Generation
+   - Breakdown queries return individual solutions (not just counts)
+   - Sellers can see WHAT solutions exist, not just HOW MANY
+   - Better handling of 'detailed breakdown' requests
+
+📋 Test Questions (from Will's feedback):
+   1. What financial services solutions help with risk management?
+   2. What agent-based applications exist in the Solutions Directory?
+   3. Provide a detailed breakdown of which industries have Adastra's agentic AI offerings
+
+🧪 Testing Steps:
+   1. Open: https://indsolse-dev-frontend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io
+   2. Clear browser cache (Cmd+Shift+R or Ctrl+Shift+R)
+   3. Ask Will's test questions above
+   4. Verify:
+      - Citations appear in insights section
+      - SQL tab shows formatted queries
+      - Query 3 returns ~88 results (not 328!)
+      - Tables show solution names + descriptions
+
+📊 Monitor Logs:
+  Frontend: az containerapp logs show --name indsolse-dev-frontend-v2-vnet --resource-group indsolse-dev-rg --follow
+  Backend: az containerapp logs show --name indsolse-dev-backend-v2-vnet --resource-group indsolse-dev-rg --follow
+
+🔄 Rollback if needed:
+  az containerapp revision list --name indsolse-dev-frontend-v2-vnet --resource-group indsolse-dev-rg
+  az containerapp revision activate --name indsolse-dev-frontend-v2-vnet --resource-group indsolse-dev-rg --revision <previous-revision>
+
+  az containerapp revision list --name indsolse-dev-backend-v2-vnet --resource-group indsolse-dev-rg
+  az containerapp revision activate --name indsolse-dev-backend-v2-vnet --resource-group indsolse-dev-rg --revision <previous-revision>

@@ -243,11 +243,27 @@ Generate a SQL query to answer the user's question. Follow these rules:
     - solutionDescription (required - MUST BE THE LAST COLUMN for better readability)
     
     Note: Include all recommended fields unless the query is specifically asking for fewer columns
+
+**CRITICAL SELLER MODE REMINDER:**
+When user asks "which solutions" or "detailed breakdown" or "list" or "what solutions" or "show me", they want:
+- INDIVIDUAL SOLUTION ROWS (not aggregated counts)
+- ALWAYS return solutionName, orgName, industryName, and other columns listed above
+- ALWAYS use SELECT DISTINCT to avoid duplicate solutions from denormalized data
+- NEVER use GROUP BY with just industryName/counts unless explicitly asked "how many"
+- WRONG: SELECT industryName, COUNT(*) ... GROUP BY industryName
+- RIGHT: SELECT DISTINCT TOP 50 solutionName, orgName, industryName, ...
+
 15. **COMPOUND QUESTIONS**: If the question asks multiple things ("what X and how many Y"), 
     - Generate ONE primary query that best answers the main question
     - Explain in the explanation field what the query shows
     - DO NOT return multiple queries or a dictionary of queries
     - The "sql" field must ALWAYS be a single SQL string, never a dict or array
+
+**BEFORE GENERATING FINAL SQL:**
+✓ Check: Is this "which/list/breakdown" query? → Use SELECT DISTINCT with individual rows
+✓ Check: Am I using GROUP BY? → Only if explicitly asked for counts/aggregates
+✓ Check: Have I included required seller columns? → solutionName, orgName, solutionDescription
+✓ Check: Is solutionDescription last? → Better readability when it's the final column
 
 Return your response in JSON format:
 {{
