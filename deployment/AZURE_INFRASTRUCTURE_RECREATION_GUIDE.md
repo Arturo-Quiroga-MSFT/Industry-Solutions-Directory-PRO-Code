@@ -24,7 +24,7 @@ This guide provides step-by-step instructions to recreate the Azure infrastructu
 2. **Set ALLOWED_ORIGINS correctly** - Frontend URL must be FIRST in the comma-separated list
 3. **Apply ACR credentials immediately** - After creating each container app, run `az containerapp registry set`
 4. **Remove .env files** - Before building frontend, delete all .env* files to prevent localhost:8000 hardcoding
-5. **Use single quotes for passwords** - Bash interprets `!` in double quotes; use `'WD!8Qt&Dx2PjAx23f7123!'`
+5. **Use single quotes for passwords** - Bash interprets `!` in double quotes; use single quotes for special chars
 6. **New Azure OpenAI endpoint** - Use `r2d2-foundry-001.services.ai.azure.com` (updated AI Foundry URL)
 
 ### Monthly Cost Estimate
@@ -47,7 +47,7 @@ This guide provides step-by-step instructions to recreate the Azure infrastructu
 
 #### 1. Azure OpenAI (AI Foundry) - ⚠️ UPDATED JANUARY 2026
 ```bash
-AZURE_OPENAI_API_KEY="C5Rvz8V3zpbsJ1qmJbVUwBfOfVjZQuDUGNd2XUxixEAPH9ieqP5DJQQJ99BLACHYHv6XJ3w3AAAAACOGkyi9"
+AZURE_OPENAI_API_KEY="<your-azure-openai-api-key-here>"
 AZURE_OPENAI_ENDPOINT="https://r2d2-foundry-001.services.ai.azure.com/"
 AZURE_OPENAI_DEPLOYMENT="gpt-4.1"
 AZURE_OPENAI_API_VERSION="2024-08-01-preview"
@@ -60,7 +60,7 @@ AZURE_OPENAI_API_VERSION="2024-08-01-preview"
 SQL_SERVER="mssoldir-prd-sql.database.windows.net"
 SQL_DATABASE="mssoldir-prd"
 SQL_USERNAME="isdapi_dev"
-SQL_PASSWORD='WD!8Qt&Dx2PjAx23f7123!'  # ⚠️ MUST use single quotes - bash interprets ! in double quotes
+SQL_PASSWORD='<your-password-with-special-chars>'  # ⚠️ MUST use single quotes - bash interprets ! in double quotes
 ```
 **Where to find:** Secure password vault or contact database admin  
 **CRITICAL:** Always use single quotes around password when setting environment variables. Double quotes cause bash to interpret `!` as history expansion, truncating the password.
@@ -226,9 +226,9 @@ az containerapp create \
     SQL_SERVER='mssoldir-prd-sql.database.windows.net' \
     SQL_DATABASE='mssoldir-prd' \
     SQL_USERNAME='isdapi_dev' \
-    SQL_PASSWORD='WD!8Qt&Dx2PjAx23f7123!' \
+    SQL_PASSWORD='<your-sql-password-here>' \
     AZURE_OPENAI_ENDPOINT='https://r2d2-foundry-001.services.ai.azure.com/' \
-    AZURE_OPENAI_API_KEY='C5Rvz8V3zpbsJ1qmJbVUwBfOfVjZQuDUGNd2XUxixEAPH9ieqP5DJQQJ99BLACHYHv6XJ3w3AAAAACOGkyi9' \
+    AZURE_OPENAI_API_KEY='<your-azure-openai-api-key-here>' \
     AZURE_OPENAI_DEPLOYMENT='gpt-4.1' \
     AZURE_OPENAI_API_VERSION='2024-08-01-preview' \
     ALLOWED_ORIGINS='https://isd-chat-seller-frontend.kindfield-353d98ed.swedencentral.azurecontainerapps.io,http://localhost:5173,http://localhost:5174'
@@ -287,9 +287,9 @@ az containerapp create \
     SQL_SERVER='mssoldir-prd-sql.database.windows.net' \
     SQL_DATABASE='mssoldir-prd' \
     SQL_USERNAME='isdapi_dev' \
-    SQL_PASSWORD='WD!8Qt&Dx2PjAx23f7123!' \
+    SQL_PASSWORD='<your-sql-password-here>' \
     AZURE_OPENAI_ENDPOINT='https://r2d2-foundry-001.services.ai.azure.com/' \
-    AZURE_OPENAI_API_KEY='C5Rvz8V3zpbsJ1qmJbVUwBfOfVjZQuDUGNd2XUxixEAPH9ieqP5DJQQJ99BLACHYHv6XJ3w3AAAAACOGkyi9' \
+    AZURE_OPENAI_API_KEY='<your-azure-openai-api-key-here>' \
     AZURE_OPENAI_DEPLOYMENT='gpt-4.1' \
     AZURE_OPENAI_API_VERSION='2024-08-01-preview' \
     ALLOWED_ORIGINS='https://isd-chat-customer-frontend.kindfield-353d98ed.swedencentral.azurecontainerapps.io,http://localhost:5173,http://localhost:5174'
@@ -595,8 +595,8 @@ rm -f .env .env.local .env.production .env.development
 
 **Solution:** Always use single quotes for passwords with special characters:
 ```bash
-SQL_PASSWORD='WD!8Qt&Dx2PjAx23f7123!'  # ✅ Correct
-SQL_PASSWORD="WD!8Qt&Dx2PjAx23f7123!"  # ❌ Wrong - gets truncated to "WD!8Qt"
+SQL_PASSWORD='My!Pass@123'  # ✅ Correct
+SQL_PASSWORD="My!Pass@123"  # ❌ Wrong - bash interprets ! and truncates
 ```
 
 ### Issue 5: exec format error / Container Won't Start
