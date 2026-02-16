@@ -4,18 +4,18 @@
   "version": "1.0.0",
   "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "developer": {
-    "name": "Industry Solutions Directory",
+    "name": "Microsoft Solutions Directory",
     "websiteUrl": "https://isd-chat-seller-frontend.kindfield-353d98ed.swedencentral.azurecontainerapps.io",
     "privacyUrl": "https://privacy.microsoft.com/en-us/privacystatement",
     "termsOfUseUrl": "https://www.microsoft.com/en-us/servicesagreement"
   },
   "name": {
-    "short": "ISD Seller Chat",
-    "full": "Industry Solutions Directory - Seller Assistant"
+    "short": "MSD Seller Chat",
+    "full": "Microsoft Solutions Directory - Seller Assistant"
   },
   "description": {
-    "short": "AI-powered partner insights for the Industry Solutions Directory",
-    "full": "Internal seller tool that provides AI-powered natural language access to the Industry Solutions Directory database. Ask questions about solutions, partners, industries, and technologies. Get partner insights, competitive analysis, and solution recommendations powered by NL2SQL and GPT-4.1."
+    "short": "AI-powered partner insights for the Microsoft Solutions Directory",
+    "full": "Internal seller tool that provides AI-powered natural language access to the Microsoft Solutions Directory database. Ask questions about solutions, partners, industries, and technologies. Get partner insights, competitive analysis, and solution recommendations powered by NL2SQL and GPT-4.1."
   },
   "icons": {
     "color": "color.png",

@@ -1,12 +1,16 @@
-# Industry Solutions Directory - AI Chat Assistants
+# Microsoft Solutions Directory - AI Chat Assistants
 
 **Solution Owner:** Arturo Quiroga  
 **Role:** Principal Industry Solutions Architect, Microsoft  
-**Purpose:** Pro-code AI chat solution enabling natural language queries against the Microsoft Industry Solutions Directory using a multi-agent NL2SQL pipeline
+**Purpose:** Pro-code AI chat solution enabling natural language queries against the Microsoft Solutions Directory using a multi-agent NL2SQL pipeline
 
 ## Overview
 
-Two AI-powered chat assistants — **Seller** (internal) and **Customer** (external) — that let users ask natural language questions about Microsoft partner solutions. The backend translates questions directly into SQL queries against the ISD production database, returning structured results with AI-generated insights.
+Two AI-powered chat assistants — **Seller** (internal) and **Customer** (external) — that let users ask natural language questions about Microsoft partner solutions. The backend translates questions directly into SQL queries against the MSD production database, returning structured results with AI-generated insights.
+
+> **Note:** This directory was originally called the **Industry Solutions Directory (ISD)**. It was renamed to **Microsoft Solutions Directory (MSD)** because the original name was misleading — the directory contains both **Industry** and **Technology** solutions (AI Business Solutions, Cloud and AI Platforms, Security), not just industry-specific ones. You may still see "ISD" in some code, database objects, and ACA resource names.
+
+**Original website:** [solutions.microsoftindustryinsights.com](https://solutions.microsoftindustryinsights.com/dashboard)
 
 **Live Apps** (Azure Container Apps, Sweden Central):
 
