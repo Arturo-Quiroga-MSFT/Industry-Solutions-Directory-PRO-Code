@@ -1,555 +1,278 @@
-# Industry Solutions Directory - AI Chat Assistant
+# Industry Solutions Directory - AI Chat Assistants
 
 **Solution Owner:** Arturo Quiroga  
 **Role:** Principal Industry Solutions Architect, Microsoft  
-**Purpose:** Pro-code AI chat solution to enable natural language search and intelligent partner recommendations for the Microsoft Industry Solutions Directory website
-
-A pro-code solution to add intelligent chat capabilities to the Microsoft Industry Solutions Directory website using Azure AI services and the RAG (Retrieval-Augmented Generation) pattern.
+**Purpose:** Pro-code AI chat solution enabling natural language queries against the Microsoft Industry Solutions Directory using a multi-agent NL2SQL pipeline
 
 ## Overview
 
-This solution enables natural language search and partner recommendations through a conversational AI interface integrated into the existing Industry Solutions Directory website at `https://solutions.microsoftindustryinsights.com/dashboard`.
+Two AI-powered chat assistants — **Seller** (internal) and **Customer** (external) — that let users ask natural language questions about Microsoft partner solutions. The backend translates questions directly into SQL queries against the ISD production database, returning structured results with AI-generated insights.
 
-The AI assistant supports **both browsing patterns** users see on the portal:
-- **Browse by Industry**: Healthcare, Education, Financial Services, Manufacturing, etc.
-- **Browse by Technology**: AI Business Solutions, Cloud and AI Platforms, Security
-- **Combined Queries**: "What AI solutions are available for healthcare?"
+**Live Apps** (Azure Container Apps, Sweden Central):
 
-See [docs/DUAL_BROWSING_SUPPORT.md](docs/DUAL_BROWSING_SUPPORT.md) for detailed information.
+| App | Frontend | Backend |
+|-----|----------|---------|
+| **Seller** | [isd-chat-seller-frontend](https://isd-chat-seller-frontend.kindfield-353d98ed.swedencentral.azurecontainerapps.io) | [isd-chat-seller-backend](https://isd-chat-seller-backend.kindfield-353d98ed.swedencentral.azurecontainerapps.io) |
+| **Customer** | [isd-chat-customer-frontend](https://isd-chat-customer-frontend.kindfield-353d98ed.swedencentral.azurecontainerapps.io) | [isd-chat-customer-backend](https://isd-chat-customer-backend.kindfield-353d98ed.swedencentral.azurecontainerapps.io) |
 
-## Screenshots
+### Seller vs Customer Mode
 
-### Enhanced Chat Interface
+- **Seller mode** — For internal Microsoft sellers. Shows partner names, rankings, solution counts by vendor, and competitive insights.
+- **Customer mode** — For external customers. Neutral, capability-focused responses. No partner rankings or vendor endorsements (legal compliance).
 
-![Industry Solutions Chat UI](docs/images/chat-ui-screenshot.png)
-
-*Modern, Microsoft-branded chat interface with:*
-- 🎨 Azure blue gradient backgrounds and professional styling
-- 💬 Conversational AI powered by Azure OpenAI
-- 🏢 Microsoft branding with industry-specific icons
-- 🔍 Intelligent search across 50+ industries
-- 📚 Citation cards with solution details and relevance scores
-
-**Live Demo:** [Try it here](https://indsolse-dev-frontend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io)
-**API Endpoint:** https://indsolse-dev-backend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io
-**Current Version:** v2.8 (REST API with integrated vectorization)
+The mode is controlled by the `APP_MODE` environment variable (`seller` or `customer`).
 
 ### Key Features
 
-- **Natural Language Search**: Users can ask questions in plain English about partner solutions
-- **Dual Browsing Support**: Search by **Industry** (Healthcare, Education, Financial Services) OR by **Technology** (AI Business Solutions, Cloud and AI Platforms, Security) - matches both portal navigation patterns
-- **Contextual Recommendations**: AI-powered matching of user needs with relevant solutions
-- **Multi-Industry Support**: Filter by industry categories (Healthcare, Financial Services, Retail, etc.)
-- **Technology Filtering**: Search by technology stack (AI, Cloud, Security, etc.)
-- **Combined Queries**: Ask for specific technology within an industry (e.g., "AI for healthcare")
-- **Conversation Memory**: Maintains context across multiple turns
-- **Source Citations**: Provides links to actual partner solutions
+- **Natural Language to SQL**: Ask questions in plain English; the multi-agent pipeline generates and executes SQL automatically
+- **Four-Agent Architecture**: Query Planner → SQL Executor → Insight Analyzer → Response Formatter
+- **448 Solutions**: Across 174 partners, 50+ industries, 3 solution areas (AI Business Solutions, Cloud and AI Platforms, Security)
+- **Conversation Memory**: Maintains context across turns with intent routing
+- **Data Tables + Insights**: Returns both structured tabular data and AI-generated narrative analysis
+- **Follow-up Questions**: Context-specific suggested questions based on query results
+- **Export**: Conversations exportable as JSON or Markdown
 
 ## Architecture
 
-The solution uses a modern RAG architecture with the following components:
+```
+User → React Frontend → FastAPI Backend → Multi-Agent Pipeline → SQL Database
+                                              │
+                                              ├─ Agent 1: Query Planner (intent analysis)
+                                              ├─ Agent 2: NL2SQL + SQL Executor (pyodbc → SQL Server)
+                                              ├─ Agent 3: Insight Analyzer (patterns, stats)
+                                              └─ Agent 4: Response Formatter (narrative + citations)
+                                              │
+                                              └─ Azure OpenAI (gpt-4.1 for all agents)
+```
 
-### Backend (Python FastAPI)
-- REST API for chat interactions
-- **Direct REST API integration** with Azure AI Search (no Python SDK)
-- **Integrated vectorization** using Azure AI Search vectorizer (automatic query vectorization)
-- Integration with Azure OpenAI for LLM chat completions
-- Azure Cosmos DB for conversation persistence
-- Passwordless authentication via DefaultAzureCredential
+### Key Components
 
-### Frontend (JavaScript Widget)
-- Lightweight embeddable chat widget
-- Can be integrated via simple `<script>` tag
-- Responsive design for desktop and mobile
+- **Backend**: Python FastAPI with multi-agent NL2SQL pipeline
+- **Frontend**: React 19 + TypeScript + Vite + Tailwind CSS
+- **Database**: SQL Server (`mssoldir-prd-sql.database.windows.net`) — read-only queries against `dbo.vw_ISDSolution_All` view (4,934 rows, 33 columns)
+- **LLM**: Azure OpenAI (`r2d2-foundry-001.openai.azure.com`) — `gpt-4.1` deployment
+- **Deployment**: Azure Container Apps (4 apps in `indsolse-dev-rg`, ACR: `indsolsedevacr`)
 
-### Data Pipeline
-- Web scraping and indexing scripts
-- Automated chunking and vectorization
-- Scheduled updates for fresh content
+### Standalone Resources
+
+These are available but **not used** by the chat apps:
+- **Azure AI Search index** (`isd-solutions-v1` on `aq-mysearch001.search.windows.net`) — 449 documents with vector embeddings, available for Copilot Studio, MCP, or future integrations
+- **MCP Server** (`mcp-isd-server/`) — Model Context Protocol server for IDE/tool integration
 
 ## Project Structure
 
 ```
 Industry-Solutions-Directory-PRO-Code/
-├── backend/                    # Python FastAPI backend
-│   ├── app/
-│   │   ├── api/               # API endpoints
-│   │   ├── services/          # Azure service integrations
-│   │   │   ├── search_service.py     # Azure AI Search
-│   │   │   ├── openai_service.py     # Azure OpenAI
-│   │   │   └── cosmos_service.py     # Azure Cosmos DB
-│   │   ├── models/            # Data models
-│   │   ├── config.py          # Configuration
-│   │   └── main.py            # FastAPI app
-│   ├── requirements.txt       # Python dependencies
-│   └── .env.example          # Environment variables template
-├── frontend/                  # Chat widget (JavaScript/React)
-│   ├── src/
-│   ├── package.json
-│   └── README.md
-├── data-ingestion/           # Data scraping and indexing
-│   ├── ingest_data.py        # Main ingestion script
-│   └── requirements.txt
-├── infra/                    # Infrastructure as Code (Bicep)
-│   ├── main.bicep           # Main infrastructure template
-│   ├── parameters/          # Environment-specific parameters
-│   └── modules/             # Bicep modules
-├── .github/workflows/        # CI/CD pipelines
-│   └── deploy.yml
-├── docs/                     # Additional documentation
-├── discovery-meeting/        # Project discovery notes
-├── ARCHITECTURE.md           # Detailed architecture documentation
-└── README.md                # This file
+├── frontend-react/              # React 19 + TypeScript frontend (shared by both apps)
+│   ├── src/                     # React components, API client, types
+│   ├── backend/                 # FastAPI backend + multi-agent pipeline
+│   │   ├── main.py              # FastAPI app with /api/query, /api/health, etc.
+│   │   ├── multi_agent_pipeline.py  # 4-agent orchestrator
+│   │   └── nl2sql_pipeline.py   # NL-to-SQL conversion + execution
+│   ├── .env.seller              # Seller app env config
+│   ├── .env.customer            # Customer app env config
+│   └── Dockerfile               # Multi-stage build (Node build → nginx serve)
+├── data-ingestion/
+│   ├── sql-direct/              # NL2SQL pipeline (used by backend)
+│   └── sql-to-search/           # SQL → Azure AI Search ingestion pipeline
+│       ├── 01_create_index.py   # Create search index with vector config
+│       ├── 02_ingest_from_sql.py # Read SQL → embeddings → upload
+│       ├── 03_verify_index.py   # Verify index contents
+│       └── README.md            # Pipeline docs, DB schema, run history
+├── teams-apps/                  # Microsoft Teams Tab App packages
+│   ├── seller/                  # Seller manifest + icons
+│   ├── customer/                # Customer manifest + icons
+│   ├── package.sh               # Build .zip packages for sideloading
+│   └── README.md                # Teams deployment guide
+├── deployment/                  # ACA deployment scripts
+├── mcp-isd-server/              # MCP server (standalone)
+├── infra/                       # Infrastructure as Code (Bicep)
+├── docs/                        # Additional documentation
+├── ARCHITECTURE.md              # Detailed architecture docs
+└── README.md                    # This file
 ```
 
 ## Prerequisites
 
-- **Azure Subscription** with the following services:
-  - Azure OpenAI Service (with text-embedding-3-large and gpt-4.1-mini deployments)
-  - Azure AI Search (Basic tier or higher)
-  - Azure Cosmos DB for NoSQL (Serverless recommended)
-  - Azure App Service or Container Apps
-  - **Azure CLI authentication** configured (passwordless auth)
+- **Azure Services**:
+  - Azure OpenAI Service (with `gpt-4.1` deployment)
+  - SQL Server with ISD database (read-only access)
+  - Azure Container Apps environment
+  - Azure Container Registry
 
-- **Development Tools**:
+- **Local Development**:
   - Python 3.11+
-  - Node.js 18+ (for frontend widget)
-  - Azure CLI (logged in with `az login`)
-  - Git
-
-## Authentication
-
-This solution uses **Azure CLI authentication (DefaultAzureCredential)** throughout - no API keys required. Ensure you:
-
-1. Run `az login` before local development
-2. Grant appropriate RBAC roles to your identity:
-   - **Azure OpenAI**: `Cognitive Services OpenAI User`
-   - **Azure AI Search**: `Search Index Data Contributor`, `Search Service Contributor`
-   - **Azure Cosmos DB**: `Cosmos DB Built-in Data Contributor`
+  - Node.js 18+
+  - ODBC Driver 18 for SQL Server
+  - Azure CLI (`az login`)
 
 ## Quick Start
 
-### 1. Clone the Repository
+### 1. Clone & Set Up
 
 ```bash
-git clone https://github.com/your-org/Industry-Solutions-Directory-PRO-Code.git
+git clone https://github.com/Arturo-Quiroga-MSFT/Industry-Solutions-Directory-PRO-Code.git
 cd Industry-Solutions-Directory-PRO-Code
+python -m venv .venv && source .venv/bin/activate
 ```
 
-### 2. Set Up Azure Resources
-
-#### Option A: Using Bicep (Recommended)
+### 2. Configure Environment
 
 ```bash
-cd infra
-az login
-az deployment sub create \
-  --location eastus \
-  --template-file main.bicep \
-  --parameters parameters/dev.parameters.json
+cd frontend-react/backend
+cp .env.example .env   # or create from template below
 ```
 
-#### Option B: Manual Setup
-
-Create the following Azure resources manually through the Azure Portal:
-1. Azure OpenAI Service with deployments:
-   - `gpt-4.1-mini` (or `gpt-4o`)
-   - `text-embedding-3-large`
-2. Azure AI Search (Standard tier)
-3. Azure Cosmos DB for NoSQL (Serverless)
-4. Azure App Service (B1 or higher)
-
-### 3. Configure Environment Variables
-
-```bash
-cd backend
-cp .env.example .env
-```
-
-Edit `.env` and configure Azure service endpoints (no API keys needed):
+Required `.env` variables:
 
 ```env
-# Azure OpenAI Configuration
+# Azure OpenAI
 AZURE_OPENAI_ENDPOINT=https://your-openai.openai.azure.com/
-AZURE_OPENAI_API_VERSION=2024-02-01
-AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4-1-mini
-AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-3-large
-# Note: Using Azure CLI authentication (no API key needed)
+AZURE_OPENAI_API_KEY=your-key
+AZURE_OPENAI_CHAT_DEPLOYMENT_NAME=gpt-4.1
 
-# Azure AI Search Configuration
-AZURE_SEARCH_ENDPOINT=https://your-search.search.windows.net
-AZURE_SEARCH_INDEX_NAME=partner-solutions-integrated
-# Note: Using Azure CLI authentication (no API key needed)
-# Note: Index uses integrated vectorization (automatic query vectorization)
+# SQL Database (read-only)
+SQL_SERVER=mssoldir-prd-sql.database.windows.net
+SQL_DATABASE=mssoldir-prd
+SQL_USERNAME=isdapi
+SQL_PASSWORD=your-password
 
-# Azure Cosmos DB Configuration
-AZURE_COSMOS_ENDPOINT=https://your-cosmos.documents.azure.com:443/
-AZURE_COSMOS_DATABASE_NAME=industry-solutions-db
-AZURE_COSMOS_CONTAINER_NAME=chat-sessions
-# Note: Using Azure CLI authentication (no key needed)
-
-# Chat Configuration
-MAX_HISTORY_MESSAGES=10
-MAX_CONTEXT_TOKENS=4000
-TEMPERATURE=0.7
-TOP_P=0.95
-
-# Search Configuration
-SEARCH_TOP_K=5
-VECTOR_SEARCH_THRESHOLD=0.7
+# App Mode
+APP_MODE=seller   # or "customer"
 ```
 
-**Important**: This solution uses passwordless authentication via Azure CLI. Make sure you're logged in with `az login` and have the required RBAC permissions.
-
-### 4. Run Data Ingestion
-
-Index partner solution data from the Industry Solutions Directory API into Azure AI Search:
+### 3. Run Backend
 
 ```bash
-cd data-ingestion
+cd frontend-react/backend
 pip install -r requirements.txt
-
-# Test with limited data first (2 industries, 5 solutions per theme)
-python ingest_data_test.py
-
-# Verify the indexed data
-python verify_index.py
-
-# Full ingestion (all 10 industries, ~20-30 minutes)
-python ingest_data.py
+uvicorn main:app --reload --port 8000
 ```
 
-**Data Source**: The ingestion scripts pull real data from `https://mssoldir-app-prd.azurewebsites.net/api/Industry/` endpoints:
-- `getMenu` - Lists all industries and themes
-- `GetThemeDetalsByViewId?slug={themeSlug}` - Gets partner solutions for each theme
+API available at `http://localhost:8000` — docs at `http://localhost:8000/docs`
 
-**Vector Configuration**: 
-- Index: `partner-solutions-integrated` with **integrated vectorization**
-- Vectorizer: Azure OpenAI `text-embedding-3-large` (3072 dimensions)
-- Automatic query vectorization: Queries are vectorized by Azure Search service
-- No client-side embedding generation required
-
-See `data-ingestion/API_INVESTIGATION.md` for details on the data source discovery process.
-
-### 5. Run the Backend API Locally
+### 4. Run Frontend
 
 ```bash
-cd backend
-pip install -r requirements.txt
-
-# Make sure you're logged in with Azure CLI
-az login
-
-# Start the FastAPI server
-uvicorn app.main:app --reload --port 8000
+cd frontend-react
+npm install
+npm run dev
 ```
 
-The API will be available at `http://localhost:8000`
+Frontend available at `http://localhost:5173`
 
-API Documentation: `http://localhost:8000/docs`
-
-**Troubleshooting**:
-- If you get Cosmos DB firewall errors, add your public IP to the firewall:
-  ```bash
-  az cosmosdb update --name your-cosmos-name --resource-group your-rg --ip-range-filter YOUR_PUBLIC_IP
-  ```
-- Ensure all RBAC permissions are granted (see Prerequisites)
-
-### 6. Test the API
+### 5. Test the API
 
 ```bash
 # Health check
 curl http://localhost:8000/api/health
 
-# Get available facets (industries, technologies)
-curl http://localhost:8000/api/facets
-
-# Chat request - Industry-based query
-curl -X POST http://localhost:8000/api/chat \
+# Query
+curl -X POST http://localhost:8000/api/query \
   -H "Content-Type: application/json" \
-  -d '{
-    "message": "What solutions are available for healthcare?",
-    "filters": {
-      "industries": ["Healthcare & Life Sciences"]
-    }
-  }'
-
-# Chat request - Technology-based query
-curl -X POST http://localhost:8000/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "Show me AI Business Solutions",
-    "filters": {
-      "technologies": ["AI Business Solutions"]
-    }
-  }'
-
-# Chat request - Combined query
-curl -X POST http://localhost:8000/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "What AI solutions are available for financial services?",
-    "filters": {
-      "industries": ["Financial Services"],
-      "technologies": ["AI Business Solutions"]
-    }
-  }'
-```
-
-**Expected Response**: The chat endpoint will return AI-generated recommendations with citations linking to actual partner solutions.
-
-### 7. Build and Deploy Frontend Widget
-
-```bash
-cd frontend
-npm install
-npm run build
-```
-
-Deploy the built widget to Azure CDN or Static Web Apps.
-
-### 8. Integrate into Existing Website
-
-Add the following code to the Industry Solutions Directory website:
-
-```html
-<!-- Add before closing </body> tag -->
-<script src="https://your-cdn.azureedge.net/chat-widget.js"></script>
-<script>
-  window.IndustrySolutionsChat.init({
-    apiEndpoint: 'https://your-api.azurewebsites.net',
-    theme: 'auto',
-    primaryColor: '#0078d4',
-    position: 'bottom-right'
-  });
-</script>
+  -d '{"question": "What healthcare AI solutions are available?"}'
 ```
 
 ## API Endpoints
 
-### `POST /api/chat`
-Main chat endpoint for user queries.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/health` | Health check (includes app mode) |
+| `POST` | `/api/query` | Execute natural language query |
+| `GET` | `/api/examples` | Get example questions by category |
+| `GET` | `/api/stats` | Database statistics |
+| `POST` | `/api/conversation/export` | Export conversation |
+
+### `POST /api/query`
 
 **Request:**
 ```json
 {
-  "message": "What partners offer financial services solutions?",
-  "session_id": "optional-session-id",
-  "filters": {
-    "industries": ["Financial Services"],
-    "technologies": ["AI"]
-  }
+  "question": "What partners offer financial services AI solutions?",
+  "conversation_id": "optional-session-id"
 }
 ```
 
 **Response:**
 ```json
 {
-  "response": "Based on your query, I found several financial services solutions...",
-  "session_id": "550e8400-e29b-41d4-a716-446655440000",
-  "citations": [
-    {
-      "solution_name": "Financial Risk Management Suite",
-      "partner_name": "FinTech Solutions Corp",
-      "description": "Advanced risk management...",
-      "url": "https://solutions.example.com/...",
-      "relevance_score": 0.95
-    }
-  ],
-  "message_id": "msg-12345"
+  "success": true,
+  "question": "...",
+  "intent": { "intent": "query", "needs_new_query": true, "query_type": "specific" },
+  "narrative": "AI-generated insights narrative...",
+  "insights": { "overview": "...", "key_findings": [...], "follow_up_questions": [...] },
+  "sql": "SELECT DISTINCT TOP 50 ...",
+  "explanation": "This query finds...",
+  "confidence": "high",
+  "columns": ["solutionName", "orgName", ...],
+  "rows": [{ "solutionName": "...", "orgName": "..." }],
+  "row_count": 25,
+  "usage_stats": { "total_tokens": 1500 },
+  "elapsed_time": 3.2,
+  "timestamp": "2026-02-16T..."
 }
 ```
 
-### `GET /api/chat/history/{session_id}`
-Retrieve chat history for a session.
-
-### `POST /api/feedback`
-Submit user feedback on responses.
-
-### `GET /api/health`
-Health check endpoint for monitoring.
-
-## Configuration
-
-All configuration is managed through environment variables. See `backend/app/config.py` for available settings.
-
-### Key Settings
-
-- `MAX_HISTORY_MESSAGES`: Number of conversation turns to keep in context (default: 10)
-- `MAX_CONTEXT_TOKENS`: Maximum tokens for RAG context (default: 4000)
-- `TEMPERATURE`: LLM temperature for response generation (default: 0.7)
-- `SEARCH_TOP_K`: Number of search results to retrieve (default: 5)
-
 ## Deployment
 
-### Deploy to Azure App Service
+All four apps run on Azure Container Apps. Deployment scripts are in `deployment/`:
 
 ```bash
-cd backend
+# Build and deploy seller backend
+az acr build --registry indsolsedevacr --image isd-backend-seller:latest --file Dockerfile .
+az containerapp update --name isd-chat-seller-backend --resource-group indsolse-dev-rg \
+  --image indsolsedevacr.azurecr.io/isd-backend-seller:latest
 
-# Create a web app
-az webapp up \
-  --name industry-solutions-chat-api \
-  --resource-group your-rg \
-  --runtime "PYTHON:3.11" \
-  --sku B1
-
-# Configure app settings
-az webapp config appsettings set \
-  --name industry-solutions-chat-api \
-  --resource-group your-rg \
-  --settings @appsettings.json
+# See deployment/ for full scripts
 ```
 
-### Deploy with GitHub Actions
+### Teams Integration
 
-The repository includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) for automated deployment.
-
-1. Add Azure credentials as GitHub secrets
-2. Push to `main` branch to trigger deployment
-
-## Monitoring & Observability
-
-The solution includes:
-
-- **Application Insights** integration for telemetry
-- **Structured logging** with correlation IDs
-- **Health check endpoints** for service monitoring
-- **Error tracking** and alerting
-
-View logs and metrics in Azure Portal > Application Insights.
-
-## Cost Estimation
-
-### Monthly Costs (Low to Medium Traffic)
-
-| Service | Configuration | Estimated Cost |
-|---------|--------------|----------------|
-| Azure OpenAI | GPT-4.1-mini (~500K tokens/day) | $150-300 |
-| Azure OpenAI | Embeddings (~100K tokens/day) | $10-20 |
-| Azure AI Search | Standard S1 | $250 |
-| Azure Cosmos DB | Serverless (10GB, 1M RUs) | $25-50 |
-| Azure App Service | B1 Basic | $13 |
-| Application Insights | Basic | $5-20 |
-| **Total** | | **$453-653/month** |
-
-### Cost Optimization Tips
-
-1. Use `gpt-4.1-nano` for simpler queries (80% cheaper)
-2. Implement response caching for common questions
-3. Use Cosmos DB serverless for variable traffic
-4. Start with AI Search Basic tier for < 1000 queries/day
-
-## Development
-
-### Running Tests
+Teams Tab App packages are available in `teams-apps/`:
 
 ```bash
-cd backend
-pytest tests/
+cd teams-apps && bash package.sh
+# Upload isd-seller-teams-app.zip or isd-customer-teams-app.zip to Teams
 ```
 
-### Code Quality
+See [teams-apps/README.md](teams-apps/README.md) for sideloading and admin center instructions.
+
+## Data Pipeline
+
+### SQL-to-Search Index (standalone)
+
+A separate pipeline in `data-ingestion/sql-to-search/` reads the SQL database and populates an Azure AI Search index with vector embeddings. This index is a standalone resource, not used by the chat apps.
 
 ```bash
-# Format code
-black app/
-isort app/
-
-# Lint
-pylint app/
+cd data-ingestion/sql-to-search
+python 01_create_index.py    # Create index schema
+python 02_ingest_from_sql.py # Ingest + embed 448 solutions
+python 03_verify_index.py    # Verify search works
 ```
+
+See [data-ingestion/sql-to-search/README.md](data-ingestion/sql-to-search/README.md) for full documentation.
 
 ## Troubleshooting
 
-### Common Issues
-
-**Issue**: Pydantic validation error for `applicationinsights_connection_string`
-- **Solution**: The config now includes `extra = "ignore"` to allow optional fields in `.env`
-
-**Issue**: Vector dimension mismatch (1536 vs 3072)
-- **Solution**: The `text-embedding-3-large` model produces 3072-dimension vectors. Index uses integrated vectorization.
-
-**Issue**: "Field 'content_vector' does not have a vectorizer defined" error
-- **Solution**: This was caused by Python SDK (azure-search-documents 11.6.0) incompatibility with integrated vectorization. **Fixed in v2.8** by switching to direct REST API calls with API version 2024-07-01.
-
-**Issue**: Cosmos DB firewall blocking local development
-- **Solution**: Add your public IP to the firewall allow list:
-  ```bash
-  # Get your public IP
-  curl ifconfig.me
-  
-  # Add to Cosmos DB firewall
-  az cosmosdb update \
-    --name your-cosmos-name \
-    --resource-group your-rg \
-    --ip-range-filter YOUR_PUBLIC_IP
-  ```
-
-**Issue**: Azure authentication errors
-- **Solution**: Ensure you're logged in with `az login` and have the required RBAC roles assigned
-
-**Issue**: Search returns no results
-- **Solution**: Verify the index exists and contains data. Run `python data-ingestion/verify_index.py` to check.
-
-**Issue**: OpenAI API rate limit errors
-- **Solution**: Implement retry logic with exponential backoff (included in code)
-
-**Issue**: CORS errors from frontend
-- **Solution**: Add your website domain to `cors_origins` in `config.py` or `.env`
-
-### Debug Mode
-
-Enable debug logging:
-
-```bash
-export DEBUG=True
-python -m app.main
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+| Issue | Solution |
+|-------|----------|
+| ODBC driver not found | Install [ODBC Driver 18 for SQL Server](https://learn.microsoft.com/sql/connect/odbc/download-odbc-driver-for-sql-server) |
+| SQL connection timeout | Check SQL Server firewall rules allow your IP |
+| Azure OpenAI 429 errors | Built-in retry logic handles rate limits; increase deployment quota if persistent |
+| CORS errors from frontend | Set `ALLOWED_ORIGINS` env var to include your frontend URL |
+| Blank Teams tab | Add `X-Frame-Options` header to ACA frontend (see teams-apps/README.md) |
 
 ## Team & Contact
 
 - **Solution Owner & Technical Lead**: Arturo Quiroga, Principal Industry Solutions Architect
 - **Product Owner**: Will Casavan
-- **Development Team**: Jason, Thomas, Arturo
-
-**Purpose**: This solution provides AI-powered natural language search capabilities to help customers discover relevant Microsoft partner solutions across 50+ industries through conversational queries, improving engagement and reducing time-to-find relevant solutions on the Industry Solutions Directory website.
 
 For questions or support, contact the team via Microsoft Teams.
 
-## License
-
-This project is proprietary and confidential.
-
-## Acknowledgments
-
-- Built with [FastAPI](https://fastapi.tiangolo.com/)
-- Powered by [Azure AI Services](https://azure.microsoft.com/services/ai-services/)
-- Based on Microsoft RAG best practices
-
-## Next Steps
-
-After initial deployment:
-
-1. **Gather User Feedback**: Collect usage data and user satisfaction metrics
-2. **Optimize Prompts**: Refine system prompts based on real queries
-3. **Add Features**: Implement voice interface, multi-language support
-4. **Scale Infrastructure**: Adjust based on traffic patterns
-5. **Enhance Search**: Implement agentic retrieval for complex queries
-
 ## References
 
-- [ARCHITECTURE.md](./ARCHITECTURE.md) - Detailed architecture documentation
-- [docs/DUAL_BROWSING_SUPPORT.md](./docs/DUAL_BROWSING_SUPPORT.md) - Comprehensive guide on dual browsing support
-- [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md) - Complete documentation index
-- [Azure AI Search Documentation](https://learn.microsoft.com/azure/search/)
-- [Azure OpenAI Service](https://learn.microsoft.com/azure/ai-services/openai/)
-- [RAG Pattern Overview](https://learn.microsoft.com/azure/search/retrieval-augmented-generation-overview)
+- [ARCHITECTURE.md](ARCHITECTURE.md) — Detailed architecture documentation
+- [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) — Complete documentation index
+- [data-ingestion/sql-to-search/README.md](data-ingestion/sql-to-search/README.md) — Search index pipeline docs
+- [teams-apps/README.md](teams-apps/README.md) — Teams deployment guide
+- [SAMPLE_QUESTIONS.md](SAMPLE_QUESTIONS.md) — Example queries to try
