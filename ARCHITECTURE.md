@@ -388,17 +388,18 @@ The current architecture bypasses Azure AI Search entirely for the query path. I
 ```bicep
 - Resource Group: indsolse-dev-rg
 - Azure OpenAI Service
-  - gpt-4.1-mini deployment (chat completions)
-  - text-embedding-3-large deployment (3072 dimensions, for indexing)
-- Azure AI Search (Standard tier)
-  - Index: partner-solutions-integrated (535 documents)
-  - Integrated vectorization enabled
+  - gpt-4.1 deployment (Query Planner, Insight Analyzer, Response Formatter)
+  - gpt-5.2 deployment (NL2SQL with low reasoning)
+- Azure SQL Server (existing ISD production database)
+  - View: dbo.vw_ISDSolution_All (read-only access via pyodbc)
 - Azure Cosmos DB for NoSQL (Serverless)
   - Database: industry-solutions-db
   - Container: chat-sessions
-- Azure Container Apps (for API and frontend)
-  - Backend: indsolse-dev-backend-v2-vnet (v2.8)
-  - Frontend: indsolse-dev-frontend-vnet
+- Azure Container Apps (4 apps)
+  - Backend: indsolse-dev-backend
+  - Frontend: indsolse-dev-frontend
+  - MCP Server: indsolse-dev-mcp-server
+  - Update Monitor: indsolse-dev-updatemon
   - Container Registry: indsolsedevacr
 - Azure Virtual Network (VNet integration)
 - Azure Application Insights (monitoring)
@@ -452,32 +453,32 @@ The current architecture bypasses Azure AI Search entirely for the query path. I
 
 ## Cost Estimation (Monthly, USD)
 
-### Pro-Code Approach
+### Pro-Code Approach (v3.0 — NL2SQL Architecture)
 | Service | Configuration | Estimated Cost |
 |---------|---------------|----------------|
-| Azure OpenAI (GPT-4.1-mini) | ~500K tokens/day | $150 - $300 |
-| Azure OpenAI (Embeddings) | ~100K tokens/day | $10 - $20 |
-| Azure AI Search | Standard S1 (1 replica) | $250 |
+| Azure OpenAI (gpt-4.1) | 3 agents · ~400K tokens/day | $120 - $250 |
+| Azure OpenAI (gpt-5.2) | NL2SQL agent · ~100K tokens/day (reasoning) | $80 - $150 |
+| Azure SQL Server | Existing ISD production database (shared) | $0 (existing) |
+| Azure Container Apps | 4 apps (backend, frontend, MCP, update-monitor) | $40 - $80 |
+| Azure Container Registry | Basic tier | $5 |
 | Azure Cosmos DB | Serverless (10GB, 1M RUs) | $25 - $50 |
-| Azure App Service | B1 Basic tier | $13 |
 | Azure Application Insights | Basic | $5 - $20 |
 | Azure Key Vault | Standard | $1 |
-| **Total (Low Traffic)** | | **$454 - $654** |
-| **Total (Medium Traffic)** | | **$600 - $900** |
+| **Total (Low Traffic)** | | **$276 - $556** |
+| **Total (Medium Traffic)** | | **$400 - $700** |
 
 ### Cost Optimization Tips
-1. Use `gpt-4.1-nano` for simpler queries (cheaper)
-2. Implement caching for common queries
+1. Use `gpt-4.1-nano` for Query Planner and Response Formatter (cheaper, sufficient for classification/formatting)
+2. Implement caching for common NL2SQL queries (same question → same SQL)
 3. Use Cosmos DB serverless for unpredictable traffic
-4. Start with Azure AI Search Basic tier if <1000 queries/day
-5. Monitor token usage and optimize prompts
+4. Scale ACA to zero during off-hours (min replicas = 0)
+5. Monitor token usage per agent and optimize prompts
 
 ### Low-Code Alternative (Copilot Studio)
 | Component | Estimated Cost |
 |-----------|----------------|
 | Copilot Studio | $200/month (base plan) |
-| Azure AI Search (if needed) | $250/month |
-| **Total** | **$450/month** |
+| **Total** | **$200/month** |
 
 **Trade-offs**:
 - **Pro-Code**: More control, customization, integration flexibility
