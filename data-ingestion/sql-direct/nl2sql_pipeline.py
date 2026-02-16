@@ -158,7 +158,7 @@ WHERE marketPlaceLink IS NOT NULL
         """Initialize Azure OpenAI client."""
         return AzureOpenAI(
             api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-            api_version="2024-10-21",
+            api_version="2025-03-01-preview",
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
         )
     
@@ -416,16 +416,14 @@ CRITICAL REMINDER BEFORE YOU GENERATE:
             # Use the deployment name from environment or default
             deployment_name = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4o-mini")
             
-            response = self.llm_client.chat.completions.create(
+            response = self.llm_client.responses.create(
                 model=deployment_name,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": natural_query}
-                ],
-                response_format={"type": "json_object"}
+                instructions=system_prompt,
+                input=natural_query + "\n\nRespond in JSON format.",
+                text={"format": {"type": "json_object"}}
             )
             
-            result = json.loads(response.choices[0].message.content)
+            result = json.loads(response.output_text)
             
             print(f"{GREEN}✓ SQL generated successfully{RESET}")
             print(f"{CYAN}Confidence: {result.get('confidence', 'unknown')}{RESET}\n")

@@ -99,16 +99,14 @@ class QueryPlanner:
 Analyze the intent and routing strategy."""
 
         try:
-            response = self.llm_client.chat.completions.create(
+            response = self.llm_client.responses.create(
                 model=self.deployment,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                response_format={"type": "json_object"}
+                instructions=system_prompt,
+                input=user_prompt + "\n\nRespond in JSON format.",
+                text={"format": {"type": "json_object"}}
             )
             
-            return json.loads(response.choices[0].message.content)
+            return json.loads(response.output_text)
         
         except Exception as e:
             # Fallback: default to query intent
@@ -496,17 +494,14 @@ Respond with a JSON object using this exact structure:
     Analyze these results and provide insights."""
 
         try:
-            response = self.llm_client.chat.completions.create(
+            response = self.llm_client.responses.create(
                 model=self.deployment,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                response_format={"type": "json_object"}
-                # Temperature removed - model doesn't support custom values
+                instructions=system_prompt,
+                input=user_prompt + "\n\nRespond in JSON format.",
+                text={"format": {"type": "json_object"}}
             )
             
-            result = json.loads(response.choices[0].message.content)
+            result = json.loads(response.output_text)
             
             # Validate quality - reject generic responses
             if result.get('insights', {}).get('key_findings'):
@@ -666,23 +661,21 @@ Create an engaging response. The detailed data table will be shown separately in
 """
 
         try:
-            response = self.llm_client.chat.completions.create(
+            response = self.llm_client.responses.create(
                 model=self.deployment,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ]
+                instructions=system_prompt,
+                input=user_prompt
                 # Temperature removed - model doesn't support custom values
             )
             
-            content = response.choices[0].message.content
+            content = response.output_text
             
             # Track token usage
             tokens = None
             if hasattr(response, 'usage') and response.usage:
                 tokens = {
-                    'prompt_tokens': response.usage.prompt_tokens,
-                    'completion_tokens': response.usage.completion_tokens,
+                    'prompt_tokens': response.usage.input_tokens,
+                    'completion_tokens': response.usage.output_tokens,
                     'total_tokens': response.usage.total_tokens
                 }
             
@@ -719,7 +712,7 @@ class MultiAgentPipeline:
         # Initialize Azure OpenAI client
         self.llm_client = AzureOpenAI(
             api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-            api_version="2024-08-01-preview",
+            api_version="2025-03-01-preview",
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
         )
         
