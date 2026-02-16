@@ -51,203 +51,71 @@ Based on the discovery meeting with Will Casavan:
 
 ## Solution Architecture
 
-### High-Level Design
-
-```mermaid
-graph TB
-    subgraph "External Website"
-        A[Industry Solutions Directory<br/>microsoftindustryinsights.com]
-        B[Embedded Chat Widget<br/>JavaScript]
-    end
-    
-    subgraph "Azure - Sweden Central"
-        subgraph "Container Apps"
-            C[FastAPI Backend<br/>Python 3.13]
-            C1["API: /api/chat/stream"]
-            C2["API: /api/health"]
-            C3["API: /api/history"]
-        end
-        
-        subgraph "AI Services"
-            D[Azure OpenAI<br/>GPT-4.1-mini]
-            E[Azure OpenAI<br/>text-embedding-3-large]
-        end
-        
-        subgraph "Data Services"
-            F[Azure AI Search<br/>695 Solutions Indexed]
-            G[Azure Cosmos DB<br/>Conversation History]
-        end
-        
-        subgraph "Security"
-            H[VNet Integration]
-            I[Private Endpoints]
-            J[Managed Identity]
-        end
-    end
-    
-    subgraph "Data Source"
-        K[ISD Website API<br/>mssoldir-app-prd.azurewebsites.net]
-        L[Update Monitor<br/>Weekly Checks]
-    end
-    
-    A --> B
-    B -->|HTTPS| C
-    C --> C1
-    C --> C2
-    C --> C3
-    C -->|Chat Completion| D
-    C -->|Embeddings| E
-    C -->|Hybrid Search| F
-    C -->|Session Data| G
-    F -->|Vector Search| E
-    
-    L -->|Fetch Solutions| K
-    L -->|Update Index| F
-    
-    H -.->|Secure| C
-    I -.->|Secure| D
-    I -.->|Secure| E
-    I -.->|Secure| F
-    I -.->|Secure| G
-    J -.->|Authenticate| C
-    
-    style A fill:#0078d4,color:#fff
-    style B fill:#50e6ff,color:#000
-    style C fill:#00bcf2,color:#000
-    style D fill:#8cbd18,color:#000
-    style E fill:#8cbd18,color:#000
-    style F fill:#ffb900,color:#000
-    style G fill:#ff8c00,color:#000
-    style K fill:#e3008c,color:#fff
-```
-
-### RAG Pattern Flow
+### Architecture Diagram (v3.0 — Multi-Agent NL2SQL Pipeline)
 
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant W as Chat Widget
-    participant API as FastAPI Backend
-    participant AI as Azure OpenAI
-    participant Search as Azure AI Search
-    participant DB as Cosmos DB
-    
-    U->>W: Enter question
-    W->>API: POST /api/chat/stream
+    participant FE as React 19 Frontend<br/>(Vite + TypeScript)
+    participant API as FastAPI Backend<br/>(Python 3.13)
+    participant QP as Agent 1: Query Planner<br/>(gpt-4.1)
+    participant SQL as Agent 2: NL2SQL<br/>(gpt-5.2 · low reasoning)
+    participant DB as SQL Server<br/>(mssoldir-prd-sql)
+    participant IA as Agent 3: Insight Analyzer<br/>(gpt-4.1)
+    participant RF as Agent 4: Response Formatter<br/>(gpt-4.1)
+    participant Cosmos as Azure Cosmos DB<br/>(Conversation History)
+
+    U->>FE: Ask question<br/>(seller or customer mode)
+    FE->>API: POST /api/chat/stream (SSE)
     activate API
-    
-    API->>DB: Load conversation history
-    DB-->>API: Previous messages
-    
-    API->>AI: Generate search query
-    AI-->>API: Optimized query
-    
-    API->>Search: Hybrid search<br/>(vector + keyword)
-    activate Search
-    Search->>AI: Vectorize query
-    AI-->>Search: Query embedding
-    Search-->>API: Top 5 relevant solutions
-    deactivate Search
-    
-    API->>AI: Generate response<br/>(with context & history)
-    activate AI
-    AI-->>API: Stream response chunks
-    deactivate AI
-    
-    API->>DB: Save message & response
-    API-->>W: Stream response
+
+    API->>Cosmos: Load conversation history
+    Cosmos-->>API: Previous messages + response IDs
+
+    API->>QP: Analyze user intent
+    activate QP
+    QP-->>API: intent: query | analyze | summarize | compare
+    deactivate QP
+
+    API->>SQL: Generate SQL from natural language
+    activate SQL
+    Note over SQL: Phrase Precision rules<br/>Domain-aware synonyms<br/>Defensive SQL (COALESCE, aliases)
+    SQL-->>API: SQL query (JSON)
+    deactivate SQL
+
+    API->>DB: Execute SQL via pyodbc
+    activate DB
+    DB-->>API: Result rows (up to 50)
+    deactivate DB
+
+    API->>IA: Analyze patterns in results
+    activate IA
+    IA-->>API: Key findings, statistics,<br/>patterns, recommendations
+    deactivate IA
+
+    API->>RF: Format narrative response
+    activate RF
+    RF-->>API: Stream markdown (SSE chunks)
+    deactivate RF
+
+    API->>Cosmos: Save conversation
+    API-->>FE: SSE stream: insights + data table
     deactivate API
-    W-->>U: Display response with citations
-```
-
-### Data Ingestion Flow
-
-```mermaid
-flowchart TD
-    A[ISD Website API] -->|getMenu| B[Fetch Industry Hierarchy]
-    B --> C[Extract Theme Slugs]
-    C --> D{For Each Theme}
-    D -->|GetThemeDetalsByViewId| E[Fetch Solutions]
-    E --> F[Parse Partner Names<br/>from Titles]
-    F --> G[Transform to Documents]
-    G --> H[Chunk Text Content]
-    H --> I[Azure AI Search Index]
-    I --> J[Integrated Vectorization]
-    J --> K[695 Solutions Ready]
-    
-    L[Update Monitor] -->|Weekly Check| A
-    L -->|Compare MD5 Hashes| I
-    L -->|New/Modified| D
-    
-    style A fill:#e3008c,color:#fff
-    style I fill:#ffb900,color:#000
-    style K fill:#8cbd18,color:#000
-    style L fill:#00bcf2,color:#000
-```
-
-**Text Representation:**
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Existing Website                              │
-│         https://solutions.microsoftindustryinsights.com         │
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │         Embedded Chat Widget (JavaScript)              │    │
-│  │  - Chat UI component                                   │    │
-│  │  - Session management                                  │    │
-│  │  - Real-time message streaming                         │    │
-│  └─────────────────┬──────────────────────────────────────┘    │
-└────────────────────┼───────────────────────────────────────────┘
-                     │ HTTPS/WebSocket
-                     ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   Azure App Service / Container Apps             │
-│                      (Backend API - Python)                      │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │  FastAPI REST API                                      │    │
-│  │  - POST /api/chat (chat endpoint)                      │    │
-│  │  - GET /api/chat/history/{sessionId}                   │    │
-│  │  - GET /api/health                                     │    │
-│  │  - WebSocket /ws/chat                                  │    │
-│  └────────────────────────────────────────────────────────┘    │
-└───────┬────────────────┬────────────────┬───────────────────────┘
-        │                │                │
-        ▼                ▼                ▼
-┌──────────────┐  ┌─────────────┐  ┌──────────────────┐
-│ Azure OpenAI │  │   Azure AI  │  │  Azure Cosmos DB │
-│              │  │   Search    │  │     (NoSQL)      │
-│ - GPT-4.1    │  │             │  │                  │
-│ - Embeddings │  │ - Vector DB │  │ - Chat history   │
-│   (text-     │  │ - Hybrid    │  │ - User sessions  │
-│    embedding │  │   search    │  │ - Analytics      │
-│    -3-large) │  │ - RAG index │  │                  │
-└──────────────┘  └─────────────┘  └──────────────────┘
+    FE-->>U: Render response<br/>(Chart/Table tabs, exports)
 ```
 
 ### Component Details
 
-#### 1. Frontend: Embeddable Chat Widget
-**Technology**: JavaScript/TypeScript (React or Vanilla JS)
+#### 1. Frontend: React 19 Chat Application
+**Technology**: React 19, TypeScript, Vite, Tailwind CSS
 **Features**:
-- Lightweight, embeddable component via `<script>` tag
-- Responsive chat interface (desktop and mobile)
-- Message history display
-- Typing indicators and loading states
-- Session persistence (localStorage + backend)
-- Markdown rendering for rich responses
-- Citation links to source solutions
-
-**Integration Method**:
-```html
-<script src="https://your-cdn.azureedge.net/chat-widget.js"></script>
-<script>
-  IndustrySolutionsChat.init({
-    apiEndpoint: 'https://your-api.azurewebsites.net',
-    theme: 'light',
-    position: 'bottom-right'
-  });
-</script>
-```
+- Full-page chat application with dual-mode support (seller / customer)
+- Responsive UI with Chart and Table tabs for data visualization
+- SSE streaming for real-time response rendering
+- Conversation export (JSON, Markdown, HTML) with mode tagging
+- URL-based mode selection (`?mode=seller` or `?mode=customer`)
+- Markdown rendering with syntax highlighting
+- Session persistence via Cosmos DB
 
 #### 2. Backend API: Python FastAPI
 **Technology**: Python 3.11+, FastAPI, Azure SDK
@@ -259,22 +127,23 @@ flowchart TD
 - `azure-ai-inference` - Azure OpenAI chat completions
 - `pydantic` - Data validation
 
-**Architecture Decision**: Uses **direct REST API calls** to Azure AI Search instead of Python SDK (`azure-search-documents`) due to better support for integrated vectorization features. API version 2024-07-01 is explicitly specified.
+**Architecture Decision**: Uses **NL2SQL pipeline** to convert natural language to SQL queries against SQL Server directly, bypassing Azure AI Search for the query path. The OpenAI client uses `openai.OpenAI` (not `AzureOpenAI`) with `base_url` pointing to the Azure OpenAI `/openai/v1/` endpoint.
 
 **Core Endpoints**:
 ```python
-POST /api/chat
-  Request: { "message": str, "conversation_id": str, "filters": {...} }
-  Response: { "response": str, "citations": [...], "session_id": str }
+POST /api/chat/stream
+  Request: { "question": str, "conversation_id": str }
+  Response: SSE stream (insights narrative + structured data)
 
-GET /api/chat/history/{sessionId}
-  Response: { "messages": [...], "sessionId": str }
+POST /api/query
+  Request: { "question": str, "conversation_id": str }
+  Response: { "success": bool, "insights": str, "data": {...} }
 
-POST /api/feedback
-  Request: { "messageId": str, "rating": int, "comment": str }
-  
 GET /api/health
-  Response: { "status": "healthy", "dependencies": {...} }
+  Response: { "status": "healthy", "mode": "seller|customer" }
+
+POST /api/export
+  Request: { "messages": [...], "format": "json|md|html", "mode": str }
 ```
 
 #### 3. Azure AI Search: Vector & Hybrid Search
@@ -432,63 +301,35 @@ This rule, combined with gpt-5.2's reasoning capability, produces highly precise
 - Initial full load
 - Periodic updates (daily/weekly via Azure Functions or GitHub Actions)
 
-## RAG Pattern Implementation
+## NL2SQL Pipeline Implementation (Current Architecture)
 
-### Modern RAG with Integrated Vectorization (Current Implementation)
-1. **User Input**: User asks "What partners offer healthcare AI solutions?"
-2. **REST API Request**: Backend sends search request to Azure AI Search with:
-   ```json
-   {
-     "search": "healthcare AI solutions",
-     "vectorQueries": [{
-       "kind": "text",
-       "text": "healthcare AI solutions",
-       "fields": "content_vector",
-       "k": 3
-     }]
-   }
-   ```
-3. **Automatic Vectorization**: Azure Search service automatically:
-   - Vectorizes the query text using the configured vectorizer (text-embedding-3-large)
-   - No client-side embedding generation required
-   - Performs hybrid search (vector + keyword)
-4. **Apply Filters**: If specified, apply OData filters (e.g., `search.ismatch('Healthcare', 'industries')`)
-5. **Retrieve Context**: Get top 3-5 relevant solution chunks with relevance scores
-6. **LLM Generation**: Send context + query to GPT-4.1-mini:
-   ```
-   Context: [Retrieved solutions with relevance scores]
-   Question: [User query]
-   Generate a helpful response with partner recommendations
-   ```
-7. **Response**: Return formatted response with citations to user
+The current architecture bypasses Azure AI Search entirely for the query path. Instead, user questions are converted to SQL via the 4-agent pipeline and executed directly against SQL Server.
 
-**Benefits of Integrated Vectorization**:
-- ✅ Reduced latency (no separate embedding API call)
-- ✅ Lower cost (no client-side token usage for embeddings)
-- ✅ Simplified code (no OpenAI embedding service needed for queries)
-- ✅ Better reliability (fewer external API dependencies)
-
-### Classic RAG Flow (Legacy, Not Used)
-1. **User Input**: User asks "What partners offer healthcare AI solutions?"
-2. **Query Embedding**: Convert query to vector using Azure OpenAI embeddings
-3. **Hybrid Search**: Search Azure AI Search using:
-   - Vector search for semantic similarity
-   - Keyword search for exact matches
-   - Filter by industry = "Healthcare & Life Sciences"
-4. **Retrieve Context**: Get top 5-10 relevant solution chunks
-5. **LLM Generation**: Send context + query to GPT-4.1:
+### Query Flow Example
+1. **User Input**: "What partners offer healthcare AI solutions?"
+2. **Query Planner** (gpt-4.1): Classifies intent as `query`, determines `needs_new_query: true`
+3. **NL2SQL** (gpt-5.2, low reasoning): Generates SQL:
+   ```sql
+   SELECT DISTINCT v.solutionName, v.orgName, v.industryName, v.solutionAreaName
+   FROM dbo.vw_ISDSolution_All AS v
+   WHERE v.solutionStatus = 'Approved'
+     AND (COALESCE(v.industryName, '') LIKE '%healthcare%'
+       OR COALESCE(v.industryThemeDesc, '') LIKE '%healthcare%')
+     AND (COALESCE(v.solutionAreaName, '') LIKE '%AI%'
+       OR COALESCE(v.solutionPlayName, '') LIKE '%artificial intelligence%')
+   ORDER BY v.orgName
    ```
-   Context: [Retrieved solutions]
-   Question: [User query]
-   Generate a helpful response with partner recommendations
-   ```
-6. **Response**: Return formatted response with citations to user
+4. **SQL Execution**: Runs query via pyodbc against `mssoldir-prd-sql.database.windows.net`
+5. **Insight Analyzer** (gpt-4.1): Extracts patterns, statistics, key findings from result rows
+6. **Response Formatter** (gpt-4.1): Creates executive-style narrative with market landscape, strategic insights
+7. **Stream to Client**: SSE stream delivers insights narrative + structured data table
 
-### Modern RAG with Agentic Retrieval (Future Enhancement)
-- Use Azure AI Search's agentic retrieval feature
-- LLM plans and executes multiple sub-queries
-- Better handling of complex, multi-faceted questions
-- Improved citation and reasoning transparency
+### Benefits over RAG
+- ✅ **Precise filtering**: SQL WHERE clauses are exact, not similarity-based
+- ✅ **Aggregation support**: COUNT, GROUP BY, ranking queries work natively
+- ✅ **No embedding drift**: Results come from the authoritative SQL database
+- ✅ **Domain synonyms**: gpt-5.2 reasoning model adds AML/KYC/etc. automatically
+- ✅ **Dual browsing**: Industry AND technology filters via SQL predicates
 
 ## Infrastructure as Code (Bicep)
 
@@ -515,8 +356,8 @@ This rule, combined with gpt-5.2's reasoning capability, produces highly precise
 **Current Deployment**:
 - Region: Sweden Central
 - Environment: Development
-- Backend Version: v2.8 (REST API with integrated vectorization)
-- Frontend: Streamlit-based chat interface
+- Backend Version: v3.0-responses-api (multi-agent NL2SQL pipeline)
+- Frontend: React 19 chat application
 
 ### Deployment Strategy
 - Bicep templates in `/infra` directory
