@@ -27,10 +27,18 @@ RESET = '\033[0m'
 class NL2SQLPipeline:
     """Natural Language to SQL conversion and execution pipeline."""
     
-    def __init__(self):
-        """Initialize the pipeline with database and LLM connections."""
+    def __init__(self, llm_client=None):
+        """Initialize the pipeline with database and LLM connections.
+        
+        Args:
+            llm_client: Optional OpenAI client (shared from MultiAgentPipeline).
+                        If None, creates its own AzureOpenAI client for standalone use.
+        """
         self.schema_context = self._load_schema_context()
-        self.llm_client = self._init_llm_client()
+        self._shared_client = llm_client  # OpenAI client from pipeline (uses responses API)
+        self.llm_client = llm_client if llm_client else self._init_llm_client()
+        self.deployment = os.getenv("MODEL_NL2SQL", os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4.1"))
+        self.reasoning_effort = os.getenv("MODEL_NL2SQL_REASONING", "low")  # low, medium, high, or none
         self.query_history = []
         self.app_mode = os.getenv('APP_MODE', 'seller').lower()  # 'seller' or 'customer'
     
@@ -338,12 +346,22 @@ Generate a SQL query to answer the user's question. Follow these rules:
    - Implementation: LIKE '%complete phrase%' 
    - Test: Would removing one word completely change the meaning?
 
-3. **Industry/Technology Filters** - Add explicit filters when mentioned:
+3. **🚨 PHRASE PRECISION - PREFER COMBINED PHRASES OVER SEPARATE WORDS 🚨**
+   - When the user's query contains a multi-word concept, keep it as a phrase in LIKE patterns
+   - ❌ WRONG: Split "campus management" into separate '%campus%' OR '%management%' → matches everything with "management" (security management, endpoint management, video management, etc.)
+   - ✅ RIGHT: Use '%campus management%' OR '%campus%' → phrase first, then the SPECIFIC word ("campus" is specific, "management" is not)
+   - ❌ WRONG: LIKE '%data%' OR LIKE '%protection%' → matches anything with "data" or "protection" separately
+   - ✅ RIGHT: LIKE '%data protection%' OR LIKE '%data privacy%' → use the phrase and related phrases
+   - **Rule**: NEVER use generic single-word wildcards alone. Words like "management", "data", "system", "platform", "solution", "services" are too broad on their own and will return excessive false positives.
+   - **Balanced approach**: Use the combined phrase PLUS the most domain-specific word from the phrase as a fallback. For "campus management": use '%campus management%' OR '%campus%' ("campus" is specific enough, "management" is not).
+   - **Example**: "administrative solutions for education" → '%administrative%' AND industryName='Education' ("administrative" is specific enough when combined with an industry filter)
+
+4. **Industry/Technology Filters** - Add explicit filters when mentioned:
    - Pattern: "X for Y" or "Y solutions"
    - Implementation: AND industryName = 'Y' or filter by solutionAreaName
    - Example: "retail solutions" → AND industryName = 'Retail & Consumer Goods'
 
-4. **Ambiguity Detection** - Trigger clarification when:
+5. **Ambiguity Detection** - Trigger clarification when:
    - Query is 1-2 generic words (e.g., "AI", "smart", "cloud") without context
    - Term has multiple distinct solution categories
    - When ambiguous: suggest 3-4 specific refinements with real-world use cases
@@ -415,44 +433,33 @@ CRITICAL REMINDER BEFORE YOU GENERATE:
 """
         
         try:
-            # Use the deployment name from environment or default
-            deployment_name = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4o-mini")
+            print(f"{CYAN}   Model: {self.deployment}, Reasoning: {self.reasoning_effort}{RESET}")
             
-            response = self.llm_client.responses.create(
-                model=deployment_name,
-                instructions=system_prompt,
-                input=natural_query,
-                text={"format": {
-                    "type": "json_schema",
-                    "name": "sql_generation",
-                    "strict": True,
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "sql": {
-                                "anyOf": [{"type": "string"}, {"type": "null"}]
-                            },
-                            "explanation": {"type": "string"},
-                            "confidence": {
-                                "type": "string",
-                                "enum": ["high", "medium", "low", "none"]
-                            },
-                            "needs_clarification": {"type": "boolean"},
-                            "clarification_question": {
-                                "anyOf": [{"type": "string"}, {"type": "null"}]
-                            },
-                            "suggested_refinements": {
-                                "type": "array",
-                                "items": {"type": "string"}
-                            }
-                        },
-                        "required": ["sql", "explanation", "confidence", "needs_clarification", "clarification_question", "suggested_refinements"],
-                        "additionalProperties": False
-                    }
-                }}
-            )
-            
-            result = json.loads(response.output_text)
+            if self._shared_client:
+                # Use Responses API (shared OpenAI client from pipeline)
+                kwargs = {
+                    "model": self.deployment,
+                    "instructions": system_prompt,
+                    "input": f"Generate a SQL query as JSON for: {natural_query}",
+                    "text": {"format": {"type": "json_object"}}
+                }
+                # Add reasoning effort for models that support it (e.g., gpt-5.2)
+                if self.reasoning_effort and self.reasoning_effort != "none":
+                    kwargs["reasoning"] = {"effort": self.reasoning_effort}
+                
+                response = self._shared_client.responses.create(**kwargs)
+                result = json.loads(response.output_text)
+            else:
+                # Fallback: AzureOpenAI chat.completions (standalone use)
+                response = self.llm_client.chat.completions.create(
+                    model=self.deployment,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": natural_query}
+                    ],
+                    response_format={"type": "json_object"}
+                )
+                result = json.loads(response.choices[0].message.content)
             
             print(f"{GREEN}✓ SQL generated successfully{RESET}")
             print(f"{CYAN}Confidence: {result.get('confidence', 'unknown')}{RESET}\n")

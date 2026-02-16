@@ -37,7 +37,7 @@ The mode is controlled by the `APP_MODE` environment variable (`seller` or `cust
 - **Conversation Memory**: Maintains context across turns with intent routing
 - **Data Tables + Insights**: Returns both structured tabular data and AI-generated narrative analysis
 - **Follow-up Questions**: Context-specific suggested questions based on query results
-- **Export**: Conversations exportable as JSON or Markdown
+- **Export**: Conversations exportable as JSON, Markdown, or HTML (mode-tagged filenames and headers)
 
 ## Architecture
 
@@ -92,19 +92,40 @@ flowchart TB
 
 ### Agentic Flow Detail
 
-| Agent | Role | API | Output Format | Chaining |
-|-------|------|-----|---------------|----------|
-| **Query Planner** | Classifies intent (query/analyze/summarize/compare), decides if new SQL is needed | `responses.create()` | JSON Schema strict — enum-constrained `intent`, `query_type`, boolean `needs_new_query` | `previous_response_id` ✅ |
-| **NL2SQL Executor** | Generates safe SQL from natural language, validates & executes (read-only) | `responses.create()` | JSON Schema strict — nullable `sql`, enum `confidence`, array `suggested_refinements` | — |
-| **Insight Analyzer** | Extracts patterns, statistics, citations from query results | `responses.create()` | `json_object` (dynamic statistics shape) | — |
-| **Response Formatter** | Creates executive-style narrative with markdown formatting | `responses.create(stream=True)` | Markdown text, streamed token-by-token via SSE | `previous_response_id` ✅ |
+| Agent | Role | API | Output Format | Chaining | Model |
+|-------|------|-----|---------------|----------|-------|
+| **Query Planner** | Classifies intent (query/analyze/summarize/compare), decides if new SQL is needed | `responses.create()` | JSON Schema strict — enum-constrained `intent`, `query_type`, boolean `needs_new_query` | `previous_response_id` ✅ | `gpt-4.1` |
+| **NL2SQL Executor** | Generates safe SQL from natural language, validates & executes (read-only) | `responses.create()` | JSON Schema strict — nullable `sql`, enum `confidence`, array `suggested_refinements` | — | `gpt-5.2` (low reasoning) |
+| **Insight Analyzer** | Extracts patterns, statistics, citations from query results | `responses.create()` | `json_object` (dynamic statistics shape) | — | `gpt-4.1` |
+| **Response Formatter** | Creates executive-style narrative with markdown formatting | `responses.create(stream=True)` | Markdown text, streamed token-by-token via SSE | `previous_response_id` ✅ | `gpt-4.1` |
+
+### Per-Agent Model Configuration
+
+Each agent can use a different Azure OpenAI model, configured via environment variables. This enables using reasoning models where they add the most value (SQL generation) while keeping faster/cheaper models for other stages.
+
+| Env Variable | Agent | Default | Description |
+|-------------|-------|---------|-------------|
+| `MODEL_QUERY_PLANNER` | Query Planner | `gpt-4.1` | Intent classification — fast model sufficient |
+| `MODEL_NL2SQL` | NL2SQL Executor | `gpt-5.2` | SQL generation — reasoning model produces better queries |
+| `MODEL_NL2SQL_REASONING` | NL2SQL Executor | `low` | Reasoning effort: `low`, `medium`, `high`, or `none` |
+| `MODEL_INSIGHT_ANALYZER` | Insight Analyzer | `gpt-4.1` | Insight extraction — fast model sufficient |
+| `MODEL_RESPONSE_FORMATTER` | Response Formatter | `gpt-4.1` | Narrative generation — fast model sufficient |
+
+All agents fall back to `AZURE_OPENAI_CHAT_DEPLOYMENT_NAME` if their specific env var is not set.
+
+**Why gpt-5.2 for NL2SQL?** Testing showed that gpt-5.2 with low reasoning effort produces significantly better SQL:
+- **Domain-aware synonyms**: Automatically adds related terms (e.g., "AML" for "anti-money laundering", "KYC" for "know your customer")
+- **Phrase precision**: Keeps multi-word concepts as combined LIKE phrases instead of splitting into overly broad single-word wildcards
+- **Defensive SQL**: Uses `COALESCE()` for NULL safety, table aliases, and inline comments
+- **Consistent quality**: Much less variance between runs compared to non-reasoning models
+- **Acceptable overhead**: ~26-30s total pipeline time (vs ~20s with gpt-4.1) — the SQL quality improvement justifies the latency
 
 ### Key Components
 
 - **Backend**: Python FastAPI with multi-agent NL2SQL pipeline
 - **Frontend**: React 19 + TypeScript + Vite + Tailwind CSS
 - **Database**: SQL Server (`mssoldir-prd-sql.database.windows.net`) — read-only queries against `dbo.vw_ISDSolution_All` view (4,934 rows, 33 columns)
-- **LLM**: Azure OpenAI (`r2d2-foundry-001.openai.azure.com`) — `gpt-4.1` via Responses API
+- **LLM**: Azure OpenAI (`r2d2-foundry-001.openai.azure.com`) — per-agent model selection (see [Per-Agent Model Configuration](#per-agent-model-configuration))
 - **Deployment**: Azure Container Apps (4 apps in `indsolse-dev-rg`, ACR: `indsolsedevacr`)
 
 ### Standalone Resources
@@ -193,27 +214,41 @@ SQL_PASSWORD=your-password
 
 # App Mode
 APP_MODE=seller   # or "customer"
+
+# Per-Agent Model Configuration (optional — defaults shown)
+MODEL_QUERY_PLANNER=gpt-4.1
+MODEL_NL2SQL=gpt-5.2
+MODEL_NL2SQL_REASONING=low          # low, medium, high, or none
+MODEL_INSIGHT_ANALYZER=gpt-4.1
+MODEL_RESPONSE_FORMATTER=gpt-4.1
 ```
 
-### 3. Run Backend
+### 3. Run Locally
 
+**Option A: Start script (recommended)**
 ```bash
+./start-local.sh          # Start both backend + frontend
+./start-local.sh backend  # Start backend only
+./start-local.sh frontend # Start frontend only
+./start-local.sh stop     # Stop all
+```
+
+**Option B: Manual**
+```bash
+# Backend
 cd frontend-react/backend
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
-```
 
-API available at `http://localhost:8000` — docs at `http://localhost:8000/docs`
-
-### 4. Run Frontend
-
-```bash
+# Frontend (separate terminal)
 cd frontend-react
 npm install
 npm run dev
 ```
 
-Frontend available at `http://localhost:5173`
+API available at `http://localhost:8000` — Frontend at `http://localhost:5173`
+
+**Mode selection via URL**: `http://localhost:5173/?mode=seller` or `?mode=customer` (overrides `APP_MODE` env var)
 
 ### 5. Test the API
 
@@ -350,6 +385,11 @@ Categories aligned with the [MSD website](https://solutions.microsoftindustryins
 | Feb 2026 | **JSON Schema structured outputs** | Strict schemas for QueryPlanner (enum-constrained intent) and NL2SQL (nullable fields, enum confidence). Eliminates "Respond in JSON" prompt hacks |
 | Feb 2026 | **Response chaining** | `previous_response_id` for QueryPlanner and ResponseFormatter — server-side conversation memory across turns |
 | Feb 2026 | **Responses API migration** | Migrated all 4 agents from `chat.completions.create()` to `responses.create()` per official Azure OpenAI docs |
+| Feb 2026 | **Per-agent model config** | Each agent can use a different model via `MODEL_*` env vars; gpt-5.2 with low reasoning for NL2SQL |
+| Feb 2026 | **NL2SQL phrase precision** | Added prompt rules to prefer combined LIKE phrases over split generic words — reduces false positives |
+| Feb 2026 | **MSD branding update** | Banner: "Microsoft Solutions Directory — AI Explorer", mode-specific badges/subtitles, URL `?mode=` param |
+| Feb 2026 | **Mode-aware exports** | JSON/MD/HTML exports include mode in filename and content; backend accepts mode parameter |
+| Feb 2026 | **Local dev script** | `start-local.sh` for backend+frontend startup with port management and health checks |
 | Feb 2026 | **MSD rebrand** | Renamed from ISD to Microsoft Solutions Directory |
 | Feb 2026 | **Teams Tab Apps** | Seller + Customer apps packaged for Microsoft Teams sideloading |
 | Feb 2026 | **SQL→Search pipeline** | Automated ingestion of 448 solutions from SQL into Azure AI Search with vector embeddings |

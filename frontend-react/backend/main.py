@@ -75,6 +75,7 @@ class QueryResponse(BaseModel):
 
 class ConversationExportRequest(BaseModel):
     messages: List[Dict[str, Any]]
+    mode: str = 'seller'
 
 class ExampleQuestionsResponse(BaseModel):
     categories: Dict[str, List[str]]
@@ -384,6 +385,7 @@ async def export_conversation(request: ConversationExportRequest):
     """
     export_data = {
         "timestamp": datetime.now().isoformat(),
+        "mode": request.mode,
         "total_queries": len([m for m in request.messages if m.get('role') == 'user']),
         "messages": request.messages
     }
