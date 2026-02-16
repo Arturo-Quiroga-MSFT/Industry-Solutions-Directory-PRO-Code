@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 from dotenv import load_dotenv
 import pyodbc
-from openai import AzureOpenAI
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
@@ -32,6 +32,7 @@ class NL2SQLPipeline:
         self.schema_context = self._load_schema_context()
         self.llm_client = self._init_llm_client()
         self.query_history = []
+        self.app_mode = os.getenv('APP_MODE', 'seller').lower()  # 'seller' or 'customer'
     
     def _load_schema_context(self):
         """Load database schema context for the LLM."""
@@ -99,11 +100,13 @@ This view contains all solution data with related information already joined. Ea
 ### Important Notes:
 
 1. **No JOINs Required**: This view already contains all related data
-2. **Denormalized**: Each solution may appear multiple times if it has:
+2. **Denormalized & Duplicates**: Each solution may appear multiple times (10-20+ rows) if it has:
    - Multiple solution areas
    - Multiple resources
    - Multiple geographic regions
-3. **NULL Values**: Some fields like solutionPlayName may be NULL
+   - Multiple solution plays
+   - **CRITICAL**: ALWAYS use SELECT DISTINCT when listing solutions to avoid showing duplicates
+3. **NULL Values**: Some fields like solutionPlayName, industryName may be NULL (displays as "(Not Set)" in UI)
 4. **Filtering**: Most queries will want to filter on:
    - solutionStatus = 'Approved' (published solutions only)
    - industryName (to focus on specific industries)
@@ -118,8 +121,8 @@ FROM dbo.vw_ISDSolution_All
 WHERE solutionStatus = 'Approved'
 GROUP BY industryName
 
-### Find healthcare AI solutions:
-SELECT DISTINCT solutionName, orgName, industryName, solutionAreaName
+### Find healthcare AI solutions (DISTINCT required to avoid duplicates):
+SELECT DISTINCT TOP 50 solutionName, orgName, industryName, solutionAreaName, solutionDescription
 FROM dbo.vw_ISDSolution_All
 WHERE industryName = 'Healthcare & Life Sciences'
   AND solutionAreaName = 'AI Business Solutions'
@@ -132,8 +135,8 @@ WHERE solutionStatus = 'Approved'
 GROUP BY orgName
 ORDER BY solution_count DESC
 
-### Solutions with marketplace links:
-SELECT DISTINCT solutionName, orgName, marketPlaceLink
+### Solutions with marketplace links (DISTINCT to avoid duplicates):
+SELECT DISTINCT TOP 50 solutionName, orgName, marketPlaceLink, geoName
 FROM dbo.vw_ISDSolution_All
 WHERE marketPlaceLink IS NOT NULL
   AND solutionStatus = 'Approved'
@@ -147,16 +150,18 @@ WHERE marketPlaceLink IS NOT NULL
 - Always use table aliases (ps, o, i, si, sa, psba)
 - Filter by IsPublished = 1 for active solutions
 - Use LEFT JOIN for optional relationships
-- Industry names: "Financial Services", "Healthcare & Life Sciences", "Retail & Consumer Goods", 
-  "Manufacturing & Mobility", "Education", "Energy & Resources", "State & Local Government"
+- Industry names: "Defense Industrial Base", "Education", "Energy & Resources", "Financial Services",
+  "Government", "Healthcare & Life Sciences", "Manufacturing & Mobility", "Media & Entertainment",
+  "Retail & Consumer Goods", "Telecommunications"
+- Solution area names: "AI Business Solutions", "Cloud and AI Platforms", "Security"
 """
     
     def _init_llm_client(self):
-        """Initialize Azure OpenAI client."""
-        return AzureOpenAI(
+        """Initialize OpenAI client per official Azure Responses API docs."""
+        azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT", "").rstrip("/")
+        return OpenAI(
             api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-            api_version="2024-10-21",
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
+            base_url=f"{azure_endpoint}/openai/v1/"
         )
     
     def _get_db_connection(self):
@@ -191,9 +196,131 @@ WHERE marketPlaceLink IS NOT NULL
         """
         print(f"{BLUE}🤖 Generating SQL from natural language...{RESET}\n")
         
+        # Determine mode-specific requirements
+        is_seller_mode = self.app_mode == 'seller'
+        mode_label = "SELLER" if is_seller_mode else "CUSTOMER"
+        print(f"{CYAN}📋 Mode: {mode_label}{RESET}")
+        
+        # Mode-specific column requirements
+        if is_seller_mode:
+            column_requirements = """
+**SELLER MODE - REQUIRED COLUMNS:**
+Microsoft sellers need comprehensive solution information. For ALL queries (including those asking for "breakdowns" or "which industries"):
+
+**CRITICAL: For "Breakdown" or "Which Industries/Partners" Queries:**
+When a user asks "which industries have X" or "breakdown by Y" or "detailed breakdown", they want to SEE the solutions, not just count them.
+
+**WRONG APPROACH (DO NOT DO THIS):**
+```sql
+-- ❌ BAD: User asked for "detailed breakdown of which industries have Adastra's agentic AI offerings"
+-- This returns counts only - seller can't see WHAT the solutions are!
+SELECT industryName, COUNT(DISTINCT solutionName) as solution_count
+FROM dbo.vw_ISDSolution_All
+WHERE orgName LIKE '%Adastra%' AND ...
+GROUP BY industryName
+```
+
+**RIGHT APPROACH (DO THIS INSTEAD):**
+```sql
+-- ✅ GOOD: Returns individual solutions so seller can see names, descriptions, and industry grouping
+-- ⚠️ CRITICAL: MUST start with SELECT DISTINCT - even when breakdown column is first!
+SELECT DISTINCT TOP 50
+    industryName,           -- Shows which industry (for breakdown)
+    solutionName,           -- REQUIRED: What is the solution?
+    orgName,                -- REQUIRED: Who provides it?
+    solutionAreaName,       -- REQUIRED: Solution category
+    geoName,                -- Geographic availability
+    marketPlaceLink,        -- Where to find it
+    solutionOrgWebsite,     -- Partner website
+    solutionPlayName,       -- Solution play
+    solutionDescription     -- REQUIRED LAST: What does it do?
+FROM dbo.vw_ISDSolution_All
+WHERE orgName LIKE '%Adastra%' AND ...
+ORDER BY industryName, solutionName
+
+-- ⚠️ ABSOLUTE RULE: Whether you start with industryName, solutionName, or any column
+-- YOU MUST ALWAYS USE "SELECT DISTINCT TOP 50" - NO EXCEPTIONS!
+```
+
+**For Aggregate Queries (ONLY if explicitly requested):**
+Only use GROUP BY/COUNT if user specifically asks "how many total", "just give me counts", "summary statistics only":
+- What specific solutions exist in each group/category
+- The solution descriptions so sellers can evaluate them
+
+**Approach for Breakdown Queries:**
+If the user asks "which industries have X" or "breakdown by Y", structure your query to show BOTH:
+1. The aggregate counts/groups
+2. Example solutions or a supplementary list
+
+Example pattern for "which industries have X solutions":
+```sql
+SELECT 
+    industryName, 
+    geoName, 
+    COUNT(DISTINCT solutionName) as solution_count,
+    -- Include actual solution names (comma-separated or as array aggregate if supported)
+    STRING_AGG(DISTINCT solutionName, '; ') WITHIN GROUP (ORDER BY solutionName) as example_solutions
+FROM dbo.vw_ISDSolution_All
+WHERE ...
+GROUP BY industryName, geoName
+ORDER BY solution_count DESC
+```
+
+OR return individual rows with all details (preferred for detailed analysis):
+```sql
+SELECT DISTINCT TOP 50  -- DISTINCT is REQUIRED to avoid duplicate solutions
+    solutionName,           -- REQUIRED: What is the solution?
+    orgName,                -- REQUIRED: Who provides it?
+    industryName,           -- REQUIRED: Which industry?
+    solutionAreaName,       -- REQUIRED: Solution category
+    marketPlaceLink,        -- RECOMMENDED: Where to find it
+    solutionOrgWebsite,     -- RECOMMENDED: Partner website
+    geoName,                -- RECOMMENDED: Geographic availability
+    solutionPlayName,       -- RECOMMENDED: Solution play
+    solutionDescription     -- REQUIRED: MUST BE LAST COLUMN - What does it do?
+FROM dbo.vw_ISDSolution_All
+WHERE ...
+ORDER BY industryName, orgName
+```
+
+**CRITICAL - DEDUPLICATION:**
+- The view is denormalized - same solution appears 10-20+ times for different resources, plays, etc.
+- **ALWAYS include DISTINCT** when listing individual solutions (not for GROUP BY aggregates)
+- Without DISTINCT, you'll get 328 results where 300+ are duplicates of the same 20 solutions
+- This confuses users and makes tables unusable
+
+**Column Priority for Seller Mode:**
+- solutionName (REQUIRED - first)
+- orgName (REQUIRED - the partner)
+- industryName (REQUIRED - target market)
+- solutionAreaName (REQUIRED - AI/Cloud/Security)
+- solutionDescription (REQUIRED - LAST column - detailed description)
+- marketPlaceLink (RECOMMENDED - Azure Marketplace link)
+- solutionOrgWebsite (RECOMMENDED - partner website)
+- geoName (RECOMMENDED - regional availability)
+- solutionPlayName (RECOMMENDED - solution play alignment)
+
+**CRITICAL FOR SELLERS:**
+- ❌ NEVER return aggregate-only results without solution names/descriptions
+- ✅ ALWAYS include solutionDescription column (as last column for readability)
+- ✅ If grouping data, use STRING_AGG or return individual rows
+- ✅ Sellers need to SEE the actual solutions, not just counts"""
+        else:
+            column_requirements = """
+**CUSTOMER MODE - MINIMAL COLUMNS:**
+External customers need focused, unbiased information:
+- solutionName
+- industryName
+- solutionAreaName
+- solutionDescription (brief)
+- geoName
+DO NOT include orgName (partner names) for customer mode."""
+        
         system_prompt = f"""You are an expert SQL query generator for the ISD (Industry Solutions Directory) database.
 
 {self.schema_context}
+
+{column_requirements}
 
 Generate a SQL query to answer the user's question. Follow these rules:
 
@@ -221,59 +348,65 @@ Generate a SQL query to answer the user's question. Follow these rules:
    - Term has multiple distinct solution categories
    - When ambiguous: suggest 3-4 specific refinements with real-world use cases
 
-**SQL GENERATION RULES:**
+**SQL GENERATION RULES - READ CAREFULLY:**
+
 5. Return ONLY valid T-SQL for SQL Server
 6. Use the vw_ISDSolution_All view - NO JOINS needed (data is pre-joined)
 7. Always filter by solutionStatus = 'Approved' unless specifically asked for all
 8. Use clear aliases and column names
-9. **IMPORTANT**: For TOP with DISTINCT, syntax is: SELECT DISTINCT TOP 50 ... (DISTINCT before TOP)
-10. For limiting results, use TOP 50 as default for solution listings
-11. Handle NULL values appropriately
-12. Use aggregate functions when appropriate (COUNT, SUM, AVG, etc.)
-13. When counting solutions, use COUNT(DISTINCT solutionName) to avoid duplicates from denormalized view
-14. **CRITICAL**: When returning solution data (not aggregates), ALWAYS include these columns for Microsoft sellers:
-    - solutionName (required - should be first column)
-    - orgName (required - the partner/vendor name)
-    - industryName (recommended - helps sellers understand target market)
-    - solutionAreaName (recommended - solution category)
-    - marketPlaceLink (recommended - direct link to Azure Marketplace listing)
-    - solutionOrgWebsite (recommended - partner website for more info)
-    - geoName (recommended - regional availability)
-    - solutionPlayName (recommended - solution play alignment)
-    - solutionDescription (required - MUST BE THE LAST COLUMN for better readability)
-    
-    Note: Include all recommended fields unless the query is specifically asking for fewer columns
 
-**CRITICAL SELLER MODE REMINDER:**
-When user asks "which solutions" or "detailed breakdown" or "list" or "what solutions" or "show me", they want:
-- INDIVIDUAL SOLUTION ROWS (not aggregated counts)
-- ALWAYS return solutionName, orgName, industryName, and other columns listed above
-- ALWAYS use SELECT DISTINCT to avoid duplicate solutions from denormalized data
-- NEVER use GROUP BY with just industryName/counts unless explicitly asked "how many"
-- WRONG: SELECT industryName, COUNT(*) ... GROUP BY industryName
-- RIGHT: SELECT DISTINCT TOP 50 solutionName, orgName, industryName, ...
+9. **🚨 CRITICAL RULE #1 - ALWAYS USE DISTINCT FOR SOLUTION LISTINGS 🚨**
+   - The view is denormalized - EVERY solution appears 10-20+ times for different resources, plays, regions
+   - **MANDATORY: Start ALL solution listing queries with SELECT DISTINCT TOP 50**
+   - Syntax: `SELECT DISTINCT TOP 50 solutionName, orgName, industryName...`
+   - ❌ WRONG: `SELECT industryName, solutionName...` → Returns 80-328 duplicate rows
+   - ✅ RIGHT: `SELECT DISTINCT TOP 50 industryName, solutionName...` → Returns ~10-20 unique solutions
+   - **EXCEPTION**: Only skip DISTINCT when using GROUP BY with aggregates (COUNT, SUM, etc.)
 
-15. **COMPOUND QUESTIONS**: If the question asks multiple things ("what X and how many Y"), 
+10. For limiting results, use TOP 50 as default (AFTER DISTINCT if listing solutions)
+11. Handle NULL values appropriately (they display as "(Not Set)" in UI - this is expected)
+12. When counting solutions with GROUP BY, use COUNT(DISTINCT solutionName) to avoid counting duplicates
+13. **COMPOUND QUESTIONS**: If the question asks multiple things ("what X and how many Y"), 
     - Generate ONE primary query that best answers the main question
     - Explain in the explanation field what the query shows
     - DO NOT return multiple queries or a dictionary of queries
     - The "sql" field must ALWAYS be a single SQL string, never a dict or array
 
-**BEFORE GENERATING FINAL SQL:**
-✓ Check: Is this "which/list/breakdown" query? → Use SELECT DISTINCT with individual rows
-✓ Check: Am I using GROUP BY? → Only if explicitly asked for counts/aggregates
-✓ Check: Have I included required seller columns? → solutionName, orgName, solutionDescription
-✓ Check: Is solutionDescription last? → Better readability when it's the final column
+**CRITICAL SELLER MODE REMINDER:**
+- If in seller mode and query asks for breakdowns/groupings (e.g., "which industries", "breakdown by", "detailed breakdown"), 
+  **ALWAYS return individual solution rows with full details** - NEVER use GROUP BY with just counts
+- Sellers need to see WHAT the solutions are (names + descriptions), not just HOW MANY there are
+- "Breakdown by industry" = show individual solutions with their industry column, NOT aggregate counts
+- "Which industries have X" = show individual solutions from those industries with industry column visible
+- Only use pure aggregates (COUNT without details) if the user **explicitly** asks for "just counts", "summary only", or "how many total"
+- When in doubt: **individual rows with DISTINCT > aggregates**
+
+**ABSOLUTE RULE FOR ALL SELLER QUERIES LISTING SOLUTIONS:**
+- EVERY query that lists individual solutions MUST start with: SELECT DISTINCT TOP 50
+- Even if putting industryName or orgName first for grouping: SELECT DISTINCT TOP 50 industryName, solutionName, ...
+- NO EXCEPTIONS - the view is denormalized and will return 10-80 duplicates without DISTINCT
+- If you write SELECT industryName, ... without DISTINCT, you WILL return duplicate solutions and fail the requirement
+
+**BEFORE GENERATING SQL - CHECKLIST:**
+✓ Am I listing individual solutions? → START WITH `SELECT DISTINCT TOP 50`
+✓ Does my query show solution names, descriptions, partners? → MUST USE DISTINCT
+✓ Am I using GROUP BY? → Then skip DISTINCT, but use COUNT(DISTINCT solutionName)
+✓ Is this a breakdown/which industries question? → DISTINCT + individual rows, NOT GROUP BY
 
 Return your response in JSON format:
 {{
-    "sql": "SELECT ...",
+    "sql": "SELECT DISTINCT TOP 50 ... (⚠️ MUST include DISTINCT for all solution listings)",
     "explanation": "This query does X...",
     "confidence": "high|medium|low",
     "needs_clarification": false,
     "clarification_question": "Optional: Only if ambiguous",
     "suggested_refinements": ["Optional: Only if ambiguous"]
 }}
+
+CRITICAL REMINDER BEFORE YOU GENERATE:
+- If your SQL lists solutions (not just counts), CHECK IT STARTS WITH: SELECT DISTINCT TOP 50
+- If you wrote: SELECT industryName, solutionName... → WRONG! Must be: SELECT DISTINCT TOP 50 industryName, solutionName...
+- The view is denormalized - without DISTINCT you'll return 80 duplicate rows instead of 10 unique solutions
 
 **Response Confidence Levels:**
 - high: Clear intent, specific domain terms, unambiguous
@@ -285,16 +418,41 @@ Return your response in JSON format:
             # Use the deployment name from environment or default
             deployment_name = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4o-mini")
             
-            response = self.llm_client.chat.completions.create(
+            response = self.llm_client.responses.create(
                 model=deployment_name,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": natural_query}
-                ],
-                response_format={"type": "json_object"}
+                instructions=system_prompt,
+                input=natural_query,
+                text={"format": {
+                    "type": "json_schema",
+                    "name": "sql_generation",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "sql": {
+                                "anyOf": [{"type": "string"}, {"type": "null"}]
+                            },
+                            "explanation": {"type": "string"},
+                            "confidence": {
+                                "type": "string",
+                                "enum": ["high", "medium", "low", "none"]
+                            },
+                            "needs_clarification": {"type": "boolean"},
+                            "clarification_question": {
+                                "anyOf": [{"type": "string"}, {"type": "null"}]
+                            },
+                            "suggested_refinements": {
+                                "type": "array",
+                                "items": {"type": "string"}
+                            }
+                        },
+                        "required": ["sql", "explanation", "confidence", "needs_clarification", "clarification_question", "suggested_refinements"],
+                        "additionalProperties": False
+                    }
+                }}
             )
             
-            result = json.loads(response.choices[0].message.content)
+            result = json.loads(response.output_text)
             
             print(f"{GREEN}✓ SQL generated successfully{RESET}")
             print(f"{CYAN}Confidence: {result.get('confidence', 'unknown')}{RESET}\n")
