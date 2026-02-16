@@ -211,12 +211,22 @@ Generate a SQL query to answer the user's question. Follow these rules:
    - Implementation: LIKE '%complete phrase%' 
    - Test: Would removing one word completely change the meaning?
 
-3. **Industry/Technology Filters** - Add explicit filters when mentioned:
+3. **🚨 PHRASE PRECISION - PREFER COMBINED PHRASES OVER SEPARATE WORDS 🚨**
+   - When the user's query contains a multi-word concept, keep it as a phrase in LIKE patterns
+   - ❌ WRONG: Split "campus management" into separate '%campus%' OR '%management%' → matches everything with "management" (security management, endpoint management, video management, etc.)
+   - ✅ RIGHT: Use '%campus management%' OR '%campus%' → phrase first, then the SPECIFIC word ("campus" is specific, "management" is not)
+   - ❌ WRONG: LIKE '%data%' OR LIKE '%protection%' → matches anything with "data" or "protection" separately
+   - ✅ RIGHT: LIKE '%data protection%' OR LIKE '%data privacy%' → use the phrase and related phrases
+   - **Rule**: NEVER use generic single-word wildcards alone. Words like "management", "data", "system", "platform", "solution", "services" are too broad on their own and will return excessive false positives.
+   - **Balanced approach**: Use the combined phrase PLUS the most domain-specific word from the phrase as a fallback. For "campus management": use '%campus management%' OR '%campus%' ("campus" is specific enough, "management" is not).
+   - **Example**: "administrative solutions for education" → '%administrative%' AND industryName='Education' ("administrative" is specific enough when combined with an industry filter)
+
+4. **Industry/Technology Filters** - Add explicit filters when mentioned:
    - Pattern: "X for Y" or "Y solutions"
    - Implementation: AND industryName = 'Y' or filter by solutionAreaName
    - Example: "retail solutions" → AND industryName = 'Retail & Consumer Goods'
 
-4. **Ambiguity Detection** - Trigger clarification when:
+5. **Ambiguity Detection** - Trigger clarification when:
    - Query is 1-2 generic words (e.g., "AI", "smart", "cloud") without context
    - Term has multiple distinct solution categories
    - When ambiguous: suggest 3-4 specific refinements with real-world use cases

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, Download, Trash2, Database, Shield } from 'lucide-react';
+import { Send, Loader2, Download, Trash2, Database, Shield, MessageSquare } from 'lucide-react';
 import Message from './components/Message';
 import type { ChatMessage, ExampleCategory } from './types';
 import { executeQuery, getExampleQuestions, exportConversation } from './api';
@@ -20,11 +20,17 @@ function App() {
     // Load example questions
     getExampleQuestions().then(setExamples).catch(console.error);
     
-    // Check app mode - use the same API base URL as the rest of the app
-    fetch(`${API_BASE_URL}/api/health`)
-      .then(res => res.json())
-      .then(data => setAppMode(data.mode || 'seller'))
-      .catch(console.error);
+    // Check URL query param first (?mode=seller or ?mode=customer), then fall back to backend
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlMode = urlParams.get('mode');
+    if (urlMode === 'seller' || urlMode === 'customer') {
+      setAppMode(urlMode);
+    } else {
+      fetch(`${API_BASE_URL}/api/health`)
+        .then(res => res.json())
+        .then(data => setAppMode(data.mode || 'seller'))
+        .catch(console.error);
+    }
   }, []);
 
   useEffect(() => {
@@ -88,12 +94,12 @@ function App() {
 
   const handleExportJSON = async () => {
     try {
-      const exportData = await exportConversation(messages);
+      const exportData = await exportConversation(messages, appMode);
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `conversation_${new Date().toISOString()}.json`;
+      a.download = `conversation_${appMode}_${new Date().toISOString()}.json`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -102,8 +108,10 @@ function App() {
   };
 
   const handleExportMarkdown = () => {
-    let markdown = `# Technology and Industry (Partner) Solutions Directory - Conversation\n\n`;
+    const modeLabel = appMode === 'seller' ? 'Seller' : 'Customer';
+    let markdown = `# Microsoft Solutions Directory — AI Explorer (${modeLabel} Mode)\n\n`;
     markdown += `**Date**: ${new Date().toLocaleString()}\n`;
+    markdown += `**Mode**: ${modeLabel}\n`;
     markdown += `**Total Queries**: ${messages.filter(m => m.role === 'user').length}\n\n---\n\n`;
 
     messages.forEach((msg, idx) => {
@@ -206,7 +214,7 @@ function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `conversation_${new Date().toISOString()}.md`;
+    a.download = `conversation_${appMode}_${new Date().toISOString()}.md`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -231,8 +239,9 @@ function App() {
   </style>
 </head>
 <body>
-  <h1>🔍 Technology and Industry (Partner) Solutions Directory - Conversation</h1>
+  <h1>🔍 Microsoft Solutions Directory — AI Explorer (${appMode === 'seller' ? 'Seller' : 'Customer'} Mode)</h1>
   <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+  <p><strong>Mode:</strong> ${appMode === 'seller' ? 'Seller' : 'Customer'}</p>
   <p><strong>Total Queries:</strong> ${messages.filter(m => m.role === 'user').length}</p>
   <hr>
 `;
@@ -365,7 +374,7 @@ function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `conversation_${new Date().toISOString()}.html`;
+    a.download = `conversation_${appMode}_${new Date().toISOString()}.html`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -389,29 +398,33 @@ function App() {
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto p-6">
           <div className="flex items-center justify-between mb-2">
-            <h1 className="text-3xl font-bold">🔍 Technology and Industry (Partner) Solutions Directory</h1>
+            <h1 className="text-3xl font-bold">🔍 Microsoft Solutions Directory — AI Explorer</h1>
             {appMode === 'customer' && (
               <div className="bg-green-500/20 text-green-200 px-4 py-2 rounded-lg flex items-center gap-2 border border-green-500/30">
                 <Shield size={16} />
-                <span className="font-semibold">CUSTOMER MODE</span>
+                <span className="font-semibold">FOR CUSTOMERS & PARTNERS</span>
               </div>
             )}
             {appMode === 'seller' && (
               <div className="bg-blue-500/20 text-blue-200 px-4 py-2 rounded-lg flex items-center gap-2 border border-blue-500/30">
                 <Database size={16} />
-                <span className="font-semibold">SELLER MODE</span>
+                <span className="font-semibold">FOR MICROSOFT SELLERS</span>
               </div>
             )}
           </div>
-          <p className="text-blue-100">Natural Language to SQL Explorer | Direct Database Access</p>
+          <p className="text-blue-100">
+            {appMode === 'seller'
+              ? 'Discover partner solutions, customer stories, and industry insights using natural language'
+              : 'Find technology solutions from Microsoft partners tailored to your industry and business needs'}
+          </p>
           <div className="flex gap-4 mt-4 text-sm">
             <div className="flex items-center gap-2">
               <Shield size={16} />
-              <span>READ-ONLY Mode</span>
+              <span>🔒 Read-Only</span>
             </div>
             <div className="flex items-center gap-2">
-              <Database size={16} />
-              <span>5,118 rows</span>
+              <MessageSquare size={16} />
+              <span>💬 Ask in natural language</span>
             </div>
           </div>
         </div>

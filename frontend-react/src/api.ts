@@ -20,8 +20,8 @@ export const getExampleQuestions = async (): Promise<ExampleCategory> => {
   return response.data.categories;
 };
 
-export const exportConversation = async (messages: any[]) => {
-  const response = await api.post('/api/conversation/export', { messages });
+export const exportConversation = async (messages: any[], mode: string = 'seller') => {
+  const response = await api.post('/api/conversation/export', { messages, mode });
   return response.data;
 };
 
