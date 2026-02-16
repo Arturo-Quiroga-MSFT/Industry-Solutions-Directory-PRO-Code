@@ -27,10 +27,18 @@ RESET = '\033[0m'
 class NL2SQLPipeline:
     """Natural Language to SQL conversion and execution pipeline."""
     
-    def __init__(self):
-        """Initialize the pipeline with database and LLM connections."""
+    def __init__(self, llm_client=None):
+        """Initialize the pipeline with database and LLM connections.
+        
+        Args:
+            llm_client: Optional OpenAI client (shared from MultiAgentPipeline).
+                        If None, creates its own AzureOpenAI client for standalone use.
+        """
         self.schema_context = self._load_schema_context()
-        self.llm_client = self._init_llm_client()
+        self._shared_client = llm_client  # OpenAI client from pipeline (uses responses API)
+        self.llm_client = llm_client if llm_client else self._init_llm_client()
+        self.deployment = os.getenv("MODEL_NL2SQL", os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4.1"))
+        self.reasoning_effort = os.getenv("MODEL_NL2SQL_REASONING", "low")  # low, medium, high, or none
         self.query_history = []
     
     def _load_schema_context(self):
@@ -292,19 +300,33 @@ Return your response in JSON format:
 """
         
         try:
-            # Use the deployment name from environment or default
-            deployment_name = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4o-mini")
+            print(f"{CYAN}   Model: {self.deployment}, Reasoning: {self.reasoning_effort}{RESET}")
             
-            response = self.llm_client.chat.completions.create(
-                model=deployment_name,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": natural_query}
-                ],
-                response_format={"type": "json_object"}
-            )
-            
-            result = json.loads(response.choices[0].message.content)
+            if self._shared_client:
+                # Use Responses API (shared OpenAI client from pipeline)
+                kwargs = {
+                    "model": self.deployment,
+                    "instructions": system_prompt,
+                    "input": f"Generate a SQL query as JSON for: {natural_query}",
+                    "text": {"format": {"type": "json_object"}}
+                }
+                # Add reasoning effort for models that support it (e.g., gpt-5.2)
+                if self.reasoning_effort and self.reasoning_effort != "none":
+                    kwargs["reasoning"] = {"effort": self.reasoning_effort}
+                
+                response = self._shared_client.responses.create(**kwargs)
+                result = json.loads(response.output_text)
+            else:
+                # Fallback: AzureOpenAI chat.completions (standalone use)
+                response = self.llm_client.chat.completions.create(
+                    model=self.deployment,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": natural_query}
+                    ],
+                    response_format={"type": "json_object"}
+                )
+                result = json.loads(response.choices[0].message.content)
             
             print(f"{GREEN}✓ SQL generated successfully{RESET}")
             print(f"{CYAN}Confidence: {result.get('confidence', 'unknown')}{RESET}\n")

@@ -25,7 +25,7 @@ class QueryPlanner:
     
     def __init__(self, llm_client: OpenAI):
         self.llm_client = llm_client
-        self.deployment = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4o-mini")
+        self.deployment = os.getenv("MODEL_QUERY_PLANNER", os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4.1"))
     
     def analyze_intent(self, question: str, conversation_history: List[Dict], previous_response_id: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -153,7 +153,7 @@ class InsightAnalyzer:
     
     def __init__(self, llm_client: OpenAI):
         self.llm_client = llm_client
-        self.deployment = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4o-mini")
+        self.deployment = os.getenv("MODEL_INSIGHT_ANALYZER", os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4.1"))
     
     def _compute_statistics(self, rows: List[Dict], columns: List[str]) -> Dict[str, Any]:
         """Pre-compute statistics from the dataset to provide richer context to LLM"""
@@ -626,7 +626,7 @@ class ResponseFormatter:
     
     def __init__(self, llm_client: OpenAI):
         self.llm_client = llm_client
-        self.deployment = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4o-mini")
+        self.deployment = os.getenv("MODEL_RESPONSE_FORMATTER", os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4.1"))
         # Streaming metadata (populated after format_response_stream exhausts)
         self._stream_response_id = None
         self._stream_tokens = None
@@ -852,11 +852,18 @@ class MultiAgentPipeline:
             base_url=f"{azure_endpoint}/openai/v1/"
         )
         
-        # Initialize agents
+        # Initialize agents (each reads its own MODEL_* env var)
         self.query_planner = QueryPlanner(self.llm_client)
-        self.sql_executor = NL2SQLPipeline()  # Existing SQL agent
+        self.sql_executor = NL2SQLPipeline(llm_client=self.llm_client)  # Shares OpenAI client for Responses API
         self.insight_analyzer = InsightAnalyzer(self.llm_client)
         self.response_formatter = ResponseFormatter(self.llm_client)
+        
+        # Log per-agent model assignments
+        print(f"\n🤖 Agent Models:")
+        print(f"   1. Query Planner:    {self.query_planner.deployment}")
+        print(f"   2. NL2SQL:           {self.sql_executor.deployment} (reasoning: {self.sql_executor.reasoning_effort})")
+        print(f"   3. Insight Analyzer: {self.insight_analyzer.deployment}")
+        print(f"   4. Response Formatter: {self.response_formatter.deployment}\n")
         
         # Conversation state
         self.conversation_history = []
