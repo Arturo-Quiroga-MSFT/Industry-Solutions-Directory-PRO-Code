@@ -54,6 +54,57 @@ Based on the discovery meeting with Will Casavan:
 ### Architecture Diagram (v3.0 — Multi-Agent NL2SQL Pipeline)
 
 ```mermaid
+flowchart TB
+    subgraph Frontend["React 19 + TypeScript"]
+        UI[Chat Interface] -->|POST /api/query| API
+        UI -->|POST /api/query/stream| SSE[SSE Stream]
+    end
+
+    subgraph Backend["FastAPI Backend"]
+        API[REST API] --> Pipeline
+        SSE --> Pipeline
+    end
+
+    subgraph Pipeline["Multi-Agent Pipeline"]
+        direction TB
+        A1["🧠 Agent 1: Query Planner\n─────────────────────\nIntent classification\nJSON Schema strict output\nprevious_response_id chaining"]
+        A2["🔍 Agent 2: NL2SQL Executor\n─────────────────────\nSQL generation + validation\nJSON Schema strict output\npyodbc read-only execution"]
+        A3["📊 Agent 3: Insight Analyzer\n─────────────────────\nPattern extraction\nStatistical analysis\nCitation generation"]
+        A4["✍️ Agent 4: Response Formatter\n─────────────────────\nNarrative generation\nSSE streaming support\nprevious_response_id chaining"]
+        A1 ==>|intent + routing| A2
+        A2 ==>|SQL results| A3
+        A3 ==>|insights| A4
+    end
+
+    subgraph LLM["Azure OpenAI"]
+        GPT["gpt-4.1\nResponses API\nJSON Schema structured outputs"]
+    end
+
+    subgraph DB["SQL Server"]
+        SQL[("dbo.vw_ISDSolution_All\n448 solutions · 174 partners\n10 industries · 3 solution areas")]
+    end
+
+    A1 -.->|responses.create| GPT
+    A2 -.->|responses.create| GPT
+    A3 -.->|responses.create| GPT
+    A4 -.->|responses.create stream=True| GPT
+    A2 ==>|READ-ONLY| SQL
+
+    linkStyle 0,1,2,3 stroke:#4fc3f7,stroke-width:2px
+    linkStyle 4,5,6 stroke:#ce93d8,stroke-width:3px
+    linkStyle 7,8,9,10 stroke:#ffb74d,stroke-width:2px,stroke-dasharray:6
+    linkStyle 11 stroke:#81c784,stroke-width:3px
+
+    style Frontend fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0d47a1
+    style Backend fill:#e8eaf6,stroke:#283593,stroke-width:2px,color:#1a237e
+    style Pipeline fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#4a148c
+    style LLM fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#bf360c
+    style DB fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20
+```
+
+### Agentic Flow Detail
+
+```mermaid
 sequenceDiagram
     participant U as User
     participant FE as React 19 Frontend<br/>(Vite + TypeScript)
