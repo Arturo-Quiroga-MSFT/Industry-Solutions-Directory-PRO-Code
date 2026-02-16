@@ -130,7 +130,8 @@ export default function ChartViewer({ data, columns }: ChartViewerProps) {
                 cy="45%"
                 labelLine={true}
                 label={({ name, percent }) => {
-                  const truncated = name.length > 18 ? name.substring(0, 18) + '…' : name;
+                  const label = name ?? '';
+                  const truncated = label.length > 18 ? label.substring(0, 18) + '…' : label;
                   return `${truncated}: ${((percent ?? 0) * 100).toFixed(0)}%`;
                 }}
                 outerRadius={90}
