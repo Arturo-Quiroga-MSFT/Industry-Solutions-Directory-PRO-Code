@@ -27,7 +27,7 @@ class QueryPlanner:
         self.llm_client = llm_client
         self.deployment = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4o-mini")
     
-    def analyze_intent(self, question: str, conversation_history: List[Dict]) -> Dict[str, Any]:
+    def analyze_intent(self, question: str, conversation_history: List[Dict], previous_response_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Analyze user intent and determine processing strategy.
         
@@ -39,15 +39,6 @@ class QueryPlanner:
                 "reasoning": "explanation of intent"
             }
         """
-        # Build context from conversation history
-        history_context = ""
-        if conversation_history:
-            recent = conversation_history[-3:]  # Last 3 exchanges
-            history_context = "Recent conversation:\n" + "\n".join([
-                f"User: {msg['question']}\nAssistant: {msg.get('summary', 'Returned data')}"
-                for msg in recent
-            ])
-        
         system_prompt = """You are a query intent analyzer for an Industry Solutions Directory chatbot.
 
 **Task**: Determine if user wants NEW data or to analyze EXISTING results from conversation.
@@ -92,21 +83,39 @@ class QueryPlanner:
 }}
 """
         
-        user_prompt = f"""Question: "{question}"
-
-{history_context}
-
-Analyze the intent and routing strategy."""
+        # Build input based on whether response chaining is available
+        if previous_response_id and conversation_history:
+            # Server provides full conversation context via chaining
+            # Add brief results note for data-availability decisions
+            last = conversation_history[-1]
+            row_count = last.get('raw_results', {}).get('row_count', 0)
+            user_prompt = f'Question: "{question}"\nPrevious query returned {row_count} rows.\n\nAnalyze the intent and routing strategy.\n\nRespond in JSON format.'
+        else:
+            # First turn or no chaining - use manual history context
+            history_context = ""
+            if conversation_history:
+                recent = conversation_history[-3:]
+                history_context = "Recent conversation:\n" + "\n".join([
+                    f"User: {msg['question']}\nAssistant: {msg.get('summary', 'Returned data')}"
+                    for msg in recent
+                ])
+            user_prompt = f'Question: "{question}"\n\n{history_context}\n\nAnalyze the intent and routing strategy.\n\nRespond in JSON format.'
 
         try:
-            response = self.llm_client.responses.create(
-                model=self.deployment,
-                instructions=system_prompt,
-                input=user_prompt + "\n\nRespond in JSON format.",
-                text={"format": {"type": "json_object"}}
-            )
+            kwargs = {
+                "model": self.deployment,
+                "instructions": system_prompt,
+                "input": user_prompt,
+                "text": {"format": {"type": "json_object"}}
+            }
+            if previous_response_id:
+                kwargs["previous_response_id"] = previous_response_id
             
-            return json.loads(response.output_text)
+            response = self.llm_client.responses.create(**kwargs)
+            
+            result = json.loads(response.output_text)
+            result['_response_id'] = response.id
+            return result
         
         except Exception as e:
             # Fallback: default to query intent
@@ -598,7 +607,7 @@ class ResponseFormatter:
         self.llm_client = llm_client
         self.deployment = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4o-mini")
     
-    def format_response(self, question: str, insights: Dict, results: Dict, intent_info: Dict) -> str:
+    def format_response(self, question: str, insights: Dict, results: Dict, intent_info: Dict, previous_response_id: Optional[str] = None) -> tuple:
         """
         Create a compelling narrative response combining insights and data.
         
@@ -661,12 +670,15 @@ Create an engaging response. The detailed data table will be shown separately in
 """
 
         try:
-            response = self.llm_client.responses.create(
-                model=self.deployment,
-                instructions=system_prompt,
-                input=user_prompt
-                # Temperature removed - model doesn't support custom values
-            )
+            kwargs = {
+                "model": self.deployment,
+                "instructions": system_prompt,
+                "input": user_prompt
+            }
+            if previous_response_id:
+                kwargs["previous_response_id"] = previous_response_id
+            
+            response = self.llm_client.responses.create(**kwargs)
             
             content = response.output_text
             
@@ -679,7 +691,7 @@ Create an engaging response. The detailed data table will be shown separately in
                     'total_tokens': response.usage.total_tokens
                 }
             
-            return content, tokens
+            return content, tokens, response.id
         
         except Exception as e:
             # Fallback formatting
@@ -697,7 +709,7 @@ Create an engaging response. The detailed data table will be shown separately in
                 for key, value in statistics.items():
                     fallback += f"- **{key}**: {value}\n"
             
-            return fallback, None
+            return fallback, None, None
 
 
 class MultiAgentPipeline:
@@ -725,6 +737,10 @@ class MultiAgentPipeline:
         
         # Conversation state
         self.conversation_history = []
+        
+        # Response chaining state (Responses API previous_response_id)
+        self.last_planner_response_id = None
+        self.last_formatter_response_id = None
     
     def process_query(self, question: str, conversation_id: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -767,7 +783,8 @@ class MultiAgentPipeline:
         try:
             # AGENT 1: Query Planner - Analyze intent
             print("🧠 Agent 1: Query Planner analyzing intent...")
-            intent_info = self.query_planner.analyze_intent(question, self.conversation_history)
+            intent_info = self.query_planner.analyze_intent(question, self.conversation_history, self.last_planner_response_id)
+            self.last_planner_response_id = intent_info.pop('_response_id', None)
             
             # Track tokens from Agent 1
             if '_tokens' in intent_info:
@@ -888,7 +905,8 @@ class MultiAgentPipeline:
             
             # AGENT 4: Response Formatter - Create narrative
             print("✍️  Agent 4: Response Formatter creating narrative...")
-            narrative, formatter_tokens = self.response_formatter.format_response(question, insights, query_results, intent_info)
+            narrative, formatter_tokens, formatter_resp_id = self.response_formatter.format_response(question, insights, query_results, intent_info, self.last_formatter_response_id)
+            self.last_formatter_response_id = formatter_resp_id
             
             # Track tokens from Agent 4
             if formatter_tokens:
