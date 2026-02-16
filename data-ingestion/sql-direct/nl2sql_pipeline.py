@@ -150,8 +150,10 @@ WHERE marketPlaceLink IS NOT NULL
 - Always use table aliases (ps, o, i, si, sa, psba)
 - Filter by IsPublished = 1 for active solutions
 - Use LEFT JOIN for optional relationships
-- Industry names: "Financial Services", "Healthcare & Life Sciences", "Retail & Consumer Goods", 
-  "Manufacturing & Mobility", "Education", "Energy & Resources", "State & Local Government"
+- Industry names: "Defense Industrial Base", "Education", "Energy & Resources", "Financial Services",
+  "Government", "Healthcare & Life Sciences", "Manufacturing & Mobility", "Media & Entertainment",
+  "Retail & Consumer Goods", "Telecommunications"
+- Solution area names: "AI Business Solutions", "Cloud and AI Platforms", "Security"
 """
     
     def _init_llm_client(self):

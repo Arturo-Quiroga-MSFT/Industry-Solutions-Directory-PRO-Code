@@ -271,29 +271,13 @@ async def get_example_questions():
     Get categorized example questions
     """
     examples = {
-        "Financial Services": [
-            "What financial services solutions help with risk management?",
-            "Show me solutions for anti-money laundering and financial crime prevention",
-            "What solutions help with regulatory compliance in financial services?",
-            "What are the best banking solutions for improving customer engagement and retention?",
-            "Show me fraud detection and prevention solutions for financial institutions",
-            "What solutions support core banking modernization and digital transformation?"
-        ],
-        "Healthcare": [
-            "Show me AI-powered solutions for healthcare and life sciences",
-            "What solutions help improve patient engagement and care coordination?",
-            "Show me electronic health record and clinical data management solutions",
-            "What solutions enable remote patient monitoring and telehealth?",
-            "Show me solutions for clinical workflow optimization and automation",
-            "What population health management and analytics solutions are available?"
-        ],
-        "Manufacturing": [
-            "What manufacturing solutions leverage IoT and AI for smart factories?",
-            "Show me predictive maintenance solutions for manufacturing equipment",
-            "What solutions optimize supply chain management for manufacturers?",
-            "Show me smart factory and Industry 4.0 solutions",
-            "What solutions help with quality control and automated defect detection?",
-            "Show me asset performance management solutions for manufacturing"
+        "Defense Industrial Base": [
+            "What solutions support defense modernization and military readiness?",
+            "Show me cybersecurity solutions for defense contractors and the defense industrial base",
+            "What solutions help with secure supply chain management for defense organizations?",
+            "Show me solutions for defense logistics and mission-critical operations",
+            "What AI-powered solutions exist for defense intelligence and threat analysis?",
+            "Show me solutions for secure communications and classified data management"
         ],
         "Education": [
             "What solutions help improve student engagement and learning outcomes?",
@@ -303,14 +287,6 @@ async def get_example_questions():
             "What learning analytics and educational data platforms are available?",
             "Show me alumni relationship management and engagement solutions"
         ],
-        "Retail & Consumer Goods": [
-            "What solutions enhance customer experience in retail and consumer goods?",
-            "Show me inventory management and stock optimization solutions for retail",
-            "What modern point of sale and retail transaction solutions are available?",
-            "Show me solutions for creating personalized shopping experiences",
-            "What omnichannel retail and unified commerce solutions are available?",
-            "Show me supply chain visibility and logistics solutions for retail"
-        ],
         "Energy & Resources": [
             "What sustainability and carbon management solutions are available for energy companies?",
             "Show me asset management solutions for oil and gas operations",
@@ -319,12 +295,61 @@ async def get_example_questions():
             "What emissions tracking and management solutions help with environmental compliance?",
             "Show me renewable energy optimization and management solutions"
         ],
+        "Financial Services": [
+            "What financial services solutions help with risk management?",
+            "Show me solutions for anti-money laundering and financial crime prevention",
+            "What solutions help with regulatory compliance in financial services?",
+            "What are the best banking solutions for improving customer engagement and retention?",
+            "Show me fraud detection and prevention solutions for financial institutions",
+            "What solutions support core banking modernization and digital transformation?"
+        ],
         "Government": [
             "What solutions improve citizen engagement and digital government services?",
             "Show me case management solutions for government agencies",
             "What public safety and emergency response solutions are available?",
             "Show me smart city and urban management solutions",
-            "What grant management and funding distribution systems are available?"
+            "What grant management and funding distribution systems are available?",
+            "Show me solutions for government transparency and open data initiatives"
+        ],
+        "Healthcare & Life Sciences": [
+            "Show me AI-powered solutions for healthcare and life sciences",
+            "What solutions help improve patient engagement and care coordination?",
+            "Show me electronic health record and clinical data management solutions",
+            "What solutions enable remote patient monitoring and telehealth?",
+            "Show me solutions for clinical workflow optimization and automation",
+            "What population health management and analytics solutions are available?"
+        ],
+        "Manufacturing & Mobility": [
+            "What manufacturing solutions leverage IoT and AI for smart factories?",
+            "Show me predictive maintenance solutions for manufacturing equipment",
+            "What solutions optimize supply chain management for manufacturers?",
+            "Show me smart factory and Industry 4.0 solutions",
+            "What solutions help with quality control and automated defect detection?",
+            "Show me asset performance management and mobility solutions"
+        ],
+        "Media & Entertainment": [
+            "What solutions support content creation and digital media management?",
+            "Show me streaming and media delivery platform solutions",
+            "What solutions help with audience analytics and engagement for media companies?",
+            "Show me solutions for digital rights management and content monetization",
+            "What AI-powered solutions exist for media personalization and recommendation?",
+            "Show me solutions for live event management and broadcasting"
+        ],
+        "Retail & Consumer Goods": [
+            "What solutions enhance customer experience in retail and consumer goods?",
+            "Show me inventory management and stock optimization solutions for retail",
+            "What modern point of sale and retail transaction solutions are available?",
+            "Show me solutions for creating personalized shopping experiences",
+            "What omnichannel retail and unified commerce solutions are available?",
+            "Show me supply chain visibility and logistics solutions for retail"
+        ],
+        "Telecommunications": [
+            "What solutions help telecom companies with network optimization and management?",
+            "Show me customer experience and churn reduction solutions for telecom",
+            "What 5G and next-generation network solutions are available?",
+            "Show me solutions for telecom billing, revenue management, and monetization",
+            "What AI-powered solutions exist for telecom network operations?",
+            "Show me solutions for telecom fraud detection and prevention"
         ],
         "Cross-Industry": [
             "Show me comprehensive cybersecurity and threat protection solutions",
