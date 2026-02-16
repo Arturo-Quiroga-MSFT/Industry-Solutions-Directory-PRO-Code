@@ -30,13 +30,13 @@ export default function ChartViewer({ data, columns }: ChartViewerProps) {
     }));
 
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-slate-800 p-4 rounded-lg">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="bg-slate-800 p-4 rounded-lg min-w-0">
           <h4 className="text-white font-semibold mb-4">Bar Chart</h4>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
+          <ResponsiveContainer width="100%" height={350}>
+            <BarChart data={chartData} margin={{ left: 10, right: 10, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="name" stroke="#9CA3AF" angle={-45} textAnchor="end" height={100} />
+              <XAxis dataKey="name" stroke="#9CA3AF" angle={-45} textAnchor="end" height={120} interval={0} fontSize={11} />
               <YAxis stroke="#9CA3AF" />
               <Tooltip
                 contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569' }}
@@ -47,17 +47,20 @@ export default function ChartViewer({ data, columns }: ChartViewerProps) {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-slate-800 p-4 rounded-lg">
+        <div className="bg-slate-800 p-4 rounded-lg min-w-0 overflow-hidden">
           <h4 className="text-white font-semibold mb-4">Pie Chart</h4>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={400}>
             <PieChart>
               <Pie
                 data={chartData.slice(0, 8)}
                 cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
-                outerRadius={80}
+                cy="45%"
+                labelLine={true}
+                label={({ name, percent }) => {
+                  const truncated = name.length > 18 ? name.substring(0, 18) + '…' : name;
+                  return `${truncated}: ${((percent ?? 0) * 100).toFixed(0)}%`;
+                }}
+                outerRadius={90}
                 fill="#8884d8"
                 dataKey="value"
               >
