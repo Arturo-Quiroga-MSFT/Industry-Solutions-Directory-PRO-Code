@@ -30,7 +30,10 @@ The mode is controlled by the `APP_MODE` environment variable (`seller` or `cust
 
 - **Natural Language to SQL**: Ask questions in plain English; the multi-agent pipeline generates and executes SQL automatically
 - **Four-Agent Architecture**: Query Planner → SQL Executor → Insight Analyzer → Response Formatter
-- **448 Solutions**: Across 174 partners, 50+ industries, 3 solution areas (AI Business Solutions, Cloud and AI Platforms, Security)
+- **448 Solutions**: Across 174 partners, 10 industries, 3 solution areas (AI Business Solutions, Cloud and AI Platforms, Security)
+- **Responses API**: Built on Azure OpenAI Responses API with `previous_response_id` conversation chaining
+- **Structured Outputs**: JSON Schema strict mode for type-safe agent responses (enum-constrained intents, nullable fields)
+- **SSE Streaming**: Real-time token-by-token narrative delivery via Server-Sent Events
 - **Conversation Memory**: Maintains context across turns with intent routing
 - **Data Tables + Insights**: Returns both structured tabular data and AI-generated narrative analysis
 - **Follow-up Questions**: Context-specific suggested questions based on query results
@@ -38,23 +41,65 @@ The mode is controlled by the `APP_MODE` environment variable (`seller` or `cust
 
 ## Architecture
 
+```mermaid
+flowchart TB
+    subgraph Frontend["React 19 + TypeScript"]
+        UI[Chat Interface] -->|POST /api/query| API
+        UI -->|POST /api/query/stream| SSE[SSE Stream]
+    end
+
+    subgraph Backend["FastAPI Backend"]
+        API[REST API] --> Pipeline
+        SSE --> Pipeline
+    end
+
+    subgraph Pipeline["Multi-Agent Pipeline"]
+        direction TB
+        A1["🧠 Agent 1: Query Planner\n─────────────────────\nIntent classification\nJSON Schema strict output\nprevious_response_id chaining"]
+        A2["🔍 Agent 2: NL2SQL Executor\n─────────────────────\nSQL generation + validation\nJSON Schema strict output\npyodbc read-only execution"]
+        A3["📊 Agent 3: Insight Analyzer\n─────────────────────\nPattern extraction\nStatistical analysis\nCitation generation"]
+        A4["✍️ Agent 4: Response Formatter\n─────────────────────\nNarrative generation\nSSE streaming support\nprevious_response_id chaining"]
+        A1 -->|intent + routing| A2
+        A2 -->|SQL results| A3
+        A3 -->|insights| A4
+    end
+
+    subgraph LLM["Azure OpenAI"]
+        GPT["gpt-4.1\nResponses API\nJSON Schema structured outputs"]
+    end
+
+    subgraph DB["SQL Server"]
+        SQL[("dbo.vw_ISDSolution_All\n448 solutions · 174 partners\n10 industries · 3 solution areas")]
+    end
+
+    A1 <-.->|responses.create| GPT
+    A2 <-.->|responses.create| GPT
+    A3 <-.->|responses.create| GPT
+    A4 <-.->|responses.create\nstream=True| GPT
+    A2 -->|READ-ONLY| SQL
+
+    style Frontend fill:#1a1a2e,stroke:#16213e,color:#e0e0e0
+    style Backend fill:#16213e,stroke:#0f3460,color:#e0e0e0
+    style Pipeline fill:#0f3460,stroke:#533483,color:#e0e0e0
+    style LLM fill:#533483,stroke:#e94560,color:#e0e0e0
+    style DB fill:#1a1a2e,stroke:#16213e,color:#e0e0e0
 ```
-User → React Frontend → FastAPI Backend → Multi-Agent Pipeline → SQL Database
-                                              │
-                                              ├─ Agent 1: Query Planner (intent analysis)
-                                              ├─ Agent 2: NL2SQL + SQL Executor (pyodbc → SQL Server)
-                                              ├─ Agent 3: Insight Analyzer (patterns, stats)
-                                              └─ Agent 4: Response Formatter (narrative + citations)
-                                              │
-                                              └─ Azure OpenAI (gpt-4.1 for all agents)
-```
+
+### Agentic Flow Detail
+
+| Agent | Role | API | Output Format | Chaining |
+|-------|------|-----|---------------|----------|
+| **Query Planner** | Classifies intent (query/analyze/summarize/compare), decides if new SQL is needed | `responses.create()` | JSON Schema strict — enum-constrained `intent`, `query_type`, boolean `needs_new_query` | `previous_response_id` ✅ |
+| **NL2SQL Executor** | Generates safe SQL from natural language, validates & executes (read-only) | `responses.create()` | JSON Schema strict — nullable `sql`, enum `confidence`, array `suggested_refinements` | — |
+| **Insight Analyzer** | Extracts patterns, statistics, citations from query results | `responses.create()` | `json_object` (dynamic statistics shape) | — |
+| **Response Formatter** | Creates executive-style narrative with markdown formatting | `responses.create(stream=True)` | Markdown text, streamed token-by-token via SSE | `previous_response_id` ✅ |
 
 ### Key Components
 
 - **Backend**: Python FastAPI with multi-agent NL2SQL pipeline
 - **Frontend**: React 19 + TypeScript + Vite + Tailwind CSS
 - **Database**: SQL Server (`mssoldir-prd-sql.database.windows.net`) — read-only queries against `dbo.vw_ISDSolution_All` view (4,934 rows, 33 columns)
-- **LLM**: Azure OpenAI (`r2d2-foundry-001.openai.azure.com`) — `gpt-4.1` deployment
+- **LLM**: Azure OpenAI (`r2d2-foundry-001.openai.azure.com`) — `gpt-4.1` via Responses API
 - **Deployment**: Azure Container Apps (4 apps in `indsolse-dev-rg`, ACR: `indsolsedevacr`)
 
 ### Standalone Resources
@@ -182,8 +227,9 @@ curl -X POST http://localhost:8000/api/query \
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/health` | Health check (includes app mode) |
-| `POST` | `/api/query` | Execute natural language query |
-| `GET` | `/api/examples` | Get example questions by category |
+| `POST` | `/api/query` | Execute natural language query (full response) |
+| `POST` | `/api/query/stream` | Execute with SSE streaming (metadata → deltas → done) |
+| `GET` | `/api/examples` | Example questions by category (11 categories) |
 | `GET` | `/api/stats` | Database statistics |
 | `POST` | `/api/conversation/export` | Export conversation |
 
@@ -272,6 +318,36 @@ See [data-ingestion/sql-to-search/README.md](data-ingestion/sql-to-search/README
 - **Product Owner**: Will Casavan
 
 For questions or support, contact the team via Microsoft Teams.
+
+## Industry & Solution Area Coverage
+
+Categories aligned with the [MSD website](https://solutions.microsoftindustryinsights.com/dashboard):
+
+| Industries (10) | Solution Areas (3) |
+|-----------------|--------------------|
+| Defense Industrial Base | AI Business Solutions |
+| Education | Cloud and AI Platforms |
+| Energy & Resources | Security |
+| Financial Services | |
+| Government | |
+| Healthcare & Life Sciences | |
+| Manufacturing & Mobility | |
+| Media & Entertainment | |
+| Retail & Consumer Goods | |
+| Telecommunications | |
+
+## Recent Improvements
+
+| Date | Change | Details |
+|------|--------|---------|
+| Feb 2026 | **Category alignment** | All 10 industries + 3 solution areas from live MSD website; 11 example question categories |
+| Feb 2026 | **SSE streaming** | `POST /api/query/stream` — agents 1-3 run synchronously, agent 4 streams token-by-token via Server-Sent Events |
+| Feb 2026 | **JSON Schema structured outputs** | Strict schemas for QueryPlanner (enum-constrained intent) and NL2SQL (nullable fields, enum confidence). Eliminates "Respond in JSON" prompt hacks |
+| Feb 2026 | **Response chaining** | `previous_response_id` for QueryPlanner and ResponseFormatter — server-side conversation memory across turns |
+| Feb 2026 | **Responses API migration** | Migrated all 4 agents from `chat.completions.create()` to `responses.create()` per official Azure OpenAI docs |
+| Feb 2026 | **MSD rebrand** | Renamed from ISD to Microsoft Solutions Directory |
+| Feb 2026 | **Teams Tab Apps** | Seller + Customer apps packaged for Microsoft Teams sideloading |
+| Feb 2026 | **SQL→Search pipeline** | Automated ingestion of 448 solutions from SQL into Azure AI Search with vector embeddings |
 
 ## References
 
