@@ -2,7 +2,7 @@
 
 **Solution Owner:** Arturo Quiroga  
 **Role:** Principal Industry Solutions Architect, Microsoft  
-**Last Updated:** November 8, 2025  
+**Last Updated:** February 16, 2026  
 **Purpose:** Comprehensive technical architecture for the AI-powered chat assistant that enables natural language search and intelligent partner solution recommendations for the Microsoft Industry Solutions Directory
 
 ## Executive Summary
@@ -11,11 +11,12 @@ This document outlines the pro-code architecture for adding intelligent chat cap
 
 ### Current Production Architecture
 
-**This document describes the Traditional ACA (Azure Container Apps) deployment**, which is currently in production:
-- **Production URL**: https://indsolse-dev-frontend-v2-vnet.icyplant-dd879251.swedencentral.azurecontainerapps.io
-- **Architecture Pattern**: Direct Backend ↔ Frontend communication
-- **Use Case**: Web-based chat interface for end users
-- **Status**: ✅ In production (v2.8)
+**This document describes the multi-agent NL2SQL architecture**, currently deployed on Azure Container Apps:
+- **Production URLs**: See [README.md](README.md) for ACA endpoints
+- **Architecture Pattern**: 4-agent pipeline (Query Planner → NL2SQL → Insight Analyzer → Response Formatter)
+- **Use Case**: Web-based AI chat assistant for natural language queries against the Microsoft Solutions Directory
+- **Status**: ✅ In production (v3.0-responses-api)
+- **Models**: Per-agent model selection — gpt-5.2 (reasoning) for SQL generation, gpt-4.1 for other agents
 
 ### MCP Server (Separate Component)
 
@@ -319,31 +320,72 @@ GET /api/health
 - **Intelligent Query Routing**: System automatically detects whether user is asking about industries or technologies
 - **Top K**: Return top 3-5 results for RAG context
 
-#### 4. Azure OpenAI: LLM & Embeddings
-**Models**:
-- **Chat**: `gpt-4.1` or `gpt-4.1-mini` (cost vs. performance trade-off)
-- **Embeddings**: `text-embedding-3-large` (1536 dimensions)
+#### 4. Azure OpenAI: Per-Agent Model Configuration
 
-**Usage**:
-- Generate embeddings for solution content during indexing
-- Generate embeddings for user queries
-- LLM generates responses using RAG pattern with search results
+Each agent in the multi-agent pipeline can use a different Azure OpenAI model deployment, configured via environment variables:
 
-**Prompt Engineering**:
-```
-System: You are an expert assistant for the Microsoft Industry Solutions Directory.
-Your role is to help users find the right partner solutions based on their needs.
+| Agent | Env Variable | Default Model | Reasoning | Why |
+|-------|-------------|---------------|-----------|-----|
+| Query Planner | `MODEL_QUERY_PLANNER` | `gpt-4.1` | None | Simple intent classification — fast model sufficient |
+| NL2SQL Executor | `MODEL_NL2SQL` | `gpt-5.2` | Low | **Reasoning model produces significantly better SQL** |
+| Insight Analyzer | `MODEL_INSIGHT_ANALYZER` | `gpt-4.1` | None | Pattern extraction — fast model sufficient |
+| Response Formatter | `MODEL_RESPONSE_FORMATTER` | `gpt-4.1` | None | Narrative generation — fast model sufficient |
 
-Context: {retrieved_solutions}
+All agents fall back to `AZURE_OPENAI_CHAT_DEPLOYMENT_NAME` if their specific env var is not set.
 
-User Question: {user_message}
+##### gpt-5.2 Reasoning Model for NL2SQL — Findings
 
-Instructions:
-- Provide clear, concise recommendations
-- Include partner names and solution links
-- Ask clarifying questions if needed
-- Focus on industry and technology fit
-```
+Extensive testing (February 2026) comparing gpt-4.1 vs gpt-5.2 with low reasoning effort for SQL generation revealed significant quality improvements:
+
+**1. Domain-Aware Synonyms**
+
+For a query like *"Show me solutions for anti-money laundering and financial crime prevention"*, gpt-5.2 automatically generates LIKE patterns for domain synonyms:
+- `'%anti-money laundering%'`, `'%AML%'` (acronym)
+- `'%financial crime%'`, `'%crime prevention%'`
+- `'%sanctions screening%'`, `'%KYC%'`, `'%know your customer%'`
+
+gpt-4.1 typically generates only the literal terms from the user's question.
+
+**2. Phrase Precision**
+
+gpt-5.2 consistently follows the prompt's Phrase Precision rule, keeping multi-word concepts as combined phrases:
+- ✅ `LIKE '%campus management%'` → precise matches
+- ❌ `LIKE '%campus%' OR LIKE '%management%'` → matches everything with "management" (false positives)
+
+gpt-4.1 frequently split phrases into individual generic words, causing 50-result queries full of irrelevant matches.
+
+**3. Defensive SQL**
+- `COALESCE(v.solutionName, '')` for NULL safety
+- Table aliases (`FROM dbo.vw_ISDSolution_All AS v`)
+- Inline SQL comments (`-- campus management (phrase first, then specific fallback)`)
+- Searches across more relevant columns (solutionPlayName, theme, industryThemeDesc)
+
+**4. Consistency**
+
+With gpt-4.1, the same question asked twice could produce wildly different SQL (one run: 11 results with precise phrases; another run: 50 results with split words). gpt-5.2 is much more consistent — both modes produce similar, high-quality SQL.
+
+**5. Performance**
+
+| Metric | gpt-4.1 | gpt-5.2 (low reasoning) |
+|--------|---------|------------------------|
+| SQL quality | Variable | Consistently high |
+| Domain synonyms | Rarely added | Frequently added |
+| Phrase precision | 50/50 | ~95% consistent |
+| Pipeline time | ~20s | ~26-30s |
+| False positive rate | High (up to 50% irrelevant) | Low (<10%) |
+
+The ~8-10s additional latency is justified by the dramatically better SQL quality.
+
+##### NL2SQL Phrase Precision Prompt Engineering
+
+The NL2SQL system prompt includes a **Phrase Precision rule** (added February 2026) that instructs the LLM to:
+
+1. **Keep multi-word concepts as combined LIKE phrases**: `'%campus management%'` not `'%campus%' OR '%management%'`
+2. **Never use generic single-word wildcards alone**: Words like "management", "data", "system", "platform", "solution" are too broad
+3. **Use the most domain-specific word as a fallback**: For "campus management", use `'%campus management%' OR '%campus%'` (— "campus" is specific, "management" is not)
+4. **Combine with industry filters when available**: `'%administrative%' AND industryName = 'Education'`
+
+This rule, combined with gpt-5.2's reasoning capability, produces highly precise SQL queries.
 
 #### 5. Azure Cosmos DB: Conversation Storage
 **Purpose**: Store chat history and user sessions
