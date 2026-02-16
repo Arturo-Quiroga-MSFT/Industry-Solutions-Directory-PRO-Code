@@ -1,0 +1,39 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0",
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "developer": {
+    "name": "Industry Solutions Directory",
+    "websiteUrl": "https://isd-chat-seller-frontend.kindfield-353d98ed.swedencentral.azurecontainerapps.io",
+    "privacyUrl": "https://privacy.microsoft.com/en-us/privacystatement",
+    "termsOfUseUrl": "https://www.microsoft.com/en-us/servicesagreement"
+  },
+  "name": {
+    "short": "ISD Seller Chat",
+    "full": "Industry Solutions Directory - Seller Assistant"
+  },
+  "description": {
+    "short": "AI-powered partner insights for the Industry Solutions Directory",
+    "full": "Internal seller tool that provides AI-powered natural language access to the Industry Solutions Directory database. Ask questions about solutions, partners, industries, and technologies. Get partner insights, competitive analysis, and solution recommendations powered by NL2SQL and GPT-4.1."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#4F46E5",
+  "staticTabs": [
+    {
+      "entityId": "isd-seller-tab",
+      "name": "Seller Assistant",
+      "contentUrl": "https://isd-chat-seller-frontend.kindfield-353d98ed.swedencentral.azurecontainerapps.io",
+      "websiteUrl": "https://isd-chat-seller-frontend.kindfield-353d98ed.swedencentral.azurecontainerapps.io",
+      "scopes": ["personal"]
+    }
+  ],
+  "permissions": ["identity", "messageTeamMembers"],
+  "validDomains": [
+    "isd-chat-seller-frontend.kindfield-353d98ed.swedencentral.azurecontainerapps.io",
+    "isd-chat-seller-backend.kindfield-353d98ed.swedencentral.azurecontainerapps.io"
+  ]
+}

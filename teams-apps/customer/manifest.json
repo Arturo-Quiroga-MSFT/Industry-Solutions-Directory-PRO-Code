@@ -1,0 +1,39 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0",
+  "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "developer": {
+    "name": "Industry Solutions Directory",
+    "websiteUrl": "https://isd-chat-customer-frontend.kindfield-353d98ed.swedencentral.azurecontainerapps.io",
+    "privacyUrl": "https://privacy.microsoft.com/en-us/privacystatement",
+    "termsOfUseUrl": "https://www.microsoft.com/en-us/servicesagreement"
+  },
+  "name": {
+    "short": "ISD Solution Finder",
+    "full": "Industry Solutions Directory - Solution Finder"
+  },
+  "description": {
+    "short": "Find Microsoft partner solutions across industries",
+    "full": "Discover Microsoft partner solutions across industries like Healthcare, Financial Services, Manufacturing, Education, and more. Ask natural language questions to explore the Industry Solutions Directory. Get vendor-neutral recommendations powered by AI."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#0EA5E9",
+  "staticTabs": [
+    {
+      "entityId": "isd-customer-tab",
+      "name": "Solution Finder",
+      "contentUrl": "https://isd-chat-customer-frontend.kindfield-353d98ed.swedencentral.azurecontainerapps.io",
+      "websiteUrl": "https://isd-chat-customer-frontend.kindfield-353d98ed.swedencentral.azurecontainerapps.io",
+      "scopes": ["personal"]
+    }
+  ],
+  "permissions": ["identity", "messageTeamMembers"],
+  "validDomains": [
+    "isd-chat-customer-frontend.kindfield-353d98ed.swedencentral.azurecontainerapps.io",
+    "isd-chat-customer-backend.kindfield-353d98ed.swedencentral.azurecontainerapps.io"
+  ]
+}

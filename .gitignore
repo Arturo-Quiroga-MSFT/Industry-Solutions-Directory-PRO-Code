@@ -24,7 +24,7 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
+/MANIFEST
 
 # Virtual environments
 venv/
@@ -76,6 +76,7 @@ frontend/build/
 !package-lock.json
 !tsconfig.json
 !*parameters*.json
+!teams-apps/**/manifest.json
 
 # Deployment outputs
 deployment-outputs.json
@@ -89,3 +90,4 @@ donotupload/
 meetings_and_internal_only/
 discovery-meeting/
 SQL_DATABASE_DISCOVERY.md*.env.bak
+teams-apps/*.zip
