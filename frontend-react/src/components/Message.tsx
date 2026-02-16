@@ -1,5 +1,5 @@
 import type { ChatMessage } from '../types';
-import { User, Bot, Database, CheckCircle, XCircle, BarChart3, Table2, Lightbulb, BookOpen, ExternalLink } from 'lucide-react';
+import { User, Bot, Database, CheckCircle, XCircle, BarChart3, Table2, Lightbulb, BookOpen, ExternalLink, Globe } from 'lucide-react';
 import DataTable from './DataTable';
 import ChartViewer from './ChartViewer';
 import { useState } from 'react';
@@ -263,6 +263,34 @@ export default function Message({ message, onFollowUpClick }: MessageProps) {
                           <p className="text-xs text-gray-500 mt-3 italic">
                             💡 Click citation numbers or solution names to see source data in the table
                           </p>
+                        </div>
+                      )}
+
+                      {/* Web Sources - from web_search enrichment */}
+                      {data.web_sources && data.web_sources.length > 0 && (
+                        <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-blue-950/60 to-cyan-950/40 border border-blue-500/30 shadow-lg shadow-blue-500/5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/20">
+                              <Globe size={18} className="text-blue-400" />
+                            </div>
+                            <h4 className="text-sm font-semibold text-blue-300 tracking-wide uppercase">
+                              Web Sources ({data.web_sources.length})
+                            </h4>
+                          </div>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {data.web_sources.map((source, idx) => (
+                              <a
+                                key={idx}
+                                href={source.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-start gap-2.5 px-3.5 py-2.5 rounded-lg bg-slate-800/70 border border-slate-600/40 hover:border-blue-400/60 hover:bg-slate-700/70 transition-all group"
+                              >
+                                <ExternalLink size={14} className="text-blue-400 mt-0.5 shrink-0 group-hover:text-blue-300" />
+                                <span className="text-sm text-gray-200 group-hover:text-white leading-snug line-clamp-2">{source.title}</span>
+                              </a>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>

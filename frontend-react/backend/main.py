@@ -68,6 +68,7 @@ class QueryResponse(BaseModel):
     columns: Optional[List[str]] = None
     rows: Optional[List[Dict[str, Any]]] = None
     row_count: int = 0
+    web_sources: Optional[List[Dict[str, str]]] = None  # Web search sources
     error: Optional[str] = None
     usage_stats: Optional[Dict[str, int]] = None  # Token usage statistics
     elapsed_time: Optional[float] = None  # Time elapsed in seconds
@@ -177,6 +178,7 @@ async def execute_query(request: QueryRequest):
             columns=result['data']['columns'],
             rows=rows_data,
             row_count=len(rows_data),
+            web_sources=result.get('web_sources'),
             usage_stats=result.get('usage_stats'),
             elapsed_time=result.get('elapsed_time'),
             timestamp=result['timestamp']

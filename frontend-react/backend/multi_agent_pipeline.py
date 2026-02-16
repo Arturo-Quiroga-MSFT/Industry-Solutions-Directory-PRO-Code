@@ -638,9 +638,12 @@ class ResponseFormatter:
     def __init__(self, llm_client: OpenAI):
         self.llm_client = llm_client
         self.deployment = os.getenv("MODEL_RESPONSE_FORMATTER", os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4.1"))
+        self.app_mode = os.getenv('APP_MODE', 'seller').lower()
+        self.web_search_enabled = self.app_mode == 'seller'
         # Streaming metadata (populated after format_response_stream exhausts)
         self._stream_response_id = None
         self._stream_tokens = None
+        self._web_sources = None  # Web search sources from last call
     
     def format_response(self, question: str, insights: Dict, results: Dict, intent_info: Dict, previous_response_id: Optional[str] = None) -> tuple:
         """
@@ -690,6 +693,21 @@ Do NOT just list raw data - tell the story behind the numbers!
         statistics = insights_content.get('statistics', {})
         recommendations = insights_content.get('recommendations', [])
         
+        # Determine partner names from results for targeted web search
+        partner_names = set()
+        if results.get('rows'):
+            for row in results['rows'][:10]:
+                org = getattr(row, 'orgName', None) if hasattr(row, 'orgName') else (row.get('orgName') if isinstance(row, dict) else None)
+                if org:
+                    partner_names.add(str(org))
+        
+        web_search_hint = ""
+        if self.web_search_enabled and partner_names:
+            partner_list = ", ".join(list(partner_names)[:5])
+            web_search_hint = f"\n\nIMPORTANT: You MUST use web search to find the latest news, press releases, partnerships, product launches, or market context about these partners: {partner_list}. Always perform at least one web search to enrich your narrative with recent, real-world context. This is required — do not skip it."
+        elif self.web_search_enabled:
+            web_search_hint = "\n\nIMPORTANT: You MUST use web search to find recent, relevant market news or partner announcements that would enrich the narrative. Always perform at least one web search to add real-world context. This is required — do not skip it."
+        
         user_prompt = f"""Question: "{question}"
 
 Intent: {intent_info.get('intent', 'query')}
@@ -701,7 +719,7 @@ Insights to present:
 - Statistics: {statistics}
 - Recommendations: {recommendations}
 
-Create an engaging response. The detailed data table will be shown separately in another tab.
+Create an engaging response. The detailed data table will be shown separately in another tab.{web_search_hint}
 """
 
         try:
@@ -713,9 +731,17 @@ Create an engaging response. The detailed data table will be shown separately in
             if previous_response_id:
                 kwargs["previous_response_id"] = previous_response_id
             
+            # Enable web search for seller mode
+            if self.web_search_enabled:
+                kwargs["tools"] = [{"type": "web_search_preview"}]
+                print("   🌐 Web search enabled for narrative enrichment")
+            
             response = self.llm_client.responses.create(**kwargs)
             
             content = response.output_text
+            
+            # Extract web search source URLs from annotations
+            self._web_sources = self._extract_web_sources(response)
             
             # Track token usage
             tokens = None
@@ -746,6 +772,28 @@ Create an engaging response. The detailed data table will be shown separately in
             
             return fallback, None, None
     
+    def _extract_web_sources(self, response) -> List[Dict[str, str]]:
+        """Extract web search source URLs from response output annotations."""
+        sources = []
+        seen_urls = set()
+        try:
+            for item in response.output:
+                if hasattr(item, 'content'):
+                    for block in item.content:
+                        if hasattr(block, 'annotations'):
+                            for ann in block.annotations:
+                                if hasattr(ann, 'url') and ann.url and ann.url not in seen_urls:
+                                    seen_urls.add(ann.url)
+                                    sources.append({
+                                        "title": getattr(ann, 'title', '') or ann.url,
+                                        "url": ann.url
+                                    })
+        except Exception:
+            pass
+        if sources:
+            print(f"   🌐 Web sources found: {len(sources)}")
+        return sources
+    
     def format_response_stream(self, question: str, insights: Dict, results: Dict, intent_info: Dict, previous_response_id: Optional[str] = None):
         """
         Stream the formatted response token-by-token.
@@ -757,6 +805,7 @@ Create an engaging response. The detailed data table will be shown separately in
         """
         self._stream_response_id = None
         self._stream_tokens = None
+        self._web_sources = None
         
         system_prompt = """You are a helpful assistant presenting Industry Solutions Directory insights.
 
@@ -799,6 +848,21 @@ Do NOT just list raw data - tell the story behind the numbers!
         statistics = insights_content.get('statistics', {})
         recommendations = insights_content.get('recommendations', [])
         
+        # Determine partner names from results for targeted web search
+        partner_names = set()
+        if results.get('rows'):
+            for row in results['rows'][:10]:
+                org = getattr(row, 'orgName', None) if hasattr(row, 'orgName') else (row.get('orgName') if isinstance(row, dict) else None)
+                if org:
+                    partner_names.add(str(org))
+        
+        web_search_hint = ""
+        if self.web_search_enabled and partner_names:
+            partner_list = ", ".join(list(partner_names)[:5])
+            web_search_hint = f"\n\nIMPORTANT: You MUST use web search to find the latest news, press releases, partnerships, product launches, or market context about these partners: {partner_list}. Always perform at least one web search to enrich your narrative with recent, real-world context. This is required — do not skip it."
+        elif self.web_search_enabled:
+            web_search_hint = "\n\nIMPORTANT: You MUST use web search to find recent, relevant market news or partner announcements that would enrich the narrative. Always perform at least one web search to add real-world context. This is required — do not skip it."
+        
         user_prompt = f"""Question: "{question}"
 
 Intent: {intent_info.get('intent', 'query')}
@@ -810,7 +874,7 @@ Insights to present:
 - Statistics: {statistics}
 - Recommendations: {recommendations}
 
-Create an engaging response. The detailed data table will be shown separately in another tab.
+Create an engaging response. The detailed data table will be shown separately in another tab.{web_search_hint}
 """
 
         try:
@@ -823,6 +887,11 @@ Create an engaging response. The detailed data table will be shown separately in
             if previous_response_id:
                 kwargs["previous_response_id"] = previous_response_id
             
+            # Enable web search for seller mode
+            if self.web_search_enabled:
+                kwargs["tools"] = [{"type": "web_search_preview"}]
+                print("   🌐 Web search enabled for streaming narrative")
+            
             response = self.llm_client.responses.create(**kwargs)
             
             for event in response:
@@ -830,6 +899,7 @@ Create an engaging response. The detailed data table will be shown separately in
                     yield event.delta
                 elif event.type == "response.completed":
                     self._stream_response_id = event.response.id
+                    self._web_sources = self._extract_web_sources(event.response)
                     if hasattr(event.response, 'usage') and event.response.usage:
                         self._stream_tokens = {
                             'prompt_tokens': event.response.usage.input_tokens,
@@ -882,7 +952,7 @@ class MultiAgentPipeline:
         # Response chaining state (Responses API previous_response_id)
         self.last_planner_response_id = None
         self.last_formatter_response_id = None
-    
+        
     def process_query(self, question: str, conversation_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Main orchestration method - processes user query through all agents.
@@ -1056,6 +1126,9 @@ class MultiAgentPipeline:
             print("✍️  Agent 4: Response Formatter creating narrative...")
             narrative, formatter_tokens, formatter_resp_id = self.response_formatter.format_response(question, insights, query_results, intent_info, self.last_formatter_response_id)
             self.last_formatter_response_id = formatter_resp_id
+            web_sources = self.response_formatter._web_sources or []
+            if web_sources:
+                print(f"   🌐 {len(web_sources)} web sources enriching narrative")
             
             # Track tokens from Agent 4
             if formatter_tokens:
@@ -1076,6 +1149,7 @@ class MultiAgentPipeline:
                 "confidence": sql_result.get('confidence'),
                 "insights": insights.get('insights', {}),
                 "narrative": narrative,
+                "web_sources": web_sources,
                 "data": {
                     "columns": query_results.get('columns', []),
                     "rows": query_results.get('rows', [])
@@ -1224,6 +1298,9 @@ class MultiAgentPipeline:
             
             # Retrieve streaming metadata
             self.last_formatter_response_id = self.response_formatter._stream_response_id
+            web_sources = self.response_formatter._web_sources or []
+            if web_sources:
+                print(f"   🌐 {len(web_sources)} web sources enriching narrative")
             formatter_tokens = self.response_formatter._stream_tokens
             if formatter_tokens:
                 total_prompt_tokens += formatter_tokens['prompt_tokens']
@@ -1245,6 +1322,7 @@ class MultiAgentPipeline:
             # Emit done event
             yield {
                 "type": "done",
+                "web_sources": web_sources,
                 "usage_stats": {
                     "prompt_tokens": total_prompt_tokens,
                     "completion_tokens": total_completion_tokens,

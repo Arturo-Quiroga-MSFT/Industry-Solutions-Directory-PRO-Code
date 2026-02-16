@@ -15,6 +15,11 @@ export interface Citation {
   row_data?: Record<string, any>;
 }
 
+export interface WebSource {
+  title: string;
+  url: string;
+}
+
 export interface QueryResult {
   success: boolean;
   question: string;
@@ -43,6 +48,7 @@ export interface QueryResult {
   columns?: string[];
   rows?: Record<string, any>[];
   row_count: number;
+  web_sources?: WebSource[];  // Web search sources from Agent 4
   error?: string;
   usage_stats?: {
     prompt_tokens: number;
@@ -56,3 +62,5 @@ export interface QueryResult {
 export interface ExampleCategory {
   [category: string]: string[];
 }
+
+
