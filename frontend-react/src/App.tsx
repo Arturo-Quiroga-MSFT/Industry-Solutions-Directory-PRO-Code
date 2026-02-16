@@ -512,7 +512,7 @@ function App() {
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-6xl mx-auto space-y-6">
+            <div className="max-w-7xl mx-auto space-y-6">
               {messages.length === 0 ? (
                 <div className="text-center text-gray-400 mt-12">
                   <Database size={64} className="mx-auto mb-4 opacity-50" />
@@ -534,7 +534,7 @@ function App() {
 
           {/* Input Area */}
           <div className="border-t border-slate-700 bg-slate-800 p-4">
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-7xl mx-auto">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();

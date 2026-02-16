@@ -10,7 +10,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'
 
 function downloadChartAsPng(container: HTMLDivElement | null, filename: string) {
   if (!container) return;
-  const svgElement = container.querySelector('svg');
+  const svgElement = container.querySelector('.recharts-surface') as SVGSVGElement | null;
   if (!svgElement) return;
 
   const cloned = svgElement.cloneNode(true) as SVGSVGElement;
@@ -117,24 +117,24 @@ export default function ChartViewer({ data, columns }: ChartViewerProps) {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-slate-800 p-4 rounded-lg min-w-0 overflow-hidden" ref={pieRef}>
+        <div className="bg-slate-800 p-4 rounded-lg min-w-0" ref={pieRef}>
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-white font-semibold">Pie Chart</h4>
             <DownloadButton onClick={() => downloadChartAsPng(pieRef.current, 'pie-chart')} />
           </div>
-          <ResponsiveContainer width="100%" height={400}>
-            <PieChart>
+          <ResponsiveContainer width="100%" height={450}>
+            <PieChart margin={{ top: 20, right: 80, bottom: 20, left: 80 }}>
               <Pie
                 data={chartData.slice(0, 8)}
                 cx="50%"
-                cy="45%"
+                cy="50%"
                 labelLine={true}
                 label={({ name, percent }) => {
                   const label = name ?? '';
-                  const truncated = label.length > 18 ? label.substring(0, 18) + '…' : label;
+                  const truncated = label.length > 15 ? label.substring(0, 15) + '…' : label;
                   return `${truncated}: ${((percent ?? 0) * 100).toFixed(0)}%`;
                 }}
-                outerRadius={90}
+                outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
               >
