@@ -419,8 +419,35 @@ CRITICAL REMINDER BEFORE YOU GENERATE:
             response = self.llm_client.responses.create(
                 model=deployment_name,
                 instructions=system_prompt,
-                input=natural_query + "\n\nRespond in JSON format.",
-                text={"format": {"type": "json_object"}}
+                input=natural_query,
+                text={"format": {
+                    "type": "json_schema",
+                    "name": "sql_generation",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "sql": {
+                                "anyOf": [{"type": "string"}, {"type": "null"}]
+                            },
+                            "explanation": {"type": "string"},
+                            "confidence": {
+                                "type": "string",
+                                "enum": ["high", "medium", "low", "none"]
+                            },
+                            "needs_clarification": {"type": "boolean"},
+                            "clarification_question": {
+                                "anyOf": [{"type": "string"}, {"type": "null"}]
+                            },
+                            "suggested_refinements": {
+                                "type": "array",
+                                "items": {"type": "string"}
+                            }
+                        },
+                        "required": ["sql", "explanation", "confidence", "needs_clarification", "clarification_question", "suggested_refinements"],
+                        "additionalProperties": False
+                    }
+                }}
             )
             
             result = json.loads(response.output_text)

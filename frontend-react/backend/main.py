@@ -6,6 +6,7 @@ Provides REST API endpoints for the React frontend
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import sys
@@ -210,6 +211,59 @@ async def execute_query(request: QueryRequest):
             error=str(e),
             timestamp=datetime.now().isoformat()
         )
+
+
+@app.post("/api/query/stream")
+async def stream_query(request: QueryRequest):
+    """
+    Execute a natural language query with streaming response.
+    Returns SSE events: metadata (agents 1-3), deltas (agent 4 tokens), done (final stats).
+    """
+    # HTML-column list for stripping tags from SSE metadata rows
+    html_columns = [
+        'solutionDescription', 'industryDescription', 'SubIndustryDescription',
+        'solAreaDescription', 'orgDescription', 'areaSolutionDescription',
+        'industryThemeDesc', 'solutionPlayDesc', 'resourceLinkDescription',
+        'THEME', 'DESCRIPTION', 'DESC', 'SOLUTION_DESCRIPTION'
+    ]
+
+    def _clean_rows(columns, rows):
+        """Convert pyodbc rows to JSON-safe dicts with HTML stripping."""
+        cleaned = []
+        for row in rows:
+            row_dict = {}
+            for col in columns:
+                try:
+                    value = row[col]
+                except (KeyError, TypeError):
+                    idx = columns.index(col)
+                    value = row[idx]
+                if value is None:
+                    row_dict[col] = "(Not Set)"
+                elif hasattr(value, 'isoformat'):
+                    row_dict[col] = value.isoformat()
+                else:
+                    str_value = str(value) if value != "NULL" else "(Not Set)"
+                    col_lower = col.lower()
+                    if (col in html_columns or
+                        any(kw in col_lower for kw in ['desc', 'description', 'theme'])):
+                        str_value = strip_html(str_value)
+                    row_dict[col] = str_value
+            cleaned.append(row_dict)
+        return cleaned
+
+    def event_generator():
+        for event in pipeline.process_query_stream(request.question, request.conversation_id):
+            if event["type"] == "metadata" and "data" in event:
+                # Clean rows for JSON serialization before sending
+                data = event.get("data", {})
+                if data.get("rows"):
+                    event["data"]["rows"] = _clean_rows(data["columns"], data["rows"])
+                    event["row_count"] = len(event["data"]["rows"])
+            yield f"data: {json.dumps(event, default=str)}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
 
 @app.get("/api/examples", response_model=ExampleQuestionsResponse)
 async def get_example_questions():

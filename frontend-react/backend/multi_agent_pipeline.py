@@ -89,7 +89,7 @@ class QueryPlanner:
             # Add brief results note for data-availability decisions
             last = conversation_history[-1]
             row_count = last.get('raw_results', {}).get('row_count', 0)
-            user_prompt = f'Question: "{question}"\nPrevious query returned {row_count} rows.\n\nAnalyze the intent and routing strategy.\n\nRespond in JSON format.'
+            user_prompt = f'Question: "{question}"\nPrevious query returned {row_count} rows.\n\nAnalyze the intent and routing strategy.'
         else:
             # First turn or no chaining - use manual history context
             history_context = ""
@@ -99,14 +99,35 @@ class QueryPlanner:
                     f"User: {msg['question']}\nAssistant: {msg.get('summary', 'Returned data')}"
                     for msg in recent
                 ])
-            user_prompt = f'Question: "{question}"\n\n{history_context}\n\nAnalyze the intent and routing strategy.\n\nRespond in JSON format.'
+            user_prompt = f'Question: "{question}"\n\n{history_context}\n\nAnalyze the intent and routing strategy.'
 
         try:
             kwargs = {
                 "model": self.deployment,
                 "instructions": system_prompt,
                 "input": user_prompt,
-                "text": {"format": {"type": "json_object"}}
+                "text": {"format": {
+                    "type": "json_schema",
+                    "name": "query_plan",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "intent": {
+                                "type": "string",
+                                "enum": ["query", "analyze", "summarize", "compare"]
+                            },
+                            "needs_new_query": {"type": "boolean"},
+                            "query_type": {
+                                "type": "string",
+                                "enum": ["specific", "aggregate", "exploratory"]
+                            },
+                            "reasoning": {"type": "string"}
+                        },
+                        "required": ["intent", "needs_new_query", "query_type", "reasoning"],
+                        "additionalProperties": False
+                    }
+                }}
             }
             if previous_response_id:
                 kwargs["previous_response_id"] = previous_response_id
@@ -606,6 +627,9 @@ class ResponseFormatter:
     def __init__(self, llm_client: OpenAI):
         self.llm_client = llm_client
         self.deployment = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4o-mini")
+        # Streaming metadata (populated after format_response_stream exhausts)
+        self._stream_response_id = None
+        self._stream_tokens = None
     
     def format_response(self, question: str, insights: Dict, results: Dict, intent_info: Dict, previous_response_id: Optional[str] = None) -> tuple:
         """
@@ -710,6 +734,105 @@ Create an engaging response. The detailed data table will be shown separately in
                     fallback += f"- **{key}**: {value}\n"
             
             return fallback, None, None
+    
+    def format_response_stream(self, question: str, insights: Dict, results: Dict, intent_info: Dict, previous_response_id: Optional[str] = None):
+        """
+        Stream the formatted response token-by-token.
+        After the generator is exhausted, retrieve metadata via
+        self._stream_response_id and self._stream_tokens.
+        
+        Yields:
+            str: text delta chunks
+        """
+        self._stream_response_id = None
+        self._stream_tokens = None
+        
+        system_prompt = """You are a helpful assistant presenting Industry Solutions Directory insights.
+
+Create a compelling, NARRATIVE response that tells a story with the data. Think like a business analyst presenting findings to executives.
+
+CRITICAL REQUIREMENTS:
+1. Write in flowing paragraphs, not bullet lists (except for specific findings)
+2. Use a conversational, insightful tone
+3. Highlight surprises, patterns, and strategic implications
+4. Connect the dots between different findings
+5. Use markdown effectively: **bold** for emphasis, ## for headers
+
+STRUCTURE:
+## Executive Summary
+[2-3 sentences painting the big picture - what's the most important takeaway?]
+
+## Market Landscape
+[Narrative paragraph about the competitive landscape, who dominates, interesting patterns]
+
+### Key Discoveries
+[Use bullets ONLY here for specific findings - 3-5 data-backed points]
+
+## Strategic Insights
+[Narrative paragraph about what this means for decision-makers, technology trends, opportunities]
+
+### Next Steps
+[Short list of 2-3 specific actions they can take]
+
+TONE EXAMPLES:
+❌ BAD: "The query found 50 solutions. DXC has 18. Adobe has 12."
+✅ GOOD: "The risk management landscape is dominated by two major players: **DXC Technology** commands 36% of the market with 18 solutions, while **Adobe** follows closely with 12 offerings focused primarily on behavioral analytics and customer journey intelligence."
+
+Do NOT just list raw data - tell the story behind the numbers!
+"""
+        
+        insights_content = insights.get('insights', {})
+        overview = insights_content.get('overview', '')
+        key_findings = insights_content.get('key_findings', [])
+        patterns = insights_content.get('patterns', [])
+        statistics = insights_content.get('statistics', {})
+        recommendations = insights_content.get('recommendations', [])
+        
+        user_prompt = f"""Question: "{question}"
+
+Intent: {intent_info.get('intent', 'query')}
+
+Insights to present:
+- Overview: {overview}
+- Key Findings: {key_findings}
+- Patterns: {patterns}
+- Statistics: {statistics}
+- Recommendations: {recommendations}
+
+Create an engaging response. The detailed data table will be shown separately in another tab.
+"""
+
+        try:
+            kwargs = {
+                "model": self.deployment,
+                "instructions": system_prompt,
+                "input": user_prompt,
+                "stream": True
+            }
+            if previous_response_id:
+                kwargs["previous_response_id"] = previous_response_id
+            
+            response = self.llm_client.responses.create(**kwargs)
+            
+            for event in response:
+                if event.type == "response.output_text.delta":
+                    yield event.delta
+                elif event.type == "response.completed":
+                    self._stream_response_id = event.response.id
+                    if hasattr(event.response, 'usage') and event.response.usage:
+                        self._stream_tokens = {
+                            'prompt_tokens': event.response.usage.input_tokens,
+                            'completion_tokens': event.response.usage.output_tokens,
+                            'total_tokens': event.response.usage.total_tokens
+                        }
+        
+        except Exception as e:
+            # Fallback: yield the error message as a single chunk
+            yield f"## Results for: {question}\n\n{overview}\n\n"
+            if key_findings:
+                yield "### Key Findings\n"
+                for finding in key_findings:
+                    yield f"- {finding}\n"
 
 
 class MultiAgentPipeline:
@@ -967,3 +1090,137 @@ class MultiAgentPipeline:
                 "error": f"Pipeline error: {str(e)}",
                 "timestamp": timestamp
             }
+    
+    def process_query_stream(self, question: str, conversation_id: Optional[str] = None):
+        """
+        Streaming orchestration — runs agents 1-3 synchronously, then streams agent 4.
+        
+        Yields:
+            dict: SSE-ready event dicts with 'type' key:
+                - {"type": "metadata", ...}  — intent, SQL, insights (before streaming)
+                - {"type": "delta", "content": "..."}  — text chunks from ResponseFormatter
+                - {"type": "done", ...}  — final usage stats and elapsed time
+        """
+        start_time = time.time()
+        timestamp = datetime.now().isoformat()
+        total_prompt_tokens = 0
+        total_completion_tokens = 0
+        total_tokens = 0
+        
+        try:
+            # AGENT 1: Query Planner
+            print("🧠 Agent 1: Query Planner analyzing intent...")
+            intent_info = self.query_planner.analyze_intent(question, self.conversation_history, self.last_planner_response_id)
+            self.last_planner_response_id = intent_info.pop('_response_id', None)
+            print(f"   Intent: {intent_info['intent']}, New Query: {intent_info['needs_new_query']}")
+            
+            # AGENT 2: SQL Executor
+            sql_result = None
+            query_results = None
+            
+            if intent_info['needs_new_query']:
+                print("🔍 Agent 2: SQL Executor generating query...")
+                sql_result = self.sql_executor.generate_sql(question)
+                
+                if sql_result.get('needs_clarification'):
+                    yield {
+                        "type": "metadata",
+                        "success": True,
+                        "needs_clarification": True,
+                        "clarification_question": sql_result.get('clarification_question'),
+                        "suggested_refinements": sql_result.get('suggested_refinements', []),
+                        "timestamp": timestamp
+                    }
+                    return
+                
+                if sql_result.get('sql') and isinstance(sql_result['sql'], str):
+                    query_results = self.sql_executor.execute_sql(sql_result['sql'])
+                else:
+                    yield {"type": "metadata", "success": False, "error": "Failed to generate SQL query", "timestamp": timestamp}
+                    return
+            else:
+                if self.conversation_history:
+                    last_exchange = self.conversation_history[-1]
+                    query_results = last_exchange.get('raw_results', {})
+                    if query_results.get('row_count', 0) == 0:
+                        sql_result = self.sql_executor.generate_sql(question)
+                        if sql_result.get('sql'):
+                            query_results = self.sql_executor.execute_sql(sql_result['sql'])
+                        else:
+                            yield {"type": "metadata", "success": False, "error": "Failed to generate SQL query", "timestamp": timestamp}
+                            return
+                    else:
+                        sql_result = {"sql": "-- Using cached results", "explanation": "Analyzing previous results"}
+                else:
+                    yield {"type": "metadata", "success": False, "error": "No previous results to analyze", "timestamp": timestamp}
+                    return
+            
+            if query_results.get('error'):
+                yield {"type": "metadata", "success": False, "error": query_results['error'], "sql": sql_result.get('sql'), "timestamp": timestamp}
+                return
+            
+            # AGENT 3: Insight Analyzer
+            print("📊 Agent 3: Insight Analyzer extracting insights...")
+            insights = self.insight_analyzer.analyze_results(question, query_results, intent_info)
+            
+            # Emit metadata (agents 1-3 results) before streaming
+            yield {
+                "type": "metadata",
+                "success": True,
+                "question": question,
+                "intent": intent_info,
+                "sql": sql_result.get('sql'),
+                "explanation": sql_result.get('explanation'),
+                "confidence": sql_result.get('confidence'),
+                "insights": insights.get('insights', {}),
+                "data": {
+                    "columns": query_results.get('columns', []),
+                    "rows": query_results.get('rows', [])
+                },
+                "timestamp": timestamp
+            }
+            
+            # AGENT 4: Response Formatter — STREAMING
+            print("✍️  Agent 4: Response Formatter streaming narrative...")
+            for chunk in self.response_formatter.format_response_stream(
+                question, insights, query_results, intent_info, self.last_formatter_response_id
+            ):
+                yield {"type": "delta", "content": chunk}
+            
+            # Retrieve streaming metadata
+            self.last_formatter_response_id = self.response_formatter._stream_response_id
+            formatter_tokens = self.response_formatter._stream_tokens
+            if formatter_tokens:
+                total_prompt_tokens += formatter_tokens['prompt_tokens']
+                total_completion_tokens += formatter_tokens['completion_tokens']
+                total_tokens += formatter_tokens['total_tokens']
+            
+            elapsed_time = time.time() - start_time
+            
+            # Store in conversation history
+            self.conversation_history.append({
+                "question": question,
+                "intent": intent_info['intent'],
+                "summary": insights.get('insights', {}).get('overview', ''),
+                "raw_results": query_results
+            })
+            if len(self.conversation_history) > 10:
+                self.conversation_history = self.conversation_history[-10:]
+            
+            # Emit done event
+            yield {
+                "type": "done",
+                "usage_stats": {
+                    "prompt_tokens": total_prompt_tokens,
+                    "completion_tokens": total_completion_tokens,
+                    "total_tokens": total_tokens
+                },
+                "elapsed_time": round(elapsed_time, 2)
+            }
+            
+            print(f"⏱️  Elapsed Time: {elapsed_time:.2f}s")
+            print("✅ Multi-agent streaming complete!\n")
+        
+        except Exception as e:
+            print(f"❌ Error in streaming pipeline: {str(e)}")
+            yield {"type": "metadata", "success": False, "error": f"Pipeline error: {str(e)}", "timestamp": timestamp}
