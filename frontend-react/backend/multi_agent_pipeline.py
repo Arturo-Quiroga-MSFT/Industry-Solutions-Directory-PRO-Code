@@ -68,11 +68,15 @@ class QueryPlanner:
 - needs_new_query = true IF:
   - Intent is "query" OR
   - No conversation history OR
-  - Previous results were empty (0 rows)
+  - Previous results were empty (0 rows) OR
+  - The new question has a DIFFERENT SCOPE than the previous query (e.g. asking about ALL solutions vs previous query filtered to a specific topic/industry)
 
-- needs_new_query = false IF:
+- needs_new_query = false ONLY IF:
   - Intent is "analyze" or "summarize" AND
-  - Previous results exist AND have data
+  - Previous results exist AND have data AND
+  - The user is explicitly asking to analyze/summarize THE SAME data that was just returned
+
+**CRITICAL**: A question like "How many solutions by industry?" requires ALL solutions, NOT a subset from a previous filtered query. When in doubt, set needs_new_query = true.
 
 **Output Format:**
 {{
@@ -86,10 +90,11 @@ class QueryPlanner:
         # Build input based on whether response chaining is available
         if previous_response_id and conversation_history:
             # Server provides full conversation context via chaining
-            # Add brief results note for data-availability decisions
+            # Include previous question AND row count so LLM can compare scope
             last = conversation_history[-1]
             row_count = last.get('raw_results', {}).get('row_count', 0)
-            user_prompt = f'Question: "{question}"\nPrevious query returned {row_count} rows.\n\nAnalyze the intent and routing strategy.'
+            prev_question = last.get('question', 'unknown')
+            user_prompt = f'Question: "{question}"\nPrevious question was: "{prev_question}" (returned {row_count} rows).\n\nAnalyze the intent and routing strategy.'
         else:
             # First turn or no chaining - use manual history context
             history_context = ""
@@ -136,6 +141,12 @@ class QueryPlanner:
             
             result = json.loads(response.output_text)
             result['_response_id'] = response.id
+            
+            # Safety net: intent "query" ALWAYS requires a new query
+            if result.get('intent') == 'query' and not result.get('needs_new_query'):
+                print(f"⚠️  QueryPlanner returned intent=query but needs_new_query=false — overriding to true")
+                result['needs_new_query'] = True
+            
             return result
         
         except Exception as e:
@@ -1011,7 +1022,15 @@ class MultiAgentPipeline:
                         "timestamp": timestamp
                     }
             
-            # Check for SQL execution errors
+            # Check for SQL execution errors — retry once on syntax errors
+            if query_results.get('error') and intent_info.get('needs_new_query'):
+                error_msg = str(query_results['error'])
+                if 'syntax' in error_msg.lower() or '42000' in error_msg:
+                    print("⚠️  SQL syntax error — regenerating query (retry 1/1)...")
+                    sql_result = self.sql_executor.generate_sql(question)
+                    if sql_result.get('sql') and isinstance(sql_result['sql'], str):
+                        query_results = self.sql_executor.execute_sql(sql_result['sql'])
+            
             if query_results.get('error'):
                 return {
                     "success": False,
@@ -1161,6 +1180,15 @@ class MultiAgentPipeline:
                 else:
                     yield {"type": "metadata", "success": False, "error": "No previous results to analyze", "timestamp": timestamp}
                     return
+            
+            # Retry once on SQL syntax errors
+            if query_results.get('error') and intent_info.get('needs_new_query'):
+                error_msg = str(query_results['error'])
+                if 'syntax' in error_msg.lower() or '42000' in error_msg:
+                    print("⚠️  SQL syntax error — regenerating query (retry 1/1)...")
+                    sql_result = self.sql_executor.generate_sql(question)
+                    if sql_result.get('sql') and isinstance(sql_result['sql'], str):
+                        query_results = self.sql_executor.execute_sql(sql_result['sql'])
             
             if query_results.get('error'):
                 yield {"type": "metadata", "success": False, "error": query_results['error'], "sql": sql_result.get('sql'), "timestamp": timestamp}
