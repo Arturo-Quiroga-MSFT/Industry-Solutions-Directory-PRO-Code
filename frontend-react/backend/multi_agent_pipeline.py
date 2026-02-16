@@ -10,7 +10,7 @@ import time
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from dotenv import load_dotenv
-from openai import AzureOpenAI
+from openai import OpenAI
 import sys
 
 # Add path for nl2sql_pipeline
@@ -23,7 +23,7 @@ load_dotenv()
 class QueryPlanner:
     """Agent 1: Analyzes user intent and routes to appropriate processing path"""
     
-    def __init__(self, llm_client: AzureOpenAI):
+    def __init__(self, llm_client: OpenAI):
         self.llm_client = llm_client
         self.deployment = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4o-mini")
     
@@ -121,7 +121,7 @@ Analyze the intent and routing strategy."""
 class InsightAnalyzer:
     """Agent 3: Analyzes query results to extract patterns, trends, and insights"""
     
-    def __init__(self, llm_client: AzureOpenAI):
+    def __init__(self, llm_client: OpenAI):
         self.llm_client = llm_client
         self.deployment = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4o-mini")
     
@@ -594,7 +594,7 @@ Respond with a JSON object using this exact structure:
 class ResponseFormatter:
     """Agent 4: Formats insights and data into compelling user-facing response"""
     
-    def __init__(self, llm_client: AzureOpenAI):
+    def __init__(self, llm_client: OpenAI):
         self.llm_client = llm_client
         self.deployment = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4o-mini")
     
@@ -709,11 +709,12 @@ class MultiAgentPipeline:
     
     def __init__(self):
         """Initialize all agents and dependencies"""
-        # Initialize Azure OpenAI client
-        self.llm_client = AzureOpenAI(
+        # Initialize OpenAI client per official Azure Responses API docs
+        # Uses OpenAI with base_url pointing to Azure resource's /openai/v1/ path
+        azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT", "").rstrip("/")
+        self.llm_client = OpenAI(
             api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-            api_version="2025-03-01-preview",
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
+            base_url=f"{azure_endpoint}/openai/v1/"
         )
         
         # Initialize agents

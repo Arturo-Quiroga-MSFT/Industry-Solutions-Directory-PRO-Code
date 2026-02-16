@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 from dotenv import load_dotenv
 import pyodbc
-from openai import AzureOpenAI
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
@@ -155,11 +155,11 @@ WHERE marketPlaceLink IS NOT NULL
 """
     
     def _init_llm_client(self):
-        """Initialize Azure OpenAI client."""
-        return AzureOpenAI(
+        """Initialize OpenAI client per official Azure Responses API docs."""
+        azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT", "").rstrip("/")
+        return OpenAI(
             api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-            api_version="2025-03-01-preview",
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
+            base_url=f"{azure_endpoint}/openai/v1/"
         )
     
     def _get_db_connection(self):
