@@ -2,43 +2,46 @@
 
 **Purpose**: Guide for demonstrating visualization capabilities in the Industry Solutions Directory chat applications
 
+> **Important**: In seller mode, the NL2SQL agent prefers returning individual solution rows over aggregates. To reliably trigger chart-generating queries, use phrases like **"counts only"**, **"just the totals"**, or **"summary counts"** in your question.
+
 ---
 
-## 📊 **Chart Queries** (Aggregation-Based)
+## 📊 **Chart Queries** (Proven Aggregation Queries)
 
-These queries use **COUNT, SUM, AVG, GROUP BY** and generate visualizations.
+These queries have been tested and confirmed to produce GROUP BY aggregation results that generate charts.
 
 ### **Distribution Questions:**
 ```
-"How many solutions are available by industry?"
-"Show me the distribution of cybersecurity solutions across different geographies"
-"What is the breakdown of AI solutions by partner organization?"
-"How many solutions are in each solution area?"
-"Count solutions by solution play"
-"Show me partner contribution statistics for healthcare solutions"
+"How many total solutions are there in each industry? Just give me the counts."
+"Count solutions by solution area — just the totals"
+"Show me a count of solutions by geography — totals only"
+"How many partners contribute solutions to each industry? Just partner counts per industry."
+"How many Healthcare solutions are there by solution area? Counts only."
+```
+
+### **Ranking Questions:**
+```
+"What are the top 10 partners by total number of solutions? Summary counts only."
+"Which 5 industries have the most Security solutions? Counts only."
 ```
 
 ### **Comparison Questions:**
 ```
-"Compare the number of cloud solutions across Canada, US, and Latin America"
-"Which industries have the most AI and machine learning solutions?"
-"What are the top 10 partners by solution count?"
-"Compare solution availability across different solution areas"
+"Compare solution counts across industries for AI Business Solutions vs Cloud and AI Platforms vs Security — totals only"
+"Compare the number of solutions across Canada, US, and Latin America — just counts"
 ```
 
-### **Statistical Questions:**
-```
-"What is the average number of solutions per partner?"
-"Show me solution counts grouped by industry and region"
-"What percentage of solutions are in each geography?"
-```
+### **Verified Results Reference:**
 
-### **Categorical Analysis:**
-```
-"Break down manufacturing solutions by solution play"
-"Group financial services solutions by partner and count"
-"Show solution distribution across healthcare subsectors"
-```
+| Query | Rows | Example Data |
+|-------|------|-------------|
+| Solutions by industry (counts) | 11 | Financial Services: 94, Healthcare: 85 |
+| Solutions by solution area | 3 | Cloud & AI: 319, AI Business: 145, Security: 124 |
+| Solutions by geography | 3 | US: 447, Canada: 334, Latin America: 204 |
+| Top 10 partners | 10 | RSM US LLP: 24, Neudesic: 16, EY: 15 |
+| Partners per industry | 11 | Financial Services: 66 partners, Healthcare: 60 |
+| Healthcare by solution area | 3 | Cloud & AI: 57, Security: 24, AI Business: 14 |
+| Industry × solution area cross-tab | 11 | Multi-column comparison |
 
 ---
 
@@ -75,30 +78,27 @@ These queries return **raw detailed data** about specific solutions.
 
 ## 🎯 **Demo Tips**
 
-### **Start with Table Queries:**
-1. Ask: **"Show me comprehensive cybersecurity and threat protection solutions"**
-   - Shows 50 detailed results
-   - Demonstrates narrative insights generation
-   - Shows partner citations (seller mode) vs generic insights (customer mode)
-   - Highlights mode differences
+### **Start with a Chart Query:**
+1. Ask: **"How many total solutions are there in each industry? Just give me the counts."**
+   - Generates bar/pie chart with 11 industry categories
+   - Shows Financial Services leading with 94 solutions
+   - Quick at-a-glance market overview
 
-### **Then Move to Chart Queries:**
-2. Ask: **"How many solutions are available by industry?"**
-   - Generates bar/pie chart
-   - Shows aggregated data
-   - Demonstrates visualization capabilities
-   - Quick at-a-glance insights
+### **Then Show a Table Query:**
+2. Ask: **"Show me comprehensive cybersecurity and threat protection solutions"**
+   - Shows 50 detailed results with full solution descriptions
+   - Demonstrates narrative insights with citations
+   - Web Sources section appears (seller mode) with real-time partner news
 
-3. Ask: **"What are the top 10 partners by solution count?"**
-   - Generates ranking visualization
-   - Shows competitive landscape (seller mode)
-   - May show generic distribution (customer mode)
+### **Ranking Visualization:**
+3. Ask: **"What are the top 10 partners by total number of solutions? Summary counts only."**
+   - Generates partner ranking chart
+   - Shows RSM US LLP, Neudesic, EY as top contributors
 
-### **Comparison Demo:**
-4. Ask: **"Compare cloud solutions across Canada, US, and Latin America"**
-   - Multi-category comparison chart
-   - Geographic distribution visualization
-   - Shows regional coverage
+### **Multi-Category Comparison:**
+4. Ask: **"Compare solution counts across industries for AI Business Solutions vs Cloud and AI Platforms vs Security — totals only"**
+   - Generates grouped/stacked chart with 3 categories × 11 industries
+   - Great for showing technology distribution patterns
 
 ---
 
@@ -113,11 +113,12 @@ These queries return **raw detailed data** about specific solutions.
 
 ## 🎬 **Recommended Demo Flow**
 
-1. **Start with Detail Query** → Show narrative insights and partner recommendations (seller mode)
-2. **Export Conversation** → Demonstrate JSON/Markdown/HTML export
-3. **Switch to Aggregation** → Show chart generation with industry breakdown
-4. **Compare Modes** → Open both seller and customer URLs side-by-side
-5. **Show Follow-ups** → Use suggested questions to continue conversation
+1. **Chart Query** → `"How many total solutions are there in each industry? Just give me the counts."` — shows chart generation
+2. **Table Query** → `"Show me AI-powered solutions in Retail — any recent partnerships or product launches?"` — shows detailed table + web search sources
+3. **Ranking Chart** → `"What are the top 10 partners by total number of solutions? Summary counts only."` — shows partner landscape
+4. **Export** → Demonstrate JSON/Markdown/HTML export of conversation
+5. **Follow-ups** → Click suggested follow-up questions to continue the conversation
+6. **Compare Modes** → Open seller and customer URLs side-by-side to show different perspectives
 
 ---
 
