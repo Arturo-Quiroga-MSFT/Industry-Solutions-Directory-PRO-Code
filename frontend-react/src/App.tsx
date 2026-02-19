@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Loader2, Download, Trash2, Database, Shield, MessageSquare } from 'lucide-react';
 import Message from './components/Message';
-import type { ChatMessage, ExampleCategory } from './types';
-import { executeQuery, getExampleQuestions, exportConversation } from './api';
+import type { ChatMessage, ExampleCategory, QueryResult } from './types';
+import { executeQueryStream, getExampleQuestions, exportConversation } from './api';
 import './App.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -11,6 +11,7 @@ function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [streamingStatus, setStreamingStatus] = useState<string>('');
   const [examples, setExamples] = useState<ExampleCategory>({});
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [appMode, setAppMode] = useState<string>('seller');
@@ -38,7 +39,7 @@ function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSubmit = async (question: string) => {
+  const handleSubmit = useCallback(async (question: string) => {
     if (!question.trim() || isLoading) return;
 
     const userMessage: ChatMessage = {
@@ -48,45 +49,162 @@ function App() {
       timestamp: new Date().toISOString(),
     };
 
+    const assistantId = (Date.now() + 1).toString();
+
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    setStreamingStatus('Connecting...');
+
+    // Create the initial assistant message placeholder
+    const initialAssistantMessage: ChatMessage = {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString(),
+      isStreaming: true,
+    };
+    setMessages(prev => [...prev, initialAssistantMessage]);
+
+    // Accumulate narrative text for final data
+    let narrativeAccumulator = '';
+    let metadataResult: Partial<QueryResult> = {};
 
     try {
-      const result = await executeQuery(question);
-
-      const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: result.needs_clarification
-          ? 'I need clarification to provide the best results'
-          : result.success
-          ? `Found ${result.row_count} results`
-          : `Error: ${result.error}`,
-        timestamp: new Date().toISOString(),
-        data: result,
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        timestamp: new Date().toISOString(),
-        data: {
-          success: false,
-          question,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          row_count: 0,
-          timestamp: new Date().toISOString(),
+      await executeQueryStream(question, {
+        onStatus: (phase, message) => {
+          setStreamingStatus(message);
+          // Update assistant message with phase info
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId ? { ...m, content: message, streamingPhase: phase } : m
+          ));
         },
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
+        onMetadata: (event) => {
+          if (!event.success) {
+            setMessages(prev => prev.map(m =>
+              m.id === assistantId ? {
+                ...m,
+                content: `Error: ${event.error}`,
+                isStreaming: false,
+                data: {
+                  success: false,
+                  question,
+                  error: event.error as string,
+                  row_count: 0,
+                  timestamp: new Date().toISOString(),
+                },
+              } : m
+            ));
+            setIsLoading(false);
+            setStreamingStatus('');
+            return;
+          }
+          // Store metadata and show table/data immediately
+          metadataResult = {
+            success: true,
+            question,
+            intent: event.intent,
+            sql: event.sql as string | undefined,
+            explanation: event.explanation as string | undefined,
+            confidence: event.confidence as string | undefined,
+            insights: event.insights as QueryResult['insights'],
+            columns: event.data?.columns,
+            rows: event.data?.rows,
+            row_count: event.row_count ?? event.data?.rows?.length ?? 0,
+            needs_clarification: event.needs_clarification,
+            clarification_question: event.clarification_question,
+            suggested_refinements: event.suggested_refinements,
+            timestamp: event.timestamp || new Date().toISOString(),
+          };
+          setStreamingStatus('Writing response...');
+          const rowCount = metadataResult.row_count ?? 0;
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId ? {
+              ...m,
+              content: metadataResult.needs_clarification
+                ? 'I need clarification to provide the best results'
+                : `Found ${rowCount} results`,
+              data: metadataResult as QueryResult,
+              isStreaming: true,
+              streamingPhase: 'writing',
+            } : m
+          ));
+        },
+        onDelta: (content) => {
+          narrativeAccumulator += content;
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId ? {
+              ...m,
+              data: {
+                ...m.data!,
+                narrative: narrativeAccumulator,
+              },
+            } : m
+          ));
+        },
+        onDone: (doneData) => {
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId ? {
+              ...m,
+              isStreaming: false,
+              streamingPhase: undefined,
+              data: {
+                ...m.data!,
+                narrative: narrativeAccumulator,
+                web_sources: doneData.web_sources,
+                usage_stats: doneData.usage_stats,
+                elapsed_time: doneData.elapsed_time,
+              },
+            } : m
+          ));
+          setIsLoading(false);
+          setStreamingStatus('');
+        },
+        onError: (error) => {
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId ? {
+              ...m,
+              content: `Error: ${error}`,
+              isStreaming: false,
+              data: {
+                success: false,
+                question,
+                error,
+                row_count: 0,
+                timestamp: new Date().toISOString(),
+              },
+            } : m
+          ));
+          setIsLoading(false);
+          setStreamingStatus('');
+        },
+      });
+
+      // If stream ended without a done event, finalize
       setIsLoading(false);
+      setStreamingStatus('');
+      setMessages(prev => prev.map(m =>
+        m.id === assistantId && m.isStreaming ? { ...m, isStreaming: false } : m
+      ));
+    } catch (error) {
+      setMessages(prev => prev.map(m =>
+        m.id === assistantId ? {
+          ...m,
+          content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          isStreaming: false,
+          data: {
+            success: false,
+            question,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            row_count: 0,
+            timestamp: new Date().toISOString(),
+          },
+        } : m
+      ));
+      setIsLoading(false);
+      setStreamingStatus('');
     }
-  };
+  }, [isLoading]);
 
   const handleExampleClick = (question: string) => {
     handleSubmit(question);
@@ -558,7 +676,7 @@ function App() {
                   {isLoading ? (
                     <>
                       <Loader2 size={20} className="animate-spin" />
-                      Processing...
+                      {streamingStatus || 'Processing...'}
                     </>
                   ) : (
                     <>

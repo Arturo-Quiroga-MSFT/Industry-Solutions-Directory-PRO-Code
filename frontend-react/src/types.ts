@@ -4,6 +4,8 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   data?: QueryResult;
+  isStreaming?: boolean;
+  streamingPhase?: string;
 }
 
 export interface Citation {
