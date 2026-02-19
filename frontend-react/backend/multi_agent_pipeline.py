@@ -993,16 +993,26 @@ class MultiAgentPipeline:
         
         try:
             # AGENT 1: Query Planner - Analyze intent
-            print("🧠 Agent 1: Query Planner analyzing intent...")
-            intent_info = self.query_planner.analyze_intent(question, self.conversation_history, self.last_planner_response_id)
-            self.last_planner_response_id = intent_info.pop('_response_id', None)
-            
-            # Track tokens from Agent 1
-            if '_tokens' in intent_info:
-                tokens = intent_info.pop('_tokens')
-                total_prompt_tokens += tokens['prompt_tokens']
-                total_completion_tokens += tokens['completion_tokens']
-                total_tokens += tokens['total_tokens']
+            # Skip on first message — always needs a new query, saves 2-4s LLM call
+            if not self.conversation_history:
+                print("🧠 Agent 1: Query Planner SKIPPED (first message — defaulting to new query)")
+                intent_info = {
+                    "intent": "query",
+                    "needs_new_query": True,
+                    "query_type": "specific",
+                    "reasoning": "First message in conversation — new query required"
+                }
+            else:
+                print("🧠 Agent 1: Query Planner analyzing intent...")
+                intent_info = self.query_planner.analyze_intent(question, self.conversation_history, self.last_planner_response_id)
+                self.last_planner_response_id = intent_info.pop('_response_id', None)
+                
+                # Track tokens from Agent 1
+                if '_tokens' in intent_info:
+                    tokens = intent_info.pop('_tokens')
+                    total_prompt_tokens += tokens['prompt_tokens']
+                    total_completion_tokens += tokens['completion_tokens']
+                    total_tokens += tokens['total_tokens']
             print(f"   Intent: {intent_info['intent']}, New Query: {intent_info['needs_new_query']}")
             
             # AGENT 2: SQL Executor - Execute query if needed
@@ -1209,9 +1219,20 @@ class MultiAgentPipeline:
         
         try:
             # AGENT 1: Query Planner
-            print("🧠 Agent 1: Query Planner analyzing intent...")
-            intent_info = self.query_planner.analyze_intent(question, self.conversation_history, self.last_planner_response_id)
-            self.last_planner_response_id = intent_info.pop('_response_id', None)
+            # Skip on first message — always needs a new query, saves 2-4s LLM call
+            if not self.conversation_history:
+                print("🧠 Agent 1: Query Planner SKIPPED (first message — defaulting to new query)")
+                intent_info = {
+                    "intent": "query",
+                    "needs_new_query": True,
+                    "query_type": "specific",
+                    "reasoning": "First message in conversation — new query required"
+                }
+            else:
+                yield {"type": "status", "phase": "planning", "message": "Analyzing your question..."}
+                print("🧠 Agent 1: Query Planner analyzing intent...")
+                intent_info = self.query_planner.analyze_intent(question, self.conversation_history, self.last_planner_response_id)
+                self.last_planner_response_id = intent_info.pop('_response_id', None)
             print(f"   Intent: {intent_info['intent']}, New Query: {intent_info['needs_new_query']}")
             
             # AGENT 2: SQL Executor
@@ -1219,6 +1240,7 @@ class MultiAgentPipeline:
             query_results = None
             
             if intent_info['needs_new_query']:
+                yield {"type": "status", "phase": "generating_sql", "message": "Generating SQL query..."}
                 print("🔍 Agent 2: SQL Executor generating query...")
                 sql_result = self.sql_executor.generate_sql(question)
                 
@@ -1234,6 +1256,7 @@ class MultiAgentPipeline:
                     return
                 
                 if sql_result.get('sql') and isinstance(sql_result['sql'], str):
+                    yield {"type": "status", "phase": "querying_database", "message": "Querying database..."}
                     query_results = self.sql_executor.execute_sql(sql_result['sql'])
                 else:
                     yield {"type": "metadata", "success": False, "error": "Failed to generate SQL query", "timestamp": timestamp}
@@ -1269,6 +1292,8 @@ class MultiAgentPipeline:
                 return
             
             # AGENT 3: Insight Analyzer
+            row_count = query_results.get('row_count', len(query_results.get('rows', [])))
+            yield {"type": "status", "phase": "analyzing", "message": f"Analyzing {row_count} results..."}
             print("📊 Agent 3: Insight Analyzer extracting insights...")
             insights = self.insight_analyzer.analyze_results(question, query_results, intent_info)
             
@@ -1290,6 +1315,7 @@ class MultiAgentPipeline:
             }
             
             # AGENT 4: Response Formatter — STREAMING
+            yield {"type": "status", "phase": "writing", "message": "Writing response..."}
             print("✍️  Agent 4: Response Formatter streaming narrative...")
             for chunk in self.response_formatter.format_response_stream(
                 question, insights, query_results, intent_info, self.last_formatter_response_id

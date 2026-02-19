@@ -1,5 +1,10 @@
 # Architecture Diagrams
 
+**Last Updated:** February 19, 2026
+**Architecture Version:** v3.0 — Multi-Agent NL2SQL Pipeline
+
+> ⚠️ **Note:** This document reflects the current production architecture. The previous RAG / Azure AI Search approach has been replaced by the NL2SQL multi-agent pipeline described here.
+
 This document contains visual representations of the Industry Solutions Chat Assistant architecture.
 
 ## System Architecture Overview
@@ -7,377 +12,345 @@ This document contains visual representations of the Industry Solutions Chat Ass
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        USER INTERFACE                            │
-│                   (Streamlit Web Application)                    │
+│              React 19 + TypeScript (Vite, Tailwind CSS)          │
 │                                                                  │
 │  Components:                                                     │
-│  • Chat input/output                                            │
-│  • Industry filter dropdown                                     │
-│  • Technology filter dropdown                                   │
-│  • Session history sidebar                                      │
-│  • Citation cards with relevance scores                         │
+│  • Chat input/output with SSE streaming                         │
+│  • Chart and Table tabs for data visualization                  │
+│  • Dual mode: Seller (internal) / Customer (external)           │
+│  • Conversation export (JSON, Markdown, HTML)                   │
+│  • URL-based mode switching (?mode=seller | ?mode=customer)     │
+│  • Follow-up question suggestions                               │
 └─────────────────────────┬───────────────────────────────────────┘
-                          │ HTTPS POST /api/chat
+                          │ POST /api/query/stream (SSE)
+                          │ POST /api/query (REST)
                           ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     BACKEND API (FastAPI)                        │
-│                Container: indsolsedevacr.azurecr.io/             │
-│                industry-solutions-backend:v2.8                   │
+│                 BACKEND API (FastAPI, Python 3.11+)              │
+│             Container: Azure Container Apps (Sweden Central)     │
 │                                                                  │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │ REST API Endpoints                                        │  │
-│  │ • POST /api/chat                                         │  │
-│  │ • GET /api/chat/history/{session_id}                     │  │
-│  │ • GET /api/facets                                        │  │
-│  │ • GET /api/health                                        │  │
+│  │ REST / SSE Endpoints                                      │  │
+│  │ • POST /api/query/stream  ← SSE streaming (primary)      │  │
+│  │ • POST /api/query         ← REST fallback                │  │
+│  │ • GET  /api/health                                       │  │
+│  │ • GET  /api/examples                                     │  │
+│  │ • POST /api/conversation/export                          │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │                                                                  │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │ Service Layer                                            │  │
+│  │ Multi-Agent Pipeline (multi_agent_pipeline.py)           │  │
 │  │                                                          │  │
-│  │  search_service.py                                       │  │
-│  │  ├─ hybrid_search() ──────────────────┐                 │  │
-│  │  ├─ semantic_hybrid_search()          │                 │  │
-│  │  ├─ get_facets()                      │                 │  │
-│  │  └─ _build_filter_expression()        │                 │  │
-│  │                                        │                 │  │
-│  │  openai_service.py                    │                 │  │
-│  │  ├─ generate_chat_response() ─────────┼────┐            │  │
-│  │  └─ format_context()                  │    │            │  │
-│  │                                        │    │            │  │
-│  │  cosmos_service.py                    │    │            │  │
-│  │  ├─ save_conversation() ──────────────┼────┼───┐        │  │
-│  │  ├─ get_conversation_history()        │    │   │        │  │
-│  │  └─ create_session()                  │    │   │        │  │
-│  └────────────────────────────────────────┼────┼───┼────────┘  │
-└───────────────────────────────────────────┼────┼───┼───────────┘
-                                            │    │   │
-                    ┌───────────────────────┘    │   │
-                    │    ┌───────────────────────┘   │
-                    │    │    ┌──────────────────────┘
-                    ▼    ▼    ▼
-         ┌──────────────────────────────────────────────────┐
-         │         AZURE AI SEARCH (Standard S1)             │
-         │         indsolse-dev-srch-okumlm                  │
-         │                                                   │
-         │  Index: partner-solutions-integrated             │
-         │  • 535 documents                                 │
-         │  • 3072-dimension vectors                        │
-         │                                                   │
-         │  ┌──────────────────────────────────────────┐   │
-         │  │ Integrated Vectorization                 │   │
-         │  │                                          │   │
-         │  │ Vectorizer: openai-vectorizer           │   │
-         │  │ • Model: text-embedding-3-large         │   │
-         │  │ • Deployment: text-embedding-3-large    │   │
-         │  │ • Auth: Managed Identity                │   │
-         │  │                                          │   │
-         │  │ When query arrives:                     │   │
-         │  │ 1. Automatically vectorize query text   │   │
-         │  │ 2. Perform hybrid search (vector+BM25)  │   │
-         │  │ 3. Apply OData filters                  │   │
-         │  │ 4. Return top K results                 │   │
-         │  └──────────────────────────────────────────┘   │
-         │         ▲                                         │
-         │         │ Managed Identity                       │
-         │         │ Authentication                          │
-         └─────────┼─────────────────────────────────────────┘
-                   │
-         ┌─────────▼─────────────────────────────────────────┐
-         │      AZURE OPENAI (GPT-4.1-mini)                  │
-         │      indsolse-dev-ai-okumlm                       │
-         │                                                   │
-         │  Deployments:                                     │
-         │  • gpt-4.1-mini (chat completions)               │
-         │  • text-embedding-3-large (for indexing)         │
-         │                                                   │
-         │  Used by:                                         │
-         │  1. Search vectorizer (automatic)                 │
-         │  2. Chat completions (backend API)                │
-         └───────────────────────────────────────────────────┘
+│  │  Agent 1: QueryPlanner (gpt-4.1)                        │  │
+│  │  ├─ analyze_intent()  — classifies user intent          │  │
+│  │  └─ Responses API · JSON Schema strict output           │  │
+│  │                          │                              │  │
+│  │  Agent 2: NL2SQL (gpt-5.2, low reasoning)              │  │
+│  │  ├─ generate_sql()    — NL → SQL with phrase precision  │  │
+│  │  ├─ execute_sql()     — pyodbc, READ-ONLY               │  │
+│  │  └─ Responses API · JSON Schema strict output           │  │
+│  │                          │                              │  │
+│  │  Agent 3: InsightAnalyzer (gpt-4.1)                    │  │
+│  │  ├─ analyze_results() — patterns, stats, citations      │  │
+│  │  └─ Dual mode: seller (partner names) / customer mode  │  │
+│  │                          │                              │  │
+│  │  Agent 4: ResponseFormatter (gpt-4.1)                  │  │
+│  │  ├─ format_response_stream() — SSE token-by-token       │  │
+│  │  └─ Seller mode: web_search_preview tool enabled        │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└───────────────────────┬─────────────────────┬───────────────────┘
+                        │                     │
+                        ▼                     ▼
+         ┌──────────────────────┐   ┌──────────────────────────┐
+         │  AZURE OPENAI        │   │  SQL SERVER (Production)  │
+         │  (Responses API)     │   │  mssoldir-prd-sql         │
+         │                      │   │                           │
+         │  gpt-4.1             │   │  View:                    │
+         │  • Query Planner     │   │  dbo.vw_ISDSolution_All   │
+         │  • Insight Analyzer  │   │  • ~5,100+ solutions      │
+         │  • Resp. Formatter   │   │  • 174 partners           │
+         │                      │   │  • 10 industries          │
+         │  gpt-5.2 (reasoning) │   │  • 3 solution areas       │
+         │  • NL2SQL Executor   │   │  READ-ONLY via pyodbc     │
+         │                      │   │  4-layer SQL validation   │
+         │  web_search_preview  │   │                           │
+         │  (Seller mode only)  │   │                           │
+         └──────────────────────┘   └──────────────────────────┘
 
          ┌───────────────────────────────────────────────────┐
          │      AZURE COSMOS DB (NoSQL Serverless)           │
-         │      indsolse-dev-db-okumlm                       │
-         │                                                   │
-         │  Database: industry-solutions-db                  │
-         │  Container: chat-sessions                         │
-         │  • Partition Key: sessionId                       │
-         │  • TTL: 90 days                                   │
+         │      Database: industry-solutions-db              │
+         │      Container: chat-sessions                     │
+         │      • Partition Key: sessionId                   │
+         │      • TTL: 90 days                               │
          │                                                   │
          │  Stores:                                          │
-         │  • Conversation history                           │
-         │  • User messages                                  │
-         │  • Assistant responses                            │
-         │  • Citations                                      │
+         │  • Full conversation history                      │
+         │  • User messages + assistant responses            │
+         │  • Response IDs (Responses API chaining)         │
          │  • Session metadata                               │
          └───────────────────────────────────────────────────┘
 ```
 
-## Data Flow - Chat Request
+---
+
+## Data Flow — Chat Request (Streaming)
 
 ```
 ┌────────┐
 │  USER  │
 └────┬───┘
-     │ 1. Sends message: "What healthcare AI solutions are available?"
+     │ 1. Sends question: "What partners offer healthcare AI solutions?"
      ▼
-┌─────────────────────┐
-│  STREAMLIT FRONTEND │
-│  indsolse-dev-      │
-│  frontend-vnet      │
-└──────┬──────────────┘
-       │ 2. POST /api/chat
-       │    {
-       │      "message": "What healthcare AI solutions...",
-       │      "conversation_id": "uuid",
-       │      "filters": {"industries": ["Healthcare"]}
-       │    }
+┌──────────────────────────────────────────────────────┐
+│  REACT 19 FRONTEND                                   │
+│  (Seller or Customer mode)                           │
+└──────┬───────────────────────────────────────────────┘
+       │ 2. POST /api/query/stream
+       │    { "question": "...", "conversation_id": "uuid" }
        ▼
 ┌──────────────────────────────────────────────────────┐
-│  BACKEND API (search_service.py)                     │
+│  FASTAPI BACKEND                                     │
 │                                                       │
-│  3. Build REST API request:                          │
-│     {                                                 │
-│       "search": "healthcare AI solutions",           │
-│       "vectorQueries": [{                            │
-│         "kind": "text",  ← Integrated vectorization  │
-│         "text": "healthcare AI solutions",           │
-│         "fields": "content_vector",                  │
-│         "k": 3                                        │
-│       }],                                             │
-│       "filter": "search.ismatch('Healthcare',...)",  │
-│       "top": 3                                        │
-│     }                                                 │
-│                                                       │
-│  4. Send REST API call:                              │
-│     POST https://...search.windows.net/indexes/      │
-│          partner-solutions-integrated/docs/search    │
-│          ?api-version=2024-07-01                     │
-│     Headers: Authorization: Bearer <token>           │
+│  3. Load conversation history from Cosmos DB         │
+│     (previous_response_ids for Responses API chain)  │
 └──────┬───────────────────────────────────────────────┘
        │
        ▼
 ┌──────────────────────────────────────────────────────┐
-│  AZURE AI SEARCH                                     │
+│  AGENT 1: Query Planner (gpt-4.1)                    │
+│  Responses API — JSON Schema strict output            │
 │                                                       │
-│  5. Integrated vectorizer:                           │
-│     • Calls Azure OpenAI text-embedding-3-large     │
-│     • Generates 3072-dim vector for query           │
-│     • Uses managed identity (no API key)            │
+│  4. Classify intent:                                 │
+│     {                                                 │
+│       "intent": "query",                             │
+│       "needs_new_query": true,                       │
+│       "query_type": "specific",                      │
+│       "reasoning": "User requesting new data"        │
+│     }                                                 │
 │                                                       │
-│  6. Hybrid search:                                   │
-│     • Vector search (semantic similarity)           │
-│     • BM25 keyword search                            │
-│     • Apply filter: industries = Healthcare         │
+│  NOTE: Skipped on first turn (always new query)      │
+└──────┬───────────────────────────────────────────────┘
+       │ → SSE: { "type": "status", "phase": "planning" }
+       ▼
+┌──────────────────────────────────────────────────────┐
+│  AGENT 2: NL2SQL Executor (gpt-5.2, low reasoning)  │
+│  Responses API — JSON Schema strict output            │
 │                                                       │
-│  7. Returns results:                                 │
+│  5. Generate SQL with phrase precision rules:        │
+│     SELECT DISTINCT v.solutionName, v.orgName,       │
+│       v.industryName, v.solutionAreaName             │
+│     FROM dbo.vw_ISDSolution_All AS v                │
+│     WHERE v.solutionStatus = 'Approved'             │
+│       AND (COALESCE(v.industryName,'')              │
+│             LIKE '%healthcare%')                     │
+│       AND (COALESCE(v.solutionAreaName,'')          │
+│             LIKE '%AI%'                              │
+│          OR COALESCE(v.solutionPlayName,'')         │
+│             LIKE '%artificial intelligence%')        │
+│     ORDER BY v.orgName                               │
+│                                                       │
+│  6. Validate SQL (4 layers: syntax, read-only,       │
+│     injection, schema) then execute via pyodbc       │
+└──────┬───────────────────────────────────────────────┘
+       │ → SSE: { "type": "status", "phase": "querying_database" }
+       ▼
+┌──────────────────────────────────────────────────────┐
+│  SQL SERVER (mssoldir-prd-sql)                        │
+│  dbo.vw_ISDSolution_All — READ-ONLY                  │
+│                                                       │
+│  7. Returns result rows:                             │
 │     [                                                 │
-│       {                                               │
-│         "solution_name": "Lightbeam Health...",      │
-│         "partner_name": "Lightbeam Health...",       │
-│         "@search.score": 0.0167,                     │
-│         "description": "AI-powered population..."    │
-│       },                                              │
-│       {                                               │
-│         "solution_name": "Andor Health",             │
-│         "@search.score": 0.0159,                     │
-│         ...                                           │
-│       }                                               │
+│       { solutionName: "...", orgName: "...",         │
+│         industryName: "Healthcare", score: null },   │
+│       ...                                             │
 │     ]                                                 │
 └──────┬───────────────────────────────────────────────┘
        │
        ▼
 ┌──────────────────────────────────────────────────────┐
-│  BACKEND API (openai_service.py)                     │
+│  AGENT 3: Insight Analyzer (gpt-4.1)                 │
 │                                                       │
-│  8. Build LLM prompt:                                │
-│     System: "You are an expert assistant..."         │
-│     Context: [Search results with descriptions]      │
-│     User: "What healthcare AI solutions..."          │
+│  8. Compute statistics (partners, industries,        │
+│     solution areas) from result set                  │
 │                                                       │
-│  9. Call Azure OpenAI:                               │
-│     POST https://...openai.azure.com/openai/         │
-│          deployments/gpt-4.1-mini/chat/completions   │
+│  9. Generate structured insights JSON:               │
 │     {                                                 │
-│       "messages": [                                   │
-│         {"role": "system", "content": "..."},        │
-│         {"role": "user", "content": "..."}           │
-│       ],                                              │
-│       "temperature": 0.7                              │
+│       "overview": "...",                             │
+│       "key_findings": [...],                         │
+│       "patterns": [...],                             │
+│       "statistics": { "top_partners": {...} },       │
+│       "follow_up_questions": [...],                  │
+│       "citations": [...]                             │
 │     }                                                 │
 │                                                       │
-│  10. GPT-4.1-mini generates response:                │
-│      "Here's a summary of healthcare AI solutions    │
-│       available:\n\n### 1. Lightbeam Health..."      │
+│  CUSTOMER MODE: removes orgName / partner rankings   │
+│  SELLER MODE:   includes partner names & rankings    │
+└──────┬───────────────────────────────────────────────┘
+       │ → SSE: { "type": "metadata", insights: {...}, data: {...} }
+       ▼
+┌──────────────────────────────────────────────────────┐
+│  AGENT 4: Response Formatter (gpt-4.1)               │
+│                                                       │
+│  10. Stream executive narrative token-by-token       │
+│      SELLER MODE: web_search_preview tool active     │
+│      → enriches narrative with real-world news       │
+│                                                       │
+│  11. Yields SSE delta chunks:                        │
+│      { "type": "delta", "content": "The healthcare " }
+│      { "type": "delta", "content": "AI landscape..." }
+│      ...                                              │
+│      { "type": "done",                               │
+│        "web_sources": [...],                         │
+│        "usage_stats": {...},                         │
+│        "elapsed_time": 26.4 }                        │
 └──────┬───────────────────────────────────────────────┘
        │
        ▼
 ┌──────────────────────────────────────────────────────┐
-│  BACKEND API (cosmos_service.py)                     │
+│  FASTAPI BACKEND                                     │
 │                                                       │
-│  11. Save to Cosmos DB:                              │
-│      {                                                │
-│        "sessionId": "uuid",                          │
-│        "messages": [                                  │
-│          {                                            │
-│            "role": "user",                           │
-│            "content": "What healthcare AI...",       │
-│            "timestamp": "2025-11-08T17:47:00Z"       │
-│          },                                           │
-│          {                                            │
-│            "role": "assistant",                      │
-│            "content": "Here's a summary...",         │
-│            "citations": [...],                       │
-│            "timestamp": "2025-11-08T17:47:03Z"       │
-│          }                                            │
-│        ]                                              │
-│      }                                                │
+│  12. Save conversation to Cosmos DB                  │
+│      (question, intent, summary, raw_results,        │
+│       last_response_id for chaining)                 │
 └──────┬───────────────────────────────────────────────┘
        │
        ▼
-┌──────────────────────────────────────────────────────┐
-│  BACKEND API Response                                │
-│                                                       │
-│  12. Return to frontend:                             │
-│      {                                                │
-│        "response": "Here's a summary of healthcare   │
-│                     AI solutions...",                 │
-│        "session_id": "uuid",                         │
-│        "citations": [                                 │
-│          {                                            │
-│            "solution_name": "Lightbeam Health...",   │
-│            "partner_name": "Lightbeam Health...",    │
-│            "relevance_score": 0.0167,                │
-│            "url": "https://solutions.microsoft..."   │
-│          }                                            │
-│        ],                                             │
-│        "follow_up_questions": [...]                  │
-│      }                                                │
-└──────┬───────────────────────────────────────────────┘
-       │
-       ▼
-┌─────────────────────┐
-│  STREAMLIT FRONTEND │
-│                     │
-│  13. Display:       │
-│  • AI response      │
-│  • Citation cards   │
-│  • Follow-ups       │
-└──────┬──────────────┘
+┌─────────────────────────────────────────────────────┐
+│  REACT 19 FRONTEND                                  │
+│                                                      │
+│  13. Render streaming narrative in chat bubble      │
+│      Display data table + charts in tabbed view     │
+│      Show follow-up suggestion chips                │
+│      Show web source citations (seller mode)        │
+└──────┬──────────────────────────────────────────────┘
        │
        ▼
 ┌────────┐
-│  USER  │ Sees results!
+│  USER  │  Sees a streaming executive narrative + data!
 └────────┘
 ```
 
-## REST API vs SDK Comparison
+---
 
-### Before v2.8 (Failed)
-
-```
-┌──────────────────────┐
-│  Backend API         │
-│                      │
-│  azure-search-       │
-│  documents SDK       │
-│  v11.6.0             │
-└──────┬───────────────┘
-       │ VectorizableTextQuery
-       │ (uses older API version)
-       ▼
-┌──────────────────────┐
-│  Azure AI Search     │
-│                      │
-│  Error: "Field       │
-│  'content_vector'    │
-│  does not have a     │
-│  vectorizer defined" │
-└──────────────────────┘
-```
-
-### After v2.8 (Success)
+## Multi-Agent Pipeline Detail
 
 ```
-┌──────────────────────┐
-│  Backend API         │
-│                      │
-│  httpx + REST API    │
-│  api-version=        │
-│  2024-07-01          │
-└──────┬───────────────┘
-       │ Direct REST call:
-       │ {
-       │   "vectorQueries": [{
-       │     "kind": "text",
-       │     "text": "query",
-       │     ...
-       │   }]
-       │ }
-       ▼
-┌──────────────────────┐
-│  Azure AI Search     │
-│                      │
-│  ✅ Integrated       │
-│  vectorization       │
-│  working             │
-└──────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                   MULTI-AGENT PIPELINE                           │
+│              (multi_agent_pipeline.py)                           │
+│                                                                  │
+│                                                                  │
+│   Question ──────────────────────────────────────────────────┐  │
+│                                                               │  │
+│   ┌───────────────────────────────────────────────────────┐  │  │
+│   │  Agent 1: Query Planner                               │  │  │
+│   │  Model: gpt-4.1 (Responses API)                       │  │  │
+│   │                                                       │  │  │
+│   │  Input:  question + conversation history              │  │  │
+│   │  Output: { intent, needs_new_query, query_type }      │  │  │
+│   │                                                       │  │  │
+│   │  Key logic:                                           │  │  │
+│   │  • ALWAYS skipped on first turn (saves ~3s)           │  │  │
+│   │  • intent=query ALWAYS forces needs_new_query=true    │  │  │
+│   │  • previous_response_id chaining across turns         │  │  │
+│   └───────────────────────────────────────────────────────┘  │  │
+│                          │ intent info                          │  │
+│                          ▼                                      │  │
+│   ┌───────────────────────────────────────────────────────┐  │  │
+│   │  Agent 2: NL2SQL Executor                             │  │  │
+│   │  Model: gpt-5.2 (low reasoning, Responses API)        │  │  │
+│   │                                                       │  │  │
+│   │  Input:  user question + schema context               │  │  │
+│   │  Output: validated SQL query                          │  │  │
+│   │                                                       │  │  │
+│   │  SQL Quality features (gpt-5.2 reasoning):            │  │  │
+│   │  • Phrase precision (keeps "campus management"        │  │  │
+│   │    as a phrase, not split into generic words)         │  │  │
+│   │  • Domain synonyms (AML → KYC, sanctions, etc.)       │  │  │
+│   │  • COALESCE() for NULL safety                         │  │  │
+│   │  • Syntax retry (1 auto-retry on SQL error)           │  │  │
+│   │  • 4-layer validation (syntax, read-only,             │  │  │
+│   │    injection, schema)                                 │  │  │
+│   │                                                       │  │  │
+│   │  Skipped when needs_new_query=false                   │  │  │
+│   │  (reuses cached results from previous turn)           │  │  │
+│   └───────────────────────────────────────────────────────┘  │  │
+│                          │ SQL execution via pyodbc             │  │
+│                          ▼                                      │  │
+│              ┌───────────────────────┐                         │  │
+│              │  SQL Server (prod)    │                         │  │
+│              │  dbo.vw_ISDSolution_All  READ-ONLY              │  │
+│              └───────────┬───────────┘                         │  │
+│                          │ result rows                          │  │
+│                          ▼                                      │  │
+│   ┌───────────────────────────────────────────────────────┐  │  │
+│   │  Agent 3: Insight Analyzer                            │  │  │
+│   │  Model: gpt-4.1 (Responses API)                       │  │  │
+│   │                                                       │  │  │
+│   │  Input:  raw result rows + columns                    │  │  │
+│   │  Output: structured insights JSON                     │  │  │
+│   │                                                       │  │  │
+│   │  Pre-computes statistics locally (partner counts,     │  │  │
+│   │  solution areas, industry distribution) before LLM   │  │  │
+│   │                                                       │  │  │
+│   │  SELLER mode:   includes partner names, rankings      │  │  │
+│   │  CUSTOMER mode: strips orgName, no rankings           │  │  │
+│   └───────────────────────────────────────────────────────┘  │  │
+│                          │ insights JSON                        │  │
+│                          ▼                                      │  │
+│   ┌───────────────────────────────────────────────────────┐  │  │
+│   │  Agent 4: Response Formatter                          │  │  │
+│   │  Model: gpt-4.1 (Responses API, stream=True)          │  │  │
+│   │                                                       │  │  │
+│   │  Input:  insights + original question                 │  │  │
+│   │  Output: executive narrative (markdown SSE stream)    │  │  │
+│   │                                                       │  │  │
+│   │  Structure: Executive Summary → Market Landscape →   │  │  │
+│   │             Key Discoveries → Strategic Insights →   │  │  │
+│   │             Next Steps                                │  │  │
+│   │                                                       │  │  │
+│   │  SELLER mode only: web_search_preview tool enabled   │  │  │
+│   │  → adds real-world partner news to narrative         │  │  │
+│   │  → streams web source citations in done event        │  │  │
+│   └───────────────────────────────────────────────────────┘  │  │
+│                                                               │  │
+└───────────────────────────────────────────────────────────────┘  │
 ```
 
-## Integrated Vectorization Flow
+---
+
+## Dual Mode Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Traditional Approach (Client-Side Embeddings)              │
-│                                                             │
-│  User Query                                                 │
-│      ↓                                                      │
-│  [1] Call Azure OpenAI Embeddings API                      │
-│      POST /deployments/text-embedding-3-large/embeddings   │
-│      Cost: ~$0.0001 per query                              │
-│      Time: ~100-200ms                                       │
-│      ↓                                                      │
-│  [2] Get 3072-dim vector                                   │
-│      ↓                                                      │
-│  [3] Call Azure AI Search with vector                      │
-│      POST /indexes/{index}/docs/search                     │
-│      Time: ~100-200ms                                       │
-│      ↓                                                      │
-│  [4] Get results                                           │
-│                                                             │
-│  Total Time: ~200-400ms                                    │
-│  Total Cost: $0.0001 per query                             │
-└─────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│                      DUAL MODE                                 │
+│          Controlled by APP_MODE environment variable          │
+└───────────────────┬───────────────────────┬───────────────────┘
+                    │                       │
+        ┌───────────▼───────┐   ┌───────────▼───────────┐
+        │   SELLER MODE     │   │   CUSTOMER MODE        │
+        │  (Internal use)   │   │   (External / public)  │
+        │                   │   │                        │
+        │  • Partner names  │   │  • No partner names    │
+        │  • Rankings       │   │  • No rankings         │
+        │  • Competitive    │   │  • Capability-focused  │
+        │    insights       │   │  • Vendor-neutral      │
+        │  • Web search     │   │  • No web search       │
+        │    enabled        │   │                        │
+        │  • "orgName" shown│   │  • "orgName" stripped  │
+        │    in data table  │   │    from results        │
+        │                   │   │                        │
+        │  URL:             │   │  URL:                  │
+        │  ?mode=seller     │   │  ?mode=customer        │
+        └───────────────────┘   └────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────┐
-│  Integrated Vectorization (v2.8)                           │
-│                                                             │
-│  User Query                                                 │
-│      ↓                                                      │
-│  [1] Call Azure AI Search with query TEXT                  │
-│      POST /indexes/{index}/docs/search                     │
-│      {                                                      │
-│        "vectorQueries": [{                                  │
-│          "kind": "text",  ← Search service handles this    │
-│          "text": "user query"                              │
-│        }]                                                   │
-│      }                                                      │
-│      │                                                      │
-│      └─→ Search service calls its vectorizer automatically │
-│          (uses managed identity, no client API key needed) │
-│      ↓                                                      │
-│  [2] Get results with vectors already computed             │
-│                                                             │
-│  Total Time: ~100-200ms (50% faster)                       │
-│  Total Cost: $0 for query embeddings                       │
-│                                                             │
-│  Benefits:                                                  │
-│  ✅ Reduced latency                                        │
-│  ✅ Lower cost                                             │
-│  ✅ Simpler code                                           │
-│  ✅ Fewer API dependencies                                 │
-└─────────────────────────────────────────────────────────────┘
+Teams Tab Apps (same backends, separate manifests):
+  • Seller Teams App  → seller mode frontend
+  • Customer Teams App → customer mode frontend
 ```
+
+---
 
 ## Deployment Architecture
 
@@ -387,58 +360,66 @@ This document contains visual representations of the Industry Solutions Chat Ass
 │  indsolsedevacr.azurecr.io                                 │
 │                                                             │
 │  Images:                                                    │
-│  • industry-solutions-backend:v2.8 ← Current               │
-│  • industry-solutions-backend:v2.7 (old)                   │
-│  • industry-solutions-frontend:latest                      │
+│  • isd-chat-backend:v3.0-responses-api    ← Current        │
+│  • isd-chat-seller-frontend:latest                         │
+│  • isd-chat-customer-frontend:latest                       │
+│  • isd-mcp-server:latest                                   │
+│  • isd-updatemon:latest                                    │
 └──────────────────────┬──────────────────────────────────────┘
                        │ Pull images
                        ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  Azure Container Apps Environment                           │
 │  Sweden Central Region                                      │
+│  kindfield-353d98ed.swedencentral.azurecontainerapps.io    │
 │                                                             │
-│  ┌───────────────────────────────────────────────────┐    │
-│  │  Virtual Network (VNet)                           │    │
-│  │  indsolse-dev-vnet                                │    │
-│  │                                                   │    │
-│  │  ┌─────────────────────────────────────────┐     │    │
-│  │  │  Container App: Backend                 │     │    │
-│  │  │  indsolse-dev-backend-v2-vnet          │     │    │
-│  │  │                                         │     │    │
-│  │  │  Image: backend:v2.8                   │     │    │
-│  │  │  Replicas: 1-3 (auto-scale)           │     │    │
-│  │  │  CPU: 0.5 cores                        │     │    │
-│  │  │  Memory: 1 GB                          │     │    │
-│  │  │  Port: 8000                            │     │    │
-│  │  │                                         │     │    │
-│  │  │  FQDN: indsolse-dev-backend-v2-vnet.  │     │    │
-│  │  │        icyplant-dd879251.swedencentral.│     │    │
-│  │  │        azurecontainerapps.io          │     │    │
-│  │  └─────────────────────────────────────────┘     │    │
-│  │                                                   │    │
-│  │  ┌─────────────────────────────────────────┐     │    │
-│  │  │  Container App: Frontend                │     │    │
-│  │  │  indsolse-dev-frontend-vnet            │     │    │
-│  │  │                                         │     │    │
-│  │  │  Image: frontend:latest                │     │    │
-│  │  │  Replicas: 1-2 (auto-scale)           │     │    │
-│  │  │  CPU: 0.5 cores                        │     │    │
-│  │  │  Memory: 1 GB                          │     │    │
-│  │  │  Port: 8501 (Streamlit)               │     │    │
-│  │  │                                         │     │    │
-│  │  │  FQDN: indsolse-dev-frontend-vnet.    │     │    │
-│  │  │        icyplant-dd879251.swedencentral.│     │    │
-│  │  │        azurecontainerapps.io          │     │    │
-│  │  └─────────────────────────────────────────┘     │    │
-│  └───────────────────────────────────────────────────┘    │
+│  ┌─────────────────────────────────────────────────────┐  │
+│  │  Container App: Backend                             │  │
+│  │  isd-chat-backend                                  │  │
+│  │  Image: isd-chat-backend:v3.0-responses-api        │  │
+│  │  Port: 8000  |  CPU: 1 core  |  Memory: 2 GB       │  │
+│  │  Env: APP_MODE (overridden per frontend)            │  │
+│  └─────────────────────────────────────────────────────┘  │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐  │
+│  │  Container App: Seller Frontend                     │  │
+│  │  isd-chat-seller-frontend                          │  │
+│  │  Image: isd-chat-seller-frontend:latest            │  │
+│  │  Port: 80  |  CPU: 0.5 cores  |  Memory: 1 GB      │  │
+│  │  FQDN: isd-chat-seller-frontend.kindfield-353d98ed │  │
+│  │        .swedencentral.azurecontainerapps.io        │  │
+│  └─────────────────────────────────────────────────────┘  │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐  │
+│  │  Container App: Customer Frontend                   │  │
+│  │  isd-chat-customer-frontend                        │  │
+│  │  Image: isd-chat-customer-frontend:latest          │  │
+│  │  Port: 80  |  CPU: 0.5 cores  |  Memory: 1 GB      │  │
+│  │  FQDN: isd-chat-customer-frontend.kindfield-353d98ed│  │
+│  │        .swedencentral.azurecontainerapps.io        │  │
+│  └─────────────────────────────────────────────────────┘  │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐  │
+│  │  Container App: MCP Server (separate component)     │  │
+│  │  isd-mcp-server                                    │  │
+│  │  For: VS Code, Claude Desktop, AI dev tools        │  │
+│  └─────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
+
+Supporting Azure Resources:
+  • Azure OpenAI  — gpt-4.1 + gpt-5.2 (Sweden Central)
+  • SQL Server    — mssoldir-prd-sql (existing ISD production DB)
+  • Cosmos DB     — Serverless, conversation history
+  • App Insights  — Monitoring and diagnostics
+  • Key Vault     — Secrets management
+  • VNet          — Network isolation
 ```
 
 ---
 
 **Legend**:
-- `→` : Synchronous API call
-- `⇢` : Asynchronous operation
+- `→` : Synchronous call
+- `⇢` : Asynchronous / streaming
 - `[n]` : Step number in sequence
-- `✅` : Success/Working
-- `❌` : Failed/Not working
+- `✅` : Success / active feature
+- `❌` : Deprecated / not used

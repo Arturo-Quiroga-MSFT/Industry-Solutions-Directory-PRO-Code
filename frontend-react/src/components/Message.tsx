@@ -1,9 +1,17 @@
 import type { ChatMessage } from '../types';
-import { User, Bot, Database, CheckCircle, XCircle, BarChart3, Table2, Lightbulb, BookOpen, ExternalLink, Globe } from 'lucide-react';
+import { User, Bot, Database, CheckCircle, XCircle, BarChart3, Table2, Lightbulb, BookOpen, ExternalLink, Globe, Loader2 } from 'lucide-react';
 import DataTable from './DataTable';
 import ChartViewer from './ChartViewer';
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+
+const PHASE_LABELS: Record<string, { icon: string; label: string }> = {
+  planning: { icon: '🧠', label: 'Analyzing your question...' },
+  generating_sql: { icon: '🔍', label: 'Generating SQL query...' },
+  querying_database: { icon: '🗄️', label: 'Querying database...' },
+  analyzing: { icon: '📊', label: 'Analyzing results...' },
+  writing: { icon: '✍️', label: 'Writing response...' },
+};
 
 // SQL formatter for better readability
 function formatSQL(sql: string): string {
@@ -57,6 +65,9 @@ export default function Message({ message, onFollowUpClick }: MessageProps) {
 
   // Assistant message
   const { data } = message;
+  const isStreaming = message.isStreaming;
+  const phase = message.streamingPhase;
+  const phaseInfo = phase ? PHASE_LABELS[phase] : null;
 
   return (
     <div className="flex gap-3 message-slide-in">
@@ -67,6 +78,16 @@ export default function Message({ message, onFollowUpClick }: MessageProps) {
       </div>
       <div className="flex-1">
         <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+          {/* Streaming status indicator */}
+          {isStreaming && phaseInfo && !data?.rows && (
+            <div className="flex items-center gap-3 text-blue-300 mb-3">
+              <Loader2 size={18} className="animate-spin" />
+              <span className="text-sm font-medium">
+                {phaseInfo.icon} {phaseInfo.label}
+              </span>
+            </div>
+          )}
+
           {data?.error ? (
             <div className="flex items-start gap-2 text-red-400">
               <XCircle size={20} className="flex-shrink-0 mt-0.5" />
@@ -189,6 +210,9 @@ export default function Message({ message, onFollowUpClick }: MessageProps) {
                     <div>
                       <div className="prose prose-invert max-w-none mb-6">
                         <ReactMarkdown>{data.narrative}</ReactMarkdown>
+                        {isStreaming && phase === 'writing' && (
+                          <span className="inline-block w-2 h-5 bg-blue-400 animate-pulse ml-1 align-text-bottom" />
+                        )}
                       </div>
                       
                       {/* Follow-up Questions */}
