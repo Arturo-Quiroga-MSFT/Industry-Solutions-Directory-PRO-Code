@@ -135,9 +135,10 @@ export default function Message({ message, onFollowUpClick }: MessageProps) {
             </div>
           ) : (
             <>
+              {(data?.row_count ?? 0) > 0 && (
               <div className="flex items-center gap-2 text-green-400 mb-3">
                 <CheckCircle size={20} />
-                <span className="font-medium">Found {data?.row_count || 0} results</span>
+                <span className="font-medium">Found {data?.row_count} results</span>
                 {data?.confidence && (
                   <span className={`ml-auto px-2 py-1 rounded text-xs ${
                     data.confidence === 'high' ? 'bg-green-900 text-green-200' :
@@ -148,6 +149,7 @@ export default function Message({ message, onFollowUpClick }: MessageProps) {
                   </span>
                 )}
               </div>
+              )}
 
               {data?.explanation && (
                 <p className="text-gray-300 text-sm mb-4">{data.explanation}</p>
