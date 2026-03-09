@@ -37,7 +37,7 @@ class NL2SQLPipeline:
         self.schema_context = self._load_schema_context()
         self._shared_client = llm_client  # OpenAI client from pipeline (uses responses API)
         self.llm_client = llm_client if llm_client else self._init_llm_client()
-        self.deployment = os.getenv("MODEL_NL2SQL", os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4.1"))
+        self.deployment = os.getenv("MODEL_NL2SQL", os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-5.4"))
         self.reasoning_effort = os.getenv("MODEL_NL2SQL_REASONING", "low")  # low, medium, high, or none
         self.query_history = []
         self.app_mode = os.getenv('APP_MODE', 'seller').lower()  # 'seller' or 'customer'
@@ -65,7 +65,7 @@ This view contains all solution data with related information already joined. Ea
 - logoFileLink (varchar) - Solution logo URL
 
 **Industry Classification:**
-- industryName (varchar) - Industry category (e.g., "Healthcare & Life Sciences", "Financial Services", "State & Local Government")
+- industryName (varchar) - Industry category (e.g., "Healthcare & Life Sciences", "Financial Services", "Defense & Intelligence", "Defense Industrial Base", "Government")
 - industryDescription (varchar) - HTML-formatted industry description
 - subIndustryName (varchar) - Sub-industry category
 - SubIndustryDescription (varchar) - Sub-industry description

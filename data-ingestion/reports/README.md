@@ -75,7 +75,7 @@ curl -s -X GET "https://indsolse-dev-srch-okumlm.search.windows.net/indexes/part
 
 - [Partner Statistics](../../docs/PARTNER_STATISTICS.md) - Detailed partner analysis
 - [Data Ingestion README](../README.md) - Main data ingestion documentation
-- [Integrated Vectorization](../integrated-vectorization/README.md) - Current production approach
+- [SQL-to-Search pipeline](../sql-to-search/README.md) - Current search index pipeline
 
 ---
 

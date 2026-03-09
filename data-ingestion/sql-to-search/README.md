@@ -18,7 +18,7 @@ This new pipeline connects **directly to the SQL database**, deduplicates the de
 │  SQL Server          │     │  Azure OpenAI        │     │  Azure AI Search         │
 │  mssoldir-prd-sql    │────▶│  r2d2-foundry-001    │────▶│  aq-mysearch001          │
 │  vw_ISDSolution_All  │     │  text-embedding-3-lg │     │  isd-solutions-v1        │
-│  (4,934 rows)        │     │  (3072 dimensions)   │     │  (448 documents)         │
+│  (5,617 rows)        │     │  (3072 dimensions)   │     │  (TBD after re-ingest)   │
 └──────────────────────┘     └──────────────────────┘     └──────────────────────────┘
 ```
 
@@ -60,9 +60,9 @@ python 03_verify_index.py
 | **Database**       | `mssoldir-prd`                             |
 | **User**           | `isdapi` (read-only)                       |
 | **View**           | `dbo.vw_ISDSolution_All`                   |
-| **Raw rows**       | 4,934 (denormalized, as of Feb 2026)       |
-| **Unique solutions** | 448 (after deduplication)                |
-| **Unique partners**  | ~174                                     |
+| **Raw rows**       | 5,617 (denormalized, as of Mar 2026)       |
+| **Unique solutions** | TBD (pending re-ingestion; view has 5,617 rows) |
+| **Unique partners**  | ~189                                     |
 
 ### Azure OpenAI
 
@@ -75,7 +75,7 @@ python 03_verify_index.py
 | **API version**    | `2025-04-01-preview`                       |
 
 **Why `text-embedding-3-large`?**  
-Both `text-embedding-3-large` and `text-embedding-3-small` are deployed on this resource. We chose `large` because it produces higher-quality embeddings (3,072 vs 1,536 dimensions) which means better search relevance. With only ~448 solutions, the cost difference is negligible.
+Both `text-embedding-3-large` and `text-embedding-3-small` are deployed on this resource. We chose `large` because it produces higher-quality embeddings (3,072 vs 1,536 dimensions) which means better search relevance.
 
 ### Azure AI Search
 
@@ -85,7 +85,7 @@ Both `text-embedding-3-large` and `text-embedding-3-small` are deployed on this 
 | **Endpoint**       | `https://aq-mysearch001.search.windows.net`|
 | **Index name**     | `isd-solutions-v1`                         |
 | **Auth**           | `DefaultAzureCredential` (az login)        |
-| **Document count** | 449 (448 solutions + 1 test doc)           |
+| **Document count** | TBD after re-ingestion (+ 1 test doc)      |
 
 > **Note**: The old search service `indsolse-dev-srch-okumlm.search.windows.net` was deleted. DNS resolution fails for it. All references to it in older config files are stale.
 
@@ -134,18 +134,21 @@ This is a **denormalized view** — each solution can appear 10–20+ times beca
 
 ### Key Data Distributions (as of Feb 2026)
 
-**By Industry** (448 unique solutions):
+**By Industry** (Mar 2026 — from SQL view, 5,617 total rows):
 | Industry                       | Solutions |
 |--------------------------------|-----------|
-| Financial Services             | 85        |
-| Healthcare & Life Sciences     | 74        |
-| Manufacturing & Mobility       | 62        |
-| (No industry set)              | 59        |
-| Retail & Consumer Goods        | 57        |
-| Education                      | 46        |
-| Energy & Resources             | 38        |
-| Government                     | 24        |
-| Defense Industrial Base        | 2         |
+| (NULL industryName)            | 2,614     |
+| Financial Services             | 748       |
+| Healthcare & Life Sciences     | 483       |
+| Retail & Consumer Goods        | 430       |
+| Manufacturing & Mobility       | 406       |
+| Energy & Resources             | 373       |
+| Education                      | 354       |
+| Government                     | 179       |
+| Telecommunications             | 12        |
+| Media & Entertainment          | 9         |
+| Defense & Intelligence         | 5         |
+| Defense Industrial Base        | 4         |
 
 **By Solution Area**:
 | Solution Area              | Solutions |
@@ -220,7 +223,7 @@ About partner: {partner_description}
 
 ## Deduplication Logic
 
-The SQL view `vw_ISDSolution_All` is heavily denormalized — 4,934 rows for 448 unique solutions. The ingestion script deduplicates by `solutionName`:
+The SQL view `vw_ISDSolution_All` is heavily denormalized — 5,617 rows as of March 2026. The ingestion script deduplicates by `solutionName`:
 
 - **Single-valued fields** (description, partner name, links): taken from the first row encountered
 - **Multi-valued fields** (industries, solution areas, geos, themes, sub-industries): collected into sets, then sorted and stored as arrays in `Collection(Edm.String)` fields
@@ -273,3 +276,5 @@ Uploaded:    448 succeeded, 0 failed
 Duration:    81.2 seconds
 Index docs:  449 (includes 1 test document)
 ```
+
+> **Note**: As of March 2026, the SQL view has grown to 5,617 rows (189 unique partners, 12 industries). Re-ingestion required to sync the search index.

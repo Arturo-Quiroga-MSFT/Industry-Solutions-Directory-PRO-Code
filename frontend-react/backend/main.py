@@ -274,6 +274,14 @@ async def get_example_questions():
     Get categorized example questions
     """
     examples = {
+        "Defense & Intelligence": [
+            "What AI and analytics solutions exist for defense intelligence and threat analysis?",
+            "Show me cybersecurity solutions for defense and intelligence organizations",
+            "What solutions support secure data sharing and classified information management?",
+            "Show me solutions for surveillance, reconnaissance, and situational awareness",
+            "What AI-powered solutions help with defense intelligence operations?",
+            "Show me solutions for command and control systems and mission management"
+        ],
         "Defense Industrial Base": [
             "What solutions support defense modernization and military readiness?",
             "Show me cybersecurity solutions for defense contractors and the defense industrial base",

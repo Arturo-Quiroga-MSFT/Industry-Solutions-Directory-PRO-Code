@@ -41,20 +41,20 @@ This document contains visual representations of the Industry Solutions Chat Ass
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │ Multi-Agent Pipeline (multi_agent_pipeline.py)           │  │
 │  │                                                          │  │
-│  │  Agent 1: QueryPlanner (gpt-4.1)                        │  │
+│  │  Agent 1: QueryPlanner (gpt-5.1, low reasoning)          │  │
 │  │  ├─ analyze_intent()  — classifies user intent          │  │
 │  │  └─ Responses API · JSON Schema strict output           │  │
 │  │                          │                              │  │
-│  │  Agent 2: NL2SQL (gpt-5.2, low reasoning)              │  │
+│  │  Agent 2: NL2SQL (gpt-5.4, low reasoning)              │  │
 │  │  ├─ generate_sql()    — NL → SQL with phrase precision  │  │
 │  │  ├─ execute_sql()     — pyodbc, READ-ONLY               │  │
 │  │  └─ Responses API · JSON Schema strict output           │  │
 │  │                          │                              │  │
-│  │  Agent 3: InsightAnalyzer (gpt-4.1)                    │  │
+│  │  Agent 3: InsightAnalyzer (gpt-5.1, low reasoning)      │  │
 │  │  ├─ analyze_results() — patterns, stats, citations      │  │
 │  │  └─ Dual mode: seller (partner names) / customer mode  │  │
 │  │                          │                              │  │
-│  │  Agent 4: ResponseFormatter (gpt-4.1)                  │  │
+│  │  Agent 4: ResponseFormatter (gpt-5.1, low reasoning)    │  │
 │  │  ├─ format_response_stream() — SSE token-by-token       │  │
 │  │  └─ Seller mode: web_search_preview tool enabled        │  │
 │  └──────────────────────────────────────────────────────────┘  │
@@ -65,12 +65,12 @@ This document contains visual representations of the Industry Solutions Chat Ass
          │  AZURE OPENAI        │   │  SQL SERVER (Production)  │
          │  (Responses API)     │   │  mssoldir-prd-sql         │
          │                      │   │                           │
-         │  gpt-4.1             │   │  View:                    │
+         │  gpt-5.1 (reasoning)     │   │  View:                    │
          │  • Query Planner     │   │  dbo.vw_ISDSolution_All   │
          │  • Insight Analyzer  │   │  • ~5,100+ solutions      │
-         │  • Resp. Formatter   │   │  • 174 partners           │
-         │                      │   │  • 10 industries          │
-         │  gpt-5.2 (reasoning) │   │  • 3 solution areas       │
+         │  • Resp. Formatter   │   │  • 189 partners           │
+         │                      │   │  • 12 industries          │
+         │  gpt-5.4 (reasoning) │   │  • 3 solution areas       │
          │  • NL2SQL Executor   │   │  READ-ONLY via pyodbc     │
          │                      │   │  4-layer SQL validation   │
          │  web_search_preview  │   │                           │
@@ -118,7 +118,7 @@ This document contains visual representations of the Industry Solutions Chat Ass
        │
        ▼
 ┌──────────────────────────────────────────────────────┐
-│  AGENT 1: Query Planner (gpt-4.1)                    │
+│  AGENT 1: Query Planner (gpt-5.1, low reasoning)    │
 │  Responses API — JSON Schema strict output            │
 │                                                       │
 │  4. Classify intent:                                 │
@@ -134,7 +134,7 @@ This document contains visual representations of the Industry Solutions Chat Ass
        │ → SSE: { "type": "status", "phase": "planning" }
        ▼
 ┌──────────────────────────────────────────────────────┐
-│  AGENT 2: NL2SQL Executor (gpt-5.2, low reasoning)  │
+│  AGENT 2: NL2SQL Executor (gpt-5.4, low reasoning)  │
 │  Responses API — JSON Schema strict output            │
 │                                                       │
 │  5. Generate SQL with phrase precision rules:        │
@@ -169,7 +169,7 @@ This document contains visual representations of the Industry Solutions Chat Ass
        │
        ▼
 ┌──────────────────────────────────────────────────────┐
-│  AGENT 3: Insight Analyzer (gpt-4.1)                 │
+│  AGENT 3: Insight Analyzer (gpt-5.1, low reasoning)  │
 │                                                       │
 │  8. Compute statistics (partners, industries,        │
 │     solution areas) from result set                  │
@@ -190,7 +190,7 @@ This document contains visual representations of the Industry Solutions Chat Ass
        │ → SSE: { "type": "metadata", insights: {...}, data: {...} }
        ▼
 ┌──────────────────────────────────────────────────────┐
-│  AGENT 4: Response Formatter (gpt-4.1)               │
+│  AGENT 4: Response Formatter (gpt-5.1, low reasoning) │
 │                                                       │
 │  10. Stream executive narrative token-by-token       │
 │      SELLER MODE: web_search_preview tool active     │
@@ -245,7 +245,7 @@ This document contains visual representations of the Industry Solutions Chat Ass
 │                                                               │  │
 │   ┌───────────────────────────────────────────────────────┐  │  │
 │   │  Agent 1: Query Planner                               │  │  │
-│   │  Model: gpt-4.1 (Responses API)                       │  │  │
+│   │  Model: gpt-5.1 (Responses API, low reasoning)        │  │  │
 │   │                                                       │  │  │
 │   │  Input:  question + conversation history              │  │  │
 │   │  Output: { intent, needs_new_query, query_type }      │  │  │
@@ -259,12 +259,12 @@ This document contains visual representations of the Industry Solutions Chat Ass
 │                          ▼                                      │  │
 │   ┌───────────────────────────────────────────────────────┐  │  │
 │   │  Agent 2: NL2SQL Executor                             │  │  │
-│   │  Model: gpt-5.2 (low reasoning, Responses API)        │  │  │
+│   │  Model: gpt-5.4 (low reasoning, Responses API)        │  │  │
 │   │                                                       │  │  │
 │   │  Input:  user question + schema context               │  │  │
 │   │  Output: validated SQL query                          │  │  │
 │   │                                                       │  │  │
-│   │  SQL Quality features (gpt-5.2 reasoning):            │  │  │
+│   │  SQL Quality features (gpt-5.4 reasoning):            │  │  │
 │   │  • Phrase precision (keeps "campus management"        │  │  │
 │   │    as a phrase, not split into generic words)         │  │  │
 │   │  • Domain synonyms (AML → KYC, sanctions, etc.)       │  │  │
@@ -286,7 +286,7 @@ This document contains visual representations of the Industry Solutions Chat Ass
 │                          ▼                                      │  │
 │   ┌───────────────────────────────────────────────────────┐  │  │
 │   │  Agent 3: Insight Analyzer                            │  │  │
-│   │  Model: gpt-4.1 (Responses API)                       │  │  │
+│   │  Model: gpt-5.1 (Responses API, low reasoning)        │  │  │
 │   │                                                       │  │  │
 │   │  Input:  raw result rows + columns                    │  │  │
 │   │  Output: structured insights JSON                     │  │  │
@@ -301,7 +301,7 @@ This document contains visual representations of the Industry Solutions Chat Ass
 │                          ▼                                      │  │
 │   ┌───────────────────────────────────────────────────────┐  │  │
 │   │  Agent 4: Response Formatter                          │  │  │
-│   │  Model: gpt-4.1 (Responses API, stream=True)          │  │  │
+│   │  Model: gpt-5.1 (Responses API, stream=True, low)     │  │  │
 │   │                                                       │  │  │
 │   │  Input:  insights + original question                 │  │  │
 │   │  Output: executive narrative (markdown SSE stream)    │  │  │
@@ -407,7 +407,7 @@ Teams Tab Apps (same backends, separate manifests):
 └─────────────────────────────────────────────────────────────┘
 
 Supporting Azure Resources:
-  • Azure OpenAI  — gpt-4.1 + gpt-5.2 (Sweden Central)
+  • Azure OpenAI  — gpt-5.1 + gpt-5.4 (Sweden Central)
   • SQL Server    — mssoldir-prd-sql (existing ISD production DB)
   • Cosmos DB     — Serverless, conversation history
   • App Insights  — Monitoring and diagnostics

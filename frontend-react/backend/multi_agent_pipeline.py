@@ -25,7 +25,8 @@ class QueryPlanner:
     
     def __init__(self, llm_client: OpenAI):
         self.llm_client = llm_client
-        self.deployment = os.getenv("MODEL_QUERY_PLANNER", os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4.1"))
+        self.deployment = os.getenv("MODEL_QUERY_PLANNER", os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-5.1"))
+        self.reasoning_effort = os.getenv("MODEL_QUERY_PLANNER_REASONING", "low")
     
     def analyze_intent(self, question: str, conversation_history: List[Dict], previous_response_id: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -136,6 +137,8 @@ class QueryPlanner:
             }
             if previous_response_id:
                 kwargs["previous_response_id"] = previous_response_id
+            if self.reasoning_effort and self.reasoning_effort != "none":
+                kwargs["reasoning"] = {"effort": self.reasoning_effort}
             
             response = self.llm_client.responses.create(**kwargs)
             
@@ -164,7 +167,8 @@ class InsightAnalyzer:
     
     def __init__(self, llm_client: OpenAI):
         self.llm_client = llm_client
-        self.deployment = os.getenv("MODEL_INSIGHT_ANALYZER", os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4.1"))
+        self.deployment = os.getenv("MODEL_INSIGHT_ANALYZER", os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-5.1"))
+        self.reasoning_effort = os.getenv("MODEL_INSIGHT_ANALYZER_REASONING", "low")
     
     def _compute_statistics(self, rows: List[Dict], columns: List[str]) -> Dict[str, Any]:
         """Pre-compute statistics from the dataset to provide richer context to LLM"""
@@ -535,12 +539,15 @@ Respond with a JSON object using this exact structure:
     Analyze these results and provide insights."""
 
         try:
-            response = self.llm_client.responses.create(
-                model=self.deployment,
-                instructions=system_prompt,
-                input=user_prompt + "\n\nRespond in JSON format.",
-                text={"format": {"type": "json_object"}}
-            )
+            ia_kwargs = {
+                "model": self.deployment,
+                "instructions": system_prompt,
+                "input": user_prompt + "\n\nRespond in JSON format.",
+                "text": {"format": {"type": "json_object"}}
+            }
+            if self.reasoning_effort and self.reasoning_effort != "none":
+                ia_kwargs["reasoning"] = {"effort": self.reasoning_effort}
+            response = self.llm_client.responses.create(**ia_kwargs)
             
             result = json.loads(response.output_text)
             
@@ -637,7 +644,8 @@ class ResponseFormatter:
     
     def __init__(self, llm_client: OpenAI):
         self.llm_client = llm_client
-        self.deployment = os.getenv("MODEL_RESPONSE_FORMATTER", os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-4.1"))
+        self.deployment = os.getenv("MODEL_RESPONSE_FORMATTER", os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-5.1"))
+        self.reasoning_effort = os.getenv("MODEL_RESPONSE_FORMATTER_REASONING", "low")
         self.app_mode = os.getenv('APP_MODE', 'seller').lower()
         self.web_search_enabled = self.app_mode == 'seller'
         # Streaming metadata (populated after format_response_stream exhausts)
@@ -730,6 +738,8 @@ Create an engaging response. The detailed data table will be shown separately in
             }
             if previous_response_id:
                 kwargs["previous_response_id"] = previous_response_id
+            if self.reasoning_effort and self.reasoning_effort != "none":
+                kwargs["reasoning"] = {"effort": self.reasoning_effort}
             
             # Enable web search for seller mode
             if self.web_search_enabled:
@@ -886,6 +896,8 @@ Create an engaging response. The detailed data table will be shown separately in
             }
             if previous_response_id:
                 kwargs["previous_response_id"] = previous_response_id
+            if self.reasoning_effort and self.reasoning_effort != "none":
+                kwargs["reasoning"] = {"effort": self.reasoning_effort}
             
             # Enable web search for seller mode
             if self.web_search_enabled:
@@ -941,10 +953,10 @@ class MultiAgentPipeline:
         
         # Log per-agent model assignments
         print(f"\n🤖 Agent Models:")
-        print(f"   1. Query Planner:    {self.query_planner.deployment}")
+        print(f"   1. Query Planner:    {self.query_planner.deployment} (reasoning: {self.query_planner.reasoning_effort})")
         print(f"   2. NL2SQL:           {self.sql_executor.deployment} (reasoning: {self.sql_executor.reasoning_effort})")
-        print(f"   3. Insight Analyzer: {self.insight_analyzer.deployment}")
-        print(f"   4. Response Formatter: {self.response_formatter.deployment}\n")
+        print(f"   3. Insight Analyzer: {self.insight_analyzer.deployment} (reasoning: {self.insight_analyzer.reasoning_effort})")
+        print(f"   4. Response Formatter: {self.response_formatter.deployment} (reasoning: {self.response_formatter.reasoning_effort})\n")
         
         # Conversation state
         self.conversation_history = []

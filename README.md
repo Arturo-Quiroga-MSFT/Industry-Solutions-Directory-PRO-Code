@@ -30,7 +30,7 @@ The mode is controlled by the `APP_MODE` environment variable (`seller` or `cust
 
 - **Natural Language to SQL**: Ask questions in plain English; the multi-agent pipeline generates and executes SQL automatically
 - **Four-Agent Architecture**: Query Planner → SQL Executor → Insight Analyzer → Response Formatter
-- **448 Solutions**: Across 174 partners, 10 industries, 3 solution areas (AI Business Solutions, Cloud and AI Platforms, Security)
+- **5,617 catalog rows**: Across 189 partners, 12 industries, 3 solution areas (AI Business Solutions, Cloud and AI Platforms, Security)
 - **Responses API**: Built on Azure OpenAI Responses API with `previous_response_id` conversation chaining
 - **Structured Outputs**: JSON Schema strict mode for type-safe agent responses (enum-constrained intents, nullable fields)
 - **SSE Streaming**: Real-time token-by-token narrative delivery via Server-Sent Events
@@ -65,11 +65,11 @@ flowchart TB
     end
 
     subgraph LLM["Azure OpenAI"]
-        GPT["gpt-4.1\nResponses API\nJSON Schema structured outputs"]
+        GPT["gpt-5.1 / gpt-5.4\nResponses API\nJSON Schema structured outputs"]
     end
 
     subgraph DB["SQL Server"]
-        SQL[("dbo.vw_ISDSolution_All\n448 solutions · 174 partners\n10 industries · 3 solution areas")]
+        SQL[("dbo.vw_ISDSolution_All\n5,617 catalog rows · 189 partners\n12 industries · 3 solution areas")]
     end
 
     A1 -.->|responses.create| GPT
@@ -94,10 +94,10 @@ flowchart TB
 
 | Agent | Role | API | Output Format | Chaining | Model |
 |-------|------|-----|---------------|----------|-------|
-| **Query Planner** | Classifies intent (query/analyze/summarize/compare), decides if new SQL is needed | `responses.create()` | JSON Schema strict — enum-constrained `intent`, `query_type`, boolean `needs_new_query` | `previous_response_id` ✅ | `gpt-4.1` |
-| **NL2SQL Executor** | Generates safe SQL from natural language, validates & executes (read-only) | `responses.create()` | JSON Schema strict — nullable `sql`, enum `confidence`, array `suggested_refinements` | — | `gpt-5.2` (low reasoning) |
-| **Insight Analyzer** | Extracts patterns, statistics, citations from query results | `responses.create()` | `json_object` (dynamic statistics shape) | — | `gpt-4.1` |
-| **Response Formatter** | Creates executive-style narrative with markdown formatting | `responses.create(stream=True)` | Markdown text, streamed token-by-token via SSE | `previous_response_id` ✅ | `gpt-4.1` |
+| **Query Planner** | Classifies intent (query/analyze/summarize/compare), decides if new SQL is needed | `responses.create()` | JSON Schema strict — enum-constrained `intent`, `query_type`, boolean `needs_new_query` | `previous_response_id` ✅ | `gpt-5.1` (low reasoning) |
+| **NL2SQL Executor** | Generates safe SQL from natural language, validates & executes (read-only) | `responses.create()` | JSON Schema strict — nullable `sql`, enum `confidence`, array `suggested_refinements` | — | `gpt-5.4` (low reasoning) |
+| **Insight Analyzer** | Extracts patterns, statistics, citations from query results | `responses.create()` | `json_object` (dynamic statistics shape) | — | `gpt-5.1` (low reasoning) |
+| **Response Formatter** | Creates executive-style narrative with markdown formatting | `responses.create(stream=True)` | Markdown text, streamed token-by-token via SSE | `previous_response_id` ✅ | `gpt-5.1` (low reasoning) |
 
 ### Per-Agent Model Configuration
 
@@ -105,20 +105,23 @@ Each agent can use a different Azure OpenAI model, configured via environment va
 
 | Env Variable | Agent | Default | Description |
 |-------------|-------|---------|-------------|
-| `MODEL_QUERY_PLANNER` | Query Planner | `gpt-4.1` | Intent classification — fast model sufficient |
-| `MODEL_NL2SQL` | NL2SQL Executor | `gpt-5.2` | SQL generation — reasoning model produces better queries |
+| `MODEL_QUERY_PLANNER` | Query Planner | `gpt-5.1` | Intent classification |
+| `MODEL_QUERY_PLANNER_REASONING` | Query Planner | `low` | Reasoning effort: `low`, `medium`, `high`, or `none` |
+| `MODEL_NL2SQL` | NL2SQL Executor | `gpt-5.4` | SQL generation — best reasoning model |
 | `MODEL_NL2SQL_REASONING` | NL2SQL Executor | `low` | Reasoning effort: `low`, `medium`, `high`, or `none` |
-| `MODEL_INSIGHT_ANALYZER` | Insight Analyzer | `gpt-4.1` | Insight extraction — fast model sufficient |
-| `MODEL_RESPONSE_FORMATTER` | Response Formatter | `gpt-4.1` | Narrative generation — fast model sufficient |
+| `MODEL_INSIGHT_ANALYZER` | Insight Analyzer | `gpt-5.1` | Insight extraction |
+| `MODEL_INSIGHT_ANALYZER_REASONING` | Insight Analyzer | `low` | Reasoning effort: `low`, `medium`, `high`, or `none` |
+| `MODEL_RESPONSE_FORMATTER` | Response Formatter | `gpt-5.1` | Narrative generation |
+| `MODEL_RESPONSE_FORMATTER_REASONING` | Response Formatter | `low` | Reasoning effort: `low`, `medium`, `high`, or `none` |
 
 All agents fall back to `AZURE_OPENAI_CHAT_DEPLOYMENT_NAME` if their specific env var is not set.
 
-**Why gpt-5.2 for NL2SQL?** Testing showed that gpt-5.2 with low reasoning effort produces significantly better SQL:
+**Why reasoning models across all agents?** All four agents now use reasoning models at low effort. For NL2SQL, gpt-5.4 (upgraded from gpt-5.2) provides the best SQL quality:
 - **Domain-aware synonyms**: Automatically adds related terms (e.g., "AML" for "anti-money laundering", "KYC" for "know your customer")
 - **Phrase precision**: Keeps multi-word concepts as combined LIKE phrases instead of splitting into overly broad single-word wildcards
 - **Defensive SQL**: Uses `COALESCE()` for NULL safety, table aliases, and inline comments
 - **Consistent quality**: Much less variance between runs compared to non-reasoning models
-- **Acceptable overhead**: ~26-30s total pipeline time (vs ~20s with gpt-4.1) — the SQL quality improvement justifies the latency
+- **Low reasoning effort**: Balances quality improvement with acceptable latency across all pipeline stages
 
 ### Key Components
 
@@ -170,7 +173,7 @@ Industry-Solutions-Directory-PRO-Code/
 ## Prerequisites
 
 - **Azure Services**:
-  - Azure OpenAI Service (with `gpt-4.1` deployment)
+  - Azure OpenAI Service (with `gpt-5.1` and `gpt-5.4` deployments)
   - SQL Server with ISD database (read-only access)
   - Azure Container Apps environment
   - Azure Container Registry
@@ -204,7 +207,7 @@ Required `.env` variables:
 # Azure OpenAI
 AZURE_OPENAI_ENDPOINT=https://your-openai.openai.azure.com/
 AZURE_OPENAI_API_KEY=your-key
-AZURE_OPENAI_CHAT_DEPLOYMENT_NAME=gpt-4.1
+AZURE_OPENAI_CHAT_DEPLOYMENT_NAME=gpt-5.1
 
 # SQL Database (read-only)
 SQL_SERVER=mssoldir-prd-sql.database.windows.net
@@ -216,11 +219,14 @@ SQL_PASSWORD=your-password
 APP_MODE=seller   # or "customer"
 
 # Per-Agent Model Configuration (optional — defaults shown)
-MODEL_QUERY_PLANNER=gpt-4.1
-MODEL_NL2SQL=gpt-5.2
-MODEL_NL2SQL_REASONING=low          # low, medium, high, or none
-MODEL_INSIGHT_ANALYZER=gpt-4.1
-MODEL_RESPONSE_FORMATTER=gpt-4.1
+MODEL_QUERY_PLANNER=gpt-5.1
+MODEL_QUERY_PLANNER_REASONING=low
+MODEL_NL2SQL=gpt-5.4
+MODEL_NL2SQL_REASONING=low
+MODEL_INSIGHT_ANALYZER=gpt-5.1
+MODEL_INSIGHT_ANALYZER_REASONING=low
+MODEL_RESPONSE_FORMATTER=gpt-5.1
+MODEL_RESPONSE_FORMATTER_REASONING=low
 ```
 
 ### 3. Run Locally
@@ -336,7 +342,7 @@ A separate pipeline in `data-ingestion/sql-to-search/` reads the SQL database an
 ```bash
 cd data-ingestion/sql-to-search
 python 01_create_index.py    # Create index schema
-python 02_ingest_from_sql.py # Ingest + embed 448 solutions
+python 02_ingest_from_sql.py # Ingest + embed solutions from SQL view
 python 03_verify_index.py    # Verify search works
 ```
 
@@ -363,11 +369,12 @@ For questions or support, contact the team via Microsoft Teams.
 
 Categories aligned with the [MSD website](https://solutions.microsoftindustryinsights.com/dashboard):
 
-| Industries (10) | Solution Areas (3) |
+| Industries (12) | Solution Areas (3) |
 |-----------------|--------------------|
-| Defense Industrial Base | AI Business Solutions |
-| Education | Cloud and AI Platforms |
-| Energy & Resources | Security |
+| Defense & Intelligence | AI Business Solutions |
+| Defense Industrial Base | Cloud and AI Platforms |
+| Education | Security |
+| Energy & Resources | |
 | Financial Services | |
 | Government | |
 | Healthcare & Life Sciences | |
@@ -385,19 +392,20 @@ Categories aligned with the [MSD website](https://solutions.microsoftindustryins
 | Feb 2026 | **JSON Schema structured outputs** | Strict schemas for QueryPlanner (enum-constrained intent) and NL2SQL (nullable fields, enum confidence). Eliminates "Respond in JSON" prompt hacks |
 | Feb 2026 | **Response chaining** | `previous_response_id` for QueryPlanner and ResponseFormatter — server-side conversation memory across turns |
 | Feb 2026 | **Responses API migration** | Migrated all 4 agents from `chat.completions.create()` to `responses.create()` per official Azure OpenAI docs |
-| Feb 2026 | **Per-agent model config** | Each agent can use a different model via `MODEL_*` env vars; gpt-5.2 with low reasoning for NL2SQL |
+| Feb 2026 | **Per-agent model config** | Each agent can use a different model via `MODEL_*` env vars; all agents now use reasoning models at low effort |
+| Mar 2026 | **All-reasoning-model pipeline** | All 4 agents upgraded to reasoning models: gpt-5.4 for NL2SQL (upgraded from gpt-5.2), gpt-5.1 for all others (replacing deprecated gpt-4.1); all at low reasoning effort |
 | Feb 2026 | **NL2SQL phrase precision** | Added prompt rules to prefer combined LIKE phrases over split generic words — reduces false positives |
 | Feb 2026 | **MSD branding update** | Banner: "Microsoft Solutions Directory — AI Explorer", mode-specific badges/subtitles, URL `?mode=` param |
 | Feb 2026 | **Mode-aware exports** | JSON/MD/HTML exports include mode in filename and content; backend accepts mode parameter |
 | Feb 2026 | **Local dev script** | `start-local.sh` for backend+frontend startup with port management and health checks |
 | Feb 2026 | **MSD rebrand** | Renamed from ISD to Microsoft Solutions Directory |
 | Feb 2026 | **Teams Tab Apps** | Seller + Customer apps packaged for Microsoft Teams sideloading |
-| Feb 2026 | **SQL→Search pipeline** | Automated ingestion of 448 solutions from SQL into Azure AI Search with vector embeddings |
+| Mar 2026 | **DB growth & re-ingestion** | SQL view grew from 448 unique solutions to 5,617 catalog rows (189 partners, 12 industries); full re-ingestion triggered |
+| Feb 2026 | **SQL→Search pipeline** | Automated ingestion of solutions from SQL into Azure AI Search with vector embeddings |
 
 ## References
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — Detailed architecture documentation
-- [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) — Complete documentation index
 - [data-ingestion/sql-to-search/README.md](data-ingestion/sql-to-search/README.md) — Search index pipeline docs
 - [teams-apps/README.md](teams-apps/README.md) — Teams deployment guide
-- [SAMPLE_QUESTIONS.md](SAMPLE_QUESTIONS.md) — Example queries to try
+- [docs/SAMPLE_QUESTIONS.md](docs/SAMPLE_QUESTIONS.md) — Example queries to try

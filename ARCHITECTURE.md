@@ -2,7 +2,7 @@
 
 **Solution Owner:** Arturo Quiroga  
 **Role:** Principal Industry Solutions Architect, Microsoft  
-**Last Updated:** February 16, 2026  
+**Last Updated:** March 9, 2026  
 **Purpose:** Comprehensive technical architecture for the AI-powered chat assistant that enables natural language search and intelligent partner solution recommendations for the Microsoft Industry Solutions Directory
 
 ## Executive Summary
@@ -16,21 +16,7 @@ This document outlines the pro-code architecture for adding intelligent chat cap
 - **Architecture Pattern**: 4-agent pipeline (Query Planner → NL2SQL → Insight Analyzer → Response Formatter)
 - **Use Case**: Web-based AI chat assistant for natural language queries against the Microsoft Solutions Directory
 - **Status**: ✅ In production (v3.0-responses-api)
-- **Models**: Per-agent model selection — gpt-5.2 (reasoning) for SQL generation, gpt-4.1 for other agents
-
-### MCP Server (Separate Component)
-
-The project also includes a **Model Context Protocol (MCP) server** as a separate component:
-- **Location**: `mcp-isd-server/` directory
-- **Purpose**: Provides Industry Solutions Directory data to MCP-compatible clients
-- **Use Cases**: VS Code extensions, Claude Desktop, AI development tools
-- **Architecture**: MCP protocol for IDE/tool integration
-- **Status**: Separate deployment, NOT used by the production web app
-- **Documentation**: See `deployment/MCP_DEPLOYMENT.md`
-
-**Important**: These are two distinct architectures serving different purposes:
-- **Traditional ACA** (this document): For web-based user interface
-- **MCP Server**: For developer tools and IDE integration
+- **Models**: Per-agent model selection — gpt-5.4 (reasoning) for SQL generation, gpt-5.1 (reasoning) for all other agents; all at low reasoning effort
 
 ## Business Requirements
 
@@ -77,11 +63,11 @@ flowchart TB
     end
 
     subgraph LLM["Azure OpenAI"]
-        GPT["gpt-4.1\nResponses API\nJSON Schema structured outputs"]
+        GPT["gpt-5.1 / gpt-5.4\nResponses API\nJSON Schema structured outputs"]
     end
 
     subgraph DB["SQL Server"]
-        SQL[("dbo.vw_ISDSolution_All\n448 solutions · 174 partners\n10 industries · 3 solution areas")]
+        SQL[("dbo.vw_ISDSolution_All\n5,617 catalog rows · 189 partners\n12 industries · 3 solution areas")]
     end
 
     A1 -.->|responses.create| GPT
@@ -109,11 +95,11 @@ sequenceDiagram
     participant U as User
     participant FE as React 19 Frontend<br/>(Vite + TypeScript)
     participant API as FastAPI Backend<br/>(Python 3.13)
-    participant QP as Agent 1: Query Planner<br/>(gpt-4.1)
-    participant SQL as Agent 2: NL2SQL<br/>(gpt-5.2 · low reasoning)
+    participant QP as Agent 1: Query Planner<br/>(gpt-5.1 · low reasoning)
+    participant SQL as Agent 2: NL2SQL<br/>(gpt-5.4 · low reasoning)
     participant DB as SQL Server<br/>(mssoldir-prd-sql)
-    participant IA as Agent 3: Insight Analyzer<br/>(gpt-4.1)
-    participant RF as Agent 4: Response Formatter<br/>(gpt-4.1)
+    participant IA as Agent 3: Insight Analyzer<br/>(gpt-5.1 · low reasoning)
+    participant RF as Agent 4: Response Formatter<br/>(gpt-5.1 · low reasoning)
     participant Cosmos as Azure Cosmos DB<br/>(Conversation History)
 
     U->>FE: Ask question<br/>(seller or customer mode)
@@ -169,76 +155,47 @@ sequenceDiagram
 - Session persistence via Cosmos DB
 
 #### 2. Backend API: Python FastAPI
-**Technology**: Python 3.11+, FastAPI, Azure SDK
+**Technology**: Python 3.11+, FastAPI
 **Key Dependencies**:
-- `fastapi` - Web framework
-- `httpx` - HTTP client for Azure AI Search REST API calls
-- `azure-cosmos` - Cosmos DB integration
-- `azure-identity` - Azure authentication (DefaultAzureCredential)
-- `azure-ai-inference` - Azure OpenAI chat completions
+- `fastapi` + `uvicorn` - Web framework
+- `openai` - Azure OpenAI Responses API client
+- `pyodbc` - SQL Server connectivity (read-only)
 - `pydantic` - Data validation
+- `python-dotenv` - Environment configuration
 
 **Architecture Decision**: Uses **NL2SQL pipeline** to convert natural language to SQL queries against SQL Server directly, bypassing Azure AI Search for the query path. The OpenAI client uses `openai.OpenAI` (not `AzureOpenAI`) with `base_url` pointing to the Azure OpenAI `/openai/v1/` endpoint.
 
 **Core Endpoints**:
 ```python
-POST /api/chat/stream
-  Request: { "question": str, "conversation_id": str }
-  Response: SSE stream (insights narrative + structured data)
-
 POST /api/query
   Request: { "question": str, "conversation_id": str }
   Response: { "success": bool, "insights": str, "data": {...} }
 
+POST /api/query/stream
+  Request: { "question": str, "conversation_id": str }
+  Response: SSE stream (insights narrative + structured data)
+
+GET /api/examples
+  Response: { "categories": [...] }  # example questions by industry
+
 GET /api/health
-  Response: { "status": "healthy", "mode": "seller|customer" }
+  Response: { "status": "healthy" }
 
-POST /api/export
+GET /api/conversation/{conversation_id}
+  Response: Conversation history
+
+POST /api/conversation/export
   Request: { "messages": [...], "format": "json|md|html", "mode": str }
+
+GET /api/stats
+  Response: Solution database statistics
 ```
 
-#### 3. Azure AI Search: Vector & Hybrid Search
-**Purpose**: Store and retrieve partner solution data
-**Index Name**: `partner-solutions-integrated` (535 documents)
-**Vector Configuration**:
-- **Integrated Vectorization**: Automatic query vectorization using Azure OpenAI vectorizer
-- **Vectorizer**: `openai-vectorizer`
-  - Deployment: `text-embedding-3-large`
-  - Dimensions: 3072
-  - Resource: Azure OpenAI service with managed identity authentication
-- **Vector Profile**: `integrated-vector-profile`
+#### 3. Azure AI Search _(orphaned — not used by current pipeline)_
 
-**Index Schema**:
-```json
-{
-  "fields": [
-    { "name": "id", "type": "Edm.String", "key": true },
-    { "name": "solution_name", "type": "Edm.String", "searchable": true },
-    { "name": "partner_name", "type": "Edm.String", "searchable": true, "facetable": true },
-    { "name": "description", "type": "Edm.String", "searchable": true },
-    { "name": "industries", "type": "Edm.String", "searchable": true, "filterable": true },
-    { "name": "technologies", "type": "Edm.String", "searchable": true, "filterable": true },
-    { "name": "solution_url", "type": "Edm.String" },
-    { "name": "content_vector", "type": "Collection(Edm.Single)", "dimensions": 3072, "vectorSearchProfile": "integrated-vector-profile" },
-    { "name": "chunk_text", "type": "Edm.String" },
-    { "name": "metadata", "type": "Edm.String" }
-  ]
-}
-```
-**Important Fields for Dual Browsing Support**:
-- **`industries`**: Supports industry-based queries (e.g., "Healthcare", "Education", "Financial Services")
-- **`technologies`**: Supports technology-based queries (e.g., "AI Business Solutions", "Cloud and AI Platforms", "Security")
-- Both fields are searchable and filterable, enabling users to browse by either dimension
-**Search Strategy**:
-- **Hybrid Search**: Combine vector search (semantic) with keyword search (BM25)
-- **Integrated Vectorization**: User queries are automatically vectorized by Azure Search using the configured vectorizer
-- **REST API Integration**: Direct REST API calls with `vectorQueries[].kind = "text"` for automatic vectorization
-- **Dual Dimension Filtering**: Support both browsing patterns seamlessly
-  - **Industry Filters**: Apply filters like `search.ismatch('Healthcare', 'industries')`
-  - **Technology Filters**: Apply filters like `search.ismatch('AI Business Solutions', 'technologies')`
-  - **Combined Filters**: Users can search by both dimensions (e.g., "AI solutions for Healthcare")
-- **Intelligent Query Routing**: System automatically detects whether user is asking about industries or technologies
-- **Top K**: Return top 3-5 results for RAG context
+Azure AI Search was used in an earlier RAG-based iteration of this project. The current NL2SQL pipeline queries SQL Server directly and does **not** use Azure AI Search at query time. The index `isd-solutions-v1` on `aq-mysearch001.search.windows.net` is an orphaned artifact (DNS no longer resolves) and is not referenced anywhere in the active codebase.
+
+See [data-ingestion/sql-to-search/README.md](data-ingestion/sql-to-search/README.md) for historical context on the ingestion pipeline that populated it.
 
 #### 4. Azure OpenAI: Per-Agent Model Configuration
 
@@ -246,20 +203,20 @@ Each agent in the multi-agent pipeline can use a different Azure OpenAI model de
 
 | Agent | Env Variable | Default Model | Reasoning | Why |
 |-------|-------------|---------------|-----------|-----|
-| Query Planner | `MODEL_QUERY_PLANNER` | `gpt-4.1` | None | Simple intent classification — fast model sufficient |
-| NL2SQL Executor | `MODEL_NL2SQL` | `gpt-5.2` | Low | **Reasoning model produces significantly better SQL** |
-| Insight Analyzer | `MODEL_INSIGHT_ANALYZER` | `gpt-4.1` | None | Pattern extraction — fast model sufficient |
-| Response Formatter | `MODEL_RESPONSE_FORMATTER` | `gpt-4.1` | None | Narrative generation — fast model sufficient |
+| Query Planner | `MODEL_QUERY_PLANNER` | `gpt-5.1` | Low | Reasoning model for consistent intent classification |
+| NL2SQL Executor | `MODEL_NL2SQL` | `gpt-5.4` | Low | **Best reasoning model produces significantly better SQL** |
+| Insight Analyzer | `MODEL_INSIGHT_ANALYZER` | `gpt-5.1` | Low | Reasoning model for deeper pattern extraction |
+| Response Formatter | `MODEL_RESPONSE_FORMATTER` | `gpt-5.1` | Low | Reasoning model for richer narrative generation |
 
 All agents fall back to `AZURE_OPENAI_CHAT_DEPLOYMENT_NAME` if their specific env var is not set.
 
-##### gpt-5.2 Reasoning Model for NL2SQL — Findings
+##### gpt-5.4 Reasoning Model for NL2SQL — Findings
 
-Extensive testing (February 2026) comparing gpt-4.1 vs gpt-5.2 with low reasoning effort for SQL generation revealed significant quality improvements:
+Extensive testing (February 2026) comparing gpt-4.1 vs gpt-5.2 (and now upgraded to gpt-5.4) with low reasoning effort for SQL generation revealed significant quality improvements:
 
 **1. Domain-Aware Synonyms**
 
-For a query like *"Show me solutions for anti-money laundering and financial crime prevention"*, gpt-5.2 automatically generates LIKE patterns for domain synonyms:
+For a query like *"Show me solutions for anti-money laundering and financial crime prevention"*, gpt-5.4 automatically generates LIKE patterns for domain synonyms:
 - `'%anti-money laundering%'`, `'%AML%'` (acronym)
 - `'%financial crime%'`, `'%crime prevention%'`
 - `'%sanctions screening%'`, `'%KYC%'`, `'%know your customer%'`
@@ -268,7 +225,7 @@ gpt-4.1 typically generates only the literal terms from the user's question.
 
 **2. Phrase Precision**
 
-gpt-5.2 consistently follows the prompt's Phrase Precision rule, keeping multi-word concepts as combined phrases:
+gpt-5.4 consistently follows the prompt's Phrase Precision rule, keeping multi-word concepts as combined phrases:
 - ✅ `LIKE '%campus management%'` → precise matches
 - ❌ `LIKE '%campus%' OR LIKE '%management%'` → matches everything with "management" (false positives)
 
@@ -282,11 +239,11 @@ gpt-4.1 frequently split phrases into individual generic words, causing 50-resul
 
 **4. Consistency**
 
-With gpt-4.1, the same question asked twice could produce wildly different SQL (one run: 11 results with precise phrases; another run: 50 results with split words). gpt-5.2 is much more consistent — both modes produce similar, high-quality SQL.
+With gpt-4.1, the same question asked twice could produce wildly different SQL (one run: 11 results with precise phrases; another run: 50 results with split words). gpt-5.4 is much more consistent — both modes produce similar, high-quality SQL.
 
 **5. Performance**
 
-| Metric | gpt-4.1 | gpt-5.2 (low reasoning) |
+| Metric | gpt-4.1 | gpt-5.4 (low reasoning) |
 |--------|---------|------------------------|
 | SQL quality | Variable | Consistently high |
 | Domain synonyms | Rarely added | Frequently added |
@@ -305,7 +262,7 @@ The NL2SQL system prompt includes a **Phrase Precision rule** (added February 20
 3. **Use the most domain-specific word as a fallback**: For "campus management", use `'%campus management%' OR '%campus%'` (— "campus" is specific, "management" is not)
 4. **Combine with industry filters when available**: `'%administrative%' AND industryName = 'Education'`
 
-This rule, combined with gpt-5.2's reasoning capability, produces highly precise SQL queries.
+This rule, combined with gpt-5.4's reasoning capability, produces highly precise SQL queries.
 
 #### 5. Azure Cosmos DB: Conversation Storage
 **Purpose**: Store chat history and user sessions
@@ -340,17 +297,15 @@ This rule, combined with gpt-5.2's reasoning capability, produces highly precise
 - Low latency for chat applications
 
 #### 6. Data Ingestion Pipeline
-**Purpose**: Scrape and index partner solutions from existing website
+**Purpose**: Populate the SQL Server view `dbo.vw_ISDSolution_All` from the ISD production database
+**Current Approach**: SQL-direct — the pipeline reads from the ISD production SQL database. No web scraping or AI Search ingestion is required for the NL2SQL query path.
 **Components**:
-- Web scraper (Python: BeautifulSoup/Scrapy)
-- Data cleaning and transformation
-- Chunking strategy for long content
-- Embedding generation via Azure OpenAI
-- Batch upload to Azure AI Search
-
-**Execution**:
-- Initial full load
-- Periodic updates (daily/weekly via Azure Functions or GitHub Actions)
+- `data-ingestion/sql-direct/` — scripts for direct SQL access and verification
+- `data-ingestion/sql-to-search/` — historical scripts for Azure AI Search (orphaned)
+**Database** (as of March 2026):
+- 5,617 catalog rows · 189 partners · 12 industries · 3 solution areas
+- Host: `mssoldir-prd-sql.database.windows.net / mssoldir-prd`
+- Access: read-only via `isdapi` user (ODBC Driver 18)
 
 ## NL2SQL Pipeline Implementation (Current Architecture)
 
@@ -358,8 +313,8 @@ The current architecture bypasses Azure AI Search entirely for the query path. I
 
 ### Query Flow Example
 1. **User Input**: "What partners offer healthcare AI solutions?"
-2. **Query Planner** (gpt-4.1): Classifies intent as `query`, determines `needs_new_query: true`
-3. **NL2SQL** (gpt-5.2, low reasoning): Generates SQL:
+2. **Query Planner** (gpt-5.1, low reasoning): Classifies intent as `query`, determines `needs_new_query: true`
+3. **NL2SQL** (gpt-5.4, low reasoning): Generates SQL:
    ```sql
    SELECT DISTINCT v.solutionName, v.orgName, v.industryName, v.solutionAreaName
    FROM dbo.vw_ISDSolution_All AS v
@@ -371,15 +326,15 @@ The current architecture bypasses Azure AI Search entirely for the query path. I
    ORDER BY v.orgName
    ```
 4. **SQL Execution**: Runs query via pyodbc against `mssoldir-prd-sql.database.windows.net`
-5. **Insight Analyzer** (gpt-4.1): Extracts patterns, statistics, key findings from result rows
-6. **Response Formatter** (gpt-4.1): Creates executive-style narrative with market landscape, strategic insights
+5. **Insight Analyzer** (gpt-5.1, low reasoning): Extracts patterns, statistics, key findings from result rows
+6. **Response Formatter** (gpt-5.1, low reasoning): Creates executive-style narrative with market landscape, strategic insights
 7. **Stream to Client**: SSE stream delivers insights narrative + structured data table
 
 ### Benefits over RAG
 - ✅ **Precise filtering**: SQL WHERE clauses are exact, not similarity-based
 - ✅ **Aggregation support**: COUNT, GROUP BY, ranking queries work natively
 - ✅ **No embedding drift**: Results come from the authoritative SQL database
-- ✅ **Domain synonyms**: gpt-5.2 reasoning model adds AML/KYC/etc. automatically
+- ✅ **Domain synonyms**: gpt-5.4 reasoning model adds AML/KYC/etc. automatically
 - ✅ **Dual browsing**: Industry AND technology filters via SQL predicates
 
 ## Infrastructure as Code (Bicep)
@@ -388,17 +343,16 @@ The current architecture bypasses Azure AI Search entirely for the query path. I
 ```bicep
 - Resource Group: indsolse-dev-rg
 - Azure OpenAI Service
-  - gpt-4.1 deployment (Query Planner, Insight Analyzer, Response Formatter)
-  - gpt-5.2 deployment (NL2SQL with low reasoning)
+  - gpt-5.1 deployment (Query Planner, Insight Analyzer, Response Formatter — low reasoning)
+  - gpt-5.4 deployment (NL2SQL with low reasoning)
 - Azure SQL Server (existing ISD production database)
   - View: dbo.vw_ISDSolution_All (read-only access via pyodbc)
 - Azure Cosmos DB for NoSQL (Serverless)
   - Database: industry-solutions-db
   - Container: chat-sessions
-- Azure Container Apps (4 apps)
+- Azure Container Apps (3 apps)
   - Backend: indsolse-dev-backend
   - Frontend: indsolse-dev-frontend
-  - MCP Server: indsolse-dev-mcp-server
   - Update Monitor: indsolse-dev-updatemon
   - Container Registry: indsolsedevacr
 - Azure Virtual Network (VNet integration)
@@ -456,10 +410,10 @@ The current architecture bypasses Azure AI Search entirely for the query path. I
 ### Pro-Code Approach (v3.0 — NL2SQL Architecture)
 | Service | Configuration | Estimated Cost |
 |---------|---------------|----------------|
-| Azure OpenAI (gpt-4.1) | 3 agents · ~400K tokens/day | $120 - $250 |
-| Azure OpenAI (gpt-5.2) | NL2SQL agent · ~100K tokens/day (reasoning) | $80 - $150 |
+| Azure OpenAI (gpt-5.1) | 3 agents · ~400K tokens/day (reasoning low) | $120 - $250 |
+| Azure OpenAI (gpt-5.4) | NL2SQL agent · ~100K tokens/day (reasoning low) | $80 - $150 |
 | Azure SQL Server | Existing ISD production database (shared) | $0 (existing) |
-| Azure Container Apps | 4 apps (backend, frontend, MCP, update-monitor) | $40 - $80 |
+| Azure Container Apps | 3 apps (backend, frontend, update-monitor) | $30 - $60 |
 | Azure Container Registry | Basic tier | $5 |
 | Azure Cosmos DB | Serverless (10GB, 1M RUs) | $25 - $50 |
 | Azure Application Insights | Basic | $5 - $20 |
@@ -468,7 +422,7 @@ The current architecture bypasses Azure AI Search entirely for the query path. I
 | **Total (Medium Traffic)** | | **$400 - $700** |
 
 ### Cost Optimization Tips
-1. Use `gpt-4.1-nano` for Query Planner and Response Formatter (cheaper, sufficient for classification/formatting)
+1. Evaluate cheaper model tiers for Query Planner and Response Formatter if latency budget allows
 2. Implement caching for common NL2SQL queries (same question → same SQL)
 3. Use Cosmos DB serverless for unpredictable traffic
 4. Scale ACA to zero during off-hours (min replicas = 0)

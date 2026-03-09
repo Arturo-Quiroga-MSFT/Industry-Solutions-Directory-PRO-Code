@@ -70,7 +70,7 @@ python 04_test_search.py
 - ✅ Simpler code and maintenance
 - ✅ Better performance
 
-See [`integrated-vectorization/README.md`](integrated-vectorization/README.md) for details.
+*(The integrated-vectorization pipeline has been removed — the SQL-direct pipeline in `sql-to-search/` is the current approach.)*
 
 ---
 
@@ -102,10 +102,7 @@ python fetch_current_solutions.py --output current_solutions.json
 
 **Recommended schedule:** Weekly checks (e.g., every Monday morning)
 
-See [`update-monitor/README.md`](update-monitor/README.md) for:
-- Automation via cron, Azure Logic Apps, or GitHub Actions
-- Scheduling best practices
-- Output file formats
+*(The update-monitor scripts have been removed. SQL view row counts can be checked via `sql-direct/check_db_state.py`.)*
 
 ---
 
@@ -123,7 +120,7 @@ The original implementation (archived in `archive/old-manual-ingestion/`) used:
 - More complex code requiring client-side embedding
 - Maintenance burden for embedding generation
 
-See [`archive/README.md`](archive/README.md) for historical context.
+*(Archive folder has been removed.)*
 
 ---
 
