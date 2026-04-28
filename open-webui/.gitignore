@@ -1,7 +1,0 @@
-# Open WebUI data - DO NOT COMMIT
-data/
-.env
-
-# Keep configuration files
-!docker-compose.yml
-!README.md

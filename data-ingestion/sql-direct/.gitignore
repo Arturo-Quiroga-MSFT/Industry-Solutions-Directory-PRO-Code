@@ -1,0 +1,7 @@
+# Generated output files — run schema_inspector.py to regenerate
+schema_report.json
+schema_report.md
+
+# Python cache
+__pycache__/
+*.pyc
