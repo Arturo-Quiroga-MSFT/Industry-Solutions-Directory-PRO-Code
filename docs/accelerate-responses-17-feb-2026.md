@@ -1,4 +1,5 @@
 
+> **⚠️ HISTORICAL — superseded.** This document captures latency analysis from **February 17, 2026**, when the pipeline still used `gpt-4.1` for several agents. The pipeline has since migrated entirely to `gpt-5.x` reasoning models (low effort): `gpt-5.1` for Query Planner / Insight Analyzer / Response Formatter, and `gpt-5.4` (with `gpt-5.5` as a supported alternative) for NL2SQL. **Do not follow the model recommendations below.** See [`README.md`](../README.md#per-agent-model-configuration) and [`ARCHITECTURE.md`](../ARCHITECTURE.md) for the current configuration.
 
 ## Root Causes of 3–60s Latency
 

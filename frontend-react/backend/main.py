@@ -419,7 +419,7 @@ async def get_statistics():
         },
         "model": {
             "provider": "Azure OpenAI",
-            "model": "GPT-4.1-mini"
+            "model": "gpt-5.1 / gpt-5.4 (per-agent)"
         }
     }
 

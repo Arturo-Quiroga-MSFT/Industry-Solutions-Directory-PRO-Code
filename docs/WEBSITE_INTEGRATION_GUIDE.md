@@ -11,14 +11,14 @@ This document outlines options for integrating the Industry Solutions Directory 
 - **Backend API**: `https://indsolse-dev-backend.redplant-675b33da.swedencentral.azurecontainerapps.io`
 - **Streamlit UI**: `https://indsolse-dev-frontend.redplant-675b33da.swedencentral.azurecontainerapps.io`
 - **Technology**: FastAPI backend + Streamlit frontend on Azure Container Apps
-- **AI Services**: Azure OpenAI (GPT-4.1-mini), Azure AI Search, Cosmos DB
+- **AI Services**: Azure OpenAI (gpt-5.1 / gpt-5.4 reasoning, low effort), Azure AI Search, Cosmos DB
 
 ### Capabilities
 - Natural language search across 376+ partner solutions
 - 10 industries: Financial Services, Healthcare, Manufacturing, Education, Retail, Energy, Government, etc.
 - RAG (Retrieval-Augmented Generation) with citations
 - Session persistence and conversation history
-- Real-time responses from GPT-4.1-mini
+- Real-time streaming responses from Azure OpenAI gpt-5.x reasoning models
 
 ---
 
@@ -392,7 +392,7 @@ app.add_middleware(
 ### Current Costs (Azure Container Apps)
 - **Backend**: ~$10-30/month (0.5 vCPU, 1GB RAM, 1-3 replicas)
 - **Frontend**: ~$10-30/month (0.5 vCPU, 1GB RAM, 1-3 replicas)
-- **Azure OpenAI**: Pay-per-token (~$0.15 per 1K tokens GPT-4.1-mini)
+- **Azure OpenAI**: Pay-per-token (gpt-5.x reasoning, low effort)
 - **Azure AI Search**: ~$250/month (Basic tier)
 - **Cosmos DB**: ~$25/month (Serverless, current usage)
 

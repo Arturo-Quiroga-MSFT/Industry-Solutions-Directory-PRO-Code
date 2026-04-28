@@ -29,7 +29,7 @@ This guide provides step-by-step instructions to recreate the Azure infrastructu
 
 ### Monthly Cost Estimate
 - **Infrastructure:** ~$137/month
-- **Azure OpenAI (GPT-4.1):** ~$90-150/month
+- **Azure OpenAI (gpt-5.x reasoning, low effort):** ~$120-250/month
 - **Total:** ~$227-287/month
 
 ---
@@ -49,7 +49,12 @@ This guide provides step-by-step instructions to recreate the Azure infrastructu
 ```bash
 AZURE_OPENAI_API_KEY="<your-azure-openai-api-key-here>"
 AZURE_OPENAI_ENDPOINT="https://r2d2-foundry-001.services.ai.azure.com/"
-AZURE_OPENAI_DEPLOYMENT="gpt-4.1"
+AZURE_OPENAI_DEPLOYMENT="gpt-5.1"            # Default chat deployment (per-agent overrides via MODEL_*)
+# Recommended per-agent deployments:
+#   MODEL_QUERY_PLANNER=gpt-5.1        (low reasoning)
+#   MODEL_NL2SQL=gpt-5.4               (low reasoning) — or gpt-5.5 if available
+#   MODEL_INSIGHT_ANALYZER=gpt-5.1     (low reasoning)
+#   MODEL_RESPONSE_FORMATTER=gpt-5.1   (low reasoning)
 AZURE_OPENAI_API_VERSION="2024-08-01-preview"
 ```
 **Where to find:** Azure Portal → AI Foundry → Keys and Endpoint  
@@ -229,7 +234,11 @@ az containerapp create \
     SQL_PASSWORD='<your-sql-password-here>' \
     AZURE_OPENAI_ENDPOINT='https://r2d2-foundry-001.services.ai.azure.com/' \
     AZURE_OPENAI_API_KEY='<your-azure-openai-api-key-here>' \
-    AZURE_OPENAI_DEPLOYMENT='gpt-4.1' \
+    AZURE_OPENAI_DEPLOYMENT='gpt-5.1' \
+    MODEL_QUERY_PLANNER='gpt-5.1' \
+    MODEL_NL2SQL='gpt-5.4' \
+    MODEL_INSIGHT_ANALYZER='gpt-5.1' \
+    MODEL_RESPONSE_FORMATTER='gpt-5.1' \
     AZURE_OPENAI_API_VERSION='2024-08-01-preview' \
     ALLOWED_ORIGINS='https://isd-chat-seller-frontend.kindfield-353d98ed.swedencentral.azurecontainerapps.io,http://localhost:5173,http://localhost:5174'
 
@@ -290,7 +299,11 @@ az containerapp create \
     SQL_PASSWORD='<your-sql-password-here>' \
     AZURE_OPENAI_ENDPOINT='https://r2d2-foundry-001.services.ai.azure.com/' \
     AZURE_OPENAI_API_KEY='<your-azure-openai-api-key-here>' \
-    AZURE_OPENAI_DEPLOYMENT='gpt-4.1' \
+    AZURE_OPENAI_DEPLOYMENT='gpt-5.1' \
+    MODEL_QUERY_PLANNER='gpt-5.1' \
+    MODEL_NL2SQL='gpt-5.4' \
+    MODEL_INSIGHT_ANALYZER='gpt-5.1' \
+    MODEL_RESPONSE_FORMATTER='gpt-5.1' \
     AZURE_OPENAI_API_VERSION='2024-08-01-preview' \
     ALLOWED_ORIGINS='https://isd-chat-customer-frontend.kindfield-353d98ed.swedencentral.azurecontainerapps.io,http://localhost:5173,http://localhost:5174'
 
@@ -853,7 +866,7 @@ echo "Resources will be fully deleted in ~5-10 minutes"
 | Frontend (Seller) | isd-chat-seller-frontend | Seller UI | $4.50 |
 | Frontend (Customer) | isd-chat-customer-frontend | Customer UI | $4.50 |
 | **Subtotal** | | | **$47** |
-| Azure OpenAI | (external) | GPT-4.1 calls | $90-150 |
+| Azure OpenAI | (external) | gpt-5.x reasoning calls | $120-250 |
 | **Total** | | | **$137-197** |
 
 ### Features Deployed

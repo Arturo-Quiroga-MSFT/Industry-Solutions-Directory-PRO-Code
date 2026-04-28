@@ -60,7 +60,7 @@ AZURE_COSMOS_DB_NAME="industry-solutions"
 AZURE_SEARCH_ENDPOINT="https://indsolse-dev-srch-okumlm.search.windows.net"
 AZURE_SEARCH_INDEX="partner-solutions-index"
 AZURE_OPENAI_ENDPOINT="https://indsolse-dev-ai-okumlm.openai.azure.com/"
-AZURE_OPENAI_CHAT_MODEL="gpt-4.1-mini"
+AZURE_OPENAI_CHAT_MODEL="gpt-5.1"
 AZURE_OPENAI_EMBEDDING_MODEL="text-embedding-3-large"
 ```
 

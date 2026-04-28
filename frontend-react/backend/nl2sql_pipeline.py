@@ -443,7 +443,7 @@ CRITICAL REMINDER BEFORE YOU GENERATE:
                     "input": f"Generate a SQL query as JSON for: {natural_query}",
                     "text": {"format": {"type": "json_object"}}
                 }
-                # Add reasoning effort for models that support it (e.g., gpt-5.2)
+                # Add reasoning effort for models that support it (e.g., gpt-5.4, gpt-5.5)
                 if self.reasoning_effort and self.reasoning_effort != "none":
                     kwargs["reasoning"] = {"effort": self.reasoning_effort}
                 

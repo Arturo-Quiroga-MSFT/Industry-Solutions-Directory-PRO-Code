@@ -18,7 +18,7 @@ This document provides a detailed cost comparison between the pro-code solution 
 | Service | SKU/Configuration | Monthly Cost (USD) |
 |---------|------------------|-------------------|
 | **Azure OpenAI** | | |
-| - GPT-4.1-mini (Chat) | ~15M tokens/month | $150 - $250 |
+| - gpt-5.1 (Chat, low reasoning) | ~15M tokens/month | $200 - $350 |
 | - text-embedding-3-large | ~3M tokens/month | $10 - $15 |
 | **Azure AI Search** | Standard S1 (1 replica, 1 partition) | $250 |
 | **Azure Cosmos DB** | Serverless (10GB storage, 1M RUs) | $25 - $40 |
@@ -38,7 +38,7 @@ This document provides a detailed cost comparison between the pro-code solution 
 | Service | SKU/Configuration | Monthly Cost (USD) |
 |---------|------------------|-------------------|
 | **Azure OpenAI** | | |
-| - GPT-4.1-mini (Chat) | ~75M tokens/month | $750 - $900 |
+| - gpt-5.1 (Chat, low reasoning) | ~75M tokens/month | $1,000 - $1,300 |
 | - text-embedding-3-large | ~15M tokens/month | $50 - $60 |
 | **Azure AI Search** | Standard S2 (2 replicas, 2 partitions) | $1,000 |
 | **Azure Cosmos DB** | Provisioned (1,000 RU/s, 50GB) | $60 |
@@ -58,7 +58,7 @@ This document provides a detailed cost comparison between the pro-code solution 
 | Service | SKU/Configuration | Monthly Cost (USD) |
 |---------|------------------|-------------------|
 | **Azure OpenAI** | | |
-| - GPT-4.1 (Chat, higher quality) | ~300M tokens/month | $3,000 - $3,600 |
+| - gpt-5.4 / gpt-5.5 (Chat, low reasoning) | ~300M tokens/month | $3,500 - $4,500 |
 | - text-embedding-3-large | ~60M tokens/month | $200 - $240 |
 | **Azure AI Search** | Standard S3 (4 replicas, 4 partitions) | $4,000 |
 | **Azure Cosmos DB** | Provisioned (5,000 RU/s, 200GB) | $300 |
@@ -115,11 +115,11 @@ This document provides a detailed cost comparison between the pro-code solution 
 
 ### Pro-Code Optimizations
 
-1. **Use Model Hierarchy**
-   - Route simple queries to `gpt-4.1-nano` (85% cheaper than `gpt-4.1`)
-   - Use `gpt-4.1-mini` for most queries
-   - Reserve `gpt-4.1` for complex reasoning
-   - **Potential Savings**: 40-60%
+1. **Use Per-Agent Model Selection**
+   - Use lighter `gpt-5.1` (low reasoning) for Query Planner, Insight Analyzer, Response Formatter
+   - Reserve `gpt-5.4` (or `gpt-5.5` if available) at low reasoning for NL2SQL only
+   - Tune `MODEL_*_REASONING` to `none` for the simplest agents if quality holds
+   - **Potential Savings**: 30-50%
 
 2. **Implement Response Caching**
    - Cache common queries using Azure Redis

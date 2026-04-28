@@ -71,7 +71,7 @@ az containerapp create \
     --env-vars \
         AZURE_OPENAI_ENDPOINT="https://$OPENAI_ACCOUNT.openai.azure.com/" \
         AZURE_OPENAI_API_VERSION="2024-02-01" \
-        AZURE_OPENAI_CHAT_DEPLOYMENT="gpt-4.1-mini" \
+        AZURE_OPENAI_CHAT_DEPLOYMENT="gpt-5.1" \
         AZURE_SEARCH_ENDPOINT="https://$SEARCH_SERVICE.search.windows.net" \
         AZURE_SEARCH_INDEX_NAME="partner-solutions-index" \
         AZURE_COSMOS_ENDPOINT="https://$COSMOS_ACCOUNT.documents.azure.com:443/" \

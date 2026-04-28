@@ -116,7 +116,7 @@ az containerapp create \
   --max-replicas 3 \
   --env-vars \
     AZURE_OPENAI_ENDPOINT=https://indsolse-dev-ai-okumlm.openai.azure.com/ \
-    AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4.1-mini \
+    AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-5.1 \
     AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-3-large \
     AZURE_OPENAI_API_VERSION=2024-02-01 \
     AZURE_SEARCH_ENDPOINT=https://indsolse-dev-srch-okumlm.search.windows.net \

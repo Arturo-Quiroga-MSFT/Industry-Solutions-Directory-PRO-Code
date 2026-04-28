@@ -116,6 +116,8 @@ Each agent can use a different Azure OpenAI model, configured via environment va
 
 All agents fall back to `AZURE_OPENAI_CHAT_DEPLOYMENT_NAME` if their specific env var is not set.
 
+> **Supported models (April 2026):** `gpt-5.1`, `gpt-5.4`, and `gpt-5.5` — all used in **low reasoning effort** mode. `gpt-5.5` is a drop-in alternative for NL2SQL or any other agent if you have quota for it. Older `gpt-4.1*` models are no longer supported and have been removed from all configs.
+
 **Why reasoning models across all agents?** All four agents now use reasoning models at low effort. For NL2SQL, gpt-5.4 (upgraded from gpt-5.2) provides the best SQL quality:
 - **Domain-aware synonyms**: Automatically adds related terms (e.g., "AML" for "anti-money laundering", "KYC" for "know your customer")
 - **Phrase precision**: Keeps multi-word concepts as combined LIKE phrases instead of splitting into overly broad single-word wildcards

@@ -4,7 +4,7 @@
 
 export AZURE_OPENAI_API_KEY='<your-azure-openai-api-key>'
 export AZURE_OPENAI_ENDPOINT='https://aq-ai-foundry-sweden-central.openai.azure.com/'
-export AZURE_OPENAI_CHAT_DEPLOYMENT_NAME='gpt-4.1'
+export AZURE_OPENAI_CHAT_DEPLOYMENT_NAME='gpt-5.1'
 export SQL_PASSWORD='<your-sql-password>'
 
 echo "✅ Environment variables set:"

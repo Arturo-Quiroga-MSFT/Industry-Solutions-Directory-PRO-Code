@@ -13,7 +13,8 @@
 - **Name**: indsolse-dev-ai-okumlm
 - **Endpoint**: https://indsolse-dev-ai-okumlm.openai.azure.com/
 - **Deployments**:
-  - `gpt-4.1-mini` (GPT-4.1, version 2025-04-14, GlobalStandard SKU, 100 capacity)
+  - `gpt-5.1` and `gpt-5.4` (low reasoning effort) — current production deployments. `gpt-5.5` is a supported drop-in alternative for NL2SQL.
+  - _(Historical: this resource was originally provisioned with `gpt-4.1-mini` in November 2025; it has since been migrated to gpt-5.x reasoning models.)_
   - `text-embedding-3-large` (Embedding model, version 1, Standard SKU, 100 capacity)
 - **Authentication**: Azure CLI / Managed Identity (local auth disabled)
 

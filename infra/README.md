@@ -86,7 +86,7 @@ infra/
 The template deploys the following resources:
 
 1. **Resource Group**: Container for all resources
-2. **Azure OpenAI Service**: With GPT-4.1-mini and text-embedding-3-large deployments
+2. **Azure OpenAI Service**: With gpt-5.1 / gpt-5.4 (reasoning, low effort) and text-embedding-3-large deployments
 3. **Azure AI Search**: For vector and hybrid search
 4. **Azure Cosmos DB**: For storing chat sessions
 5. **App Service Plan**: Hosting plan for the API

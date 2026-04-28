@@ -14,7 +14,7 @@ az containerapp create \
     APP_MODE=seller \
     AZURE_OPENAI_API_KEY='<your-azure-openai-api-key-here>' \
     AZURE_OPENAI_ENDPOINT=https://aq-ai-foundry-sweden-central.openai.azure.com/ \
-    AZURE_OPENAI_CHAT_DEPLOYMENT_NAME=gpt-4.1 \
+    AZURE_OPENAI_CHAT_DEPLOYMENT_NAME=gpt-5.1 \
     SQL_SERVER=mssoldir-prd-sql.database.windows.net \
     SQL_DATABASE=mssoldir-prd \
     SQL_USERNAME=isdapi_dev \

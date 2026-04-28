@@ -212,6 +212,8 @@ All agents fall back to `AZURE_OPENAI_CHAT_DEPLOYMENT_NAME` if their specific en
 
 ##### gpt-5.4 Reasoning Model for NL2SQL — Findings
 
+> **Historical comparison.** The table and notes below compare `gpt-5.4` against the previously-used `gpt-4.1` (now retired). Current production uses `gpt-5.1` and `gpt-5.4` (with `gpt-5.5` as a supported drop-in alternative for NL2SQL); no `gpt-4.1*` models are deployed.
+
 Extensive testing (February 2026) comparing gpt-4.1 vs gpt-5.2 (and now upgraded to gpt-5.4) with low reasoning effort for SQL generation revealed significant quality improvements:
 
 **1. Domain-Aware Synonyms**

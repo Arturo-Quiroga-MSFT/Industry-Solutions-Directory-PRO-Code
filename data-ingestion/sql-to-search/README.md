@@ -71,7 +71,7 @@ python 03_verify_index.py
 | **Resource**       | `r2d2-foundry-001`                         |
 | **Endpoint**       | `https://r2d2-foundry-001.openai.azure.com/` |
 | **Embedding model**| `text-embedding-3-large` (3,072 dimensions)|
-| **Chat model**     | `gpt-4.1`                                 |
+| **Chat model**     | `gpt-5.1` (low reasoning)                 |
 | **API version**    | `2025-04-01-preview`                       |
 
 **Why `text-embedding-3-large`?**  

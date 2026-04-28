@@ -15,7 +15,7 @@
   },
   "description": {
     "short": "AI-powered partner insights for the Microsoft Solutions Directory",
-    "full": "Internal seller tool that provides AI-powered natural language access to the Microsoft Solutions Directory database. Ask questions about solutions, partners, industries, and technologies. Get partner insights, competitive analysis, and solution recommendations powered by NL2SQL and GPT-4.1."
+    "full": "Internal seller tool that provides AI-powered natural language access to the Microsoft Solutions Directory database. Ask questions about solutions, partners, industries, and technologies. Get partner insights, competitive analysis, and solution recommendations powered by a multi-agent NL2SQL pipeline on Azure OpenAI (gpt-5.x reasoning models, low effort)."
   },
   "icons": {
     "color": "color.png",
